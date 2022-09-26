@@ -4,12 +4,13 @@
   - [**Description**](#description)
   - [**Before you run!**](#before-you-run)
   - [**Liability**](#liability)
-  - [****Execution****](#execution)
+  - [**Execution**](#execution)
   - [**Interactivity**](#interactivity)
   - [**Compatibility**](#compatibility)
   - [**Known side effects**](#known-side-effects)
   - [**Known issues**](#known-issues)
   - [**Undo changes**](#undo-changes)
+  - [**Finally**](#finally)
   - [**Thanks To**](#thanks-to)
 
 
@@ -53,7 +54,7 @@ It would be very daring on my part, given the simplicity of the script, to furth
 This script has taken dozens of hours and years of experimentation on my part, self-learning, and is being shared freely for use, distribution, and study. I'm not responsible for anything. All script is provided as it is, and you can use it at your own risk.
 
 
-## ****Execution****
+## **Execution**
 
 The script is divided into a module with all the functions and a preset file containing only the call of the procedures to be executed. Directly running the script.cmd file solves all these complexities for you, such as elevating privileges.
 
@@ -141,6 +142,13 @@ To revert the entire script, follow these steps:
 ### Revert functions
 
 If you want to revert some specific function, create and add this opposite (or equivalent) name function that reverts the required behaviour to the default and append it to the present file.
+
+
+## **Finally**
+If you understand what you are doing, consider downloading and running Microsoft's Autorun later and checking your system.
+https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns
+
+![autoruns_v13.png](README/autoruns_v13.png)
 
 
 ## **Thanks To**
