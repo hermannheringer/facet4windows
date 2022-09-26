@@ -1,0 +1,1801 @@
+<#
+Facet4 Windows 10/11 distribution
+Author: Hermann Heringer
+Version : 0.1.0
+Source: https://github.com/hermannheringer/
+#>
+
+
+
+###					   ###
+### Application Tweaks ###
+###					   ###
+
+
+
+# Check if winget is installed
+Function InstallWinget {
+Write-Host "Checking winget"
+if (Test-Path ~\AppData\Local\Microsoft\WindowsApps\winget.exe){
+	'Winget were already installed'
+	}else {
+		# Installing winget from the Microsoft Store
+		Write-Host "Winget not found, installing it now... Please Wait"
+		Start-Process "ms-appinstaller:?source=https://aka.ms/getwinget"
+		$nid = (Get-Process AppInstaller).Id
+		Wait-Process -Id $nid
+		Write-Host "Winget Installed"
+	}
+}
+
+
+
+###					###
+### Debloat Windows ###
+###					###
+
+
+
+Function DebloatBlacklist {
+
+	$Bloatware = @(
+		# Unnecessary default Windows 10 Apps
+		"*Microsoft.3DBuilder*"
+		#"*Microsoft.AppConnector*"
+		#"*Microsoft.CommsPhone*"
+		#"*Microsoft.ConnectivityStore*"
+		"*Microsoft.Disney*"
+		"*Microsoft.FreshPaint*"
+		"*Microsoft.GamingApp*"
+		"*Microsoft.GamingBar*"
+		"*Microsoft.GamingServices*"
+		"*Microsoft.GetHelp*"
+		"*Microsoft.Getstarted*"
+		"*Microsoft.HelpAndTips*"
+		"*Microsoft.Media.PlayReadyClient*"
+		"*Microsoft.Messaging*"
+		"*Microsoft.Microsoft3DViewer*"
+		"*Microsoft.MicrosoftOfficeHub*"
+		#"*Microsoft.MicrosoftPowerBIForWindows*"
+		"*Microsoft.MicrosoftSolitaireCollection*"
+		#"*Teams*"
+		"*Microsoft.MinecraftUWP*"
+		"*Microsoft.MixedReality.Portal*"
+		#"*Microsoft.NetworkSpeedTest*"
+		"*Microsoft.News*"
+		#"*Microsoft.Office.OneNote*"
+		#"*Microsoft.Office.Todo.List*"
+		#"*Microsoft.OfficeLens*"
+		#"*Microsoft.Office.Sway*"
+		#"*Microsoft.OneConnect*"
+		#"*Microsoft.People*"
+		"*Microsoft.Print3D*"
+		"*Microsoft.Reader*"
+		#"*Microsoft.RemoteDesktop*"
+		"*Microsoft.SkypeApp*"
+		#"*Microsoft.StorePurchaseApp*"
+		#"*Microsoft.Todos*"
+		#"*Microsoft.Wallet*"
+		#"*Microsoft.WebMediaExtensions*"
+		#"*Microsoft.Whiteboard*"
+		#"*Microsoft.WindowsAlarms*"
+		#"*Microsoft.WindowsCamera*"
+		#"*Microsoft.windowscommunicationsapps*"
+		#"*Microsoft.WindowsMaps*"
+		#"*Microsoft.WindowsReadingList*"
+		"*Microsoft.WindowsScan*"
+		#"*Microsoft.WindowsSoundRecorder*"
+		"*Microsoft.WinJS.1.0*"
+		"*Microsoft.WinJS.2.0*"
+		"*Microsoft.Xbox.TCUI*"
+		"*Microsoft.XboxApp*"
+		"*Microsoft.XboxGameOverlay*"
+		"*Microsoft.XboxGamingOverlay*"
+		"*Microsoft.XboxSpeechToTextOverlay*"
+		"*Microsoft.YourPhone*"
+		"*Microsoft.ZuneMusic*"
+		"*Microsoft.ZuneVideo*"
+
+
+		# Redstone Apps
+		"*Microsoft.BingFinance*"
+		"*Microsoft.BingFoodAndDrink*"
+		"*Microsoft.BingHealthAndFitness*"
+		"*Microsoft.BingMaps*"
+		"*Microsoft.BingNews*"
+		"*Microsoft.BingSports*"
+		"*Microsoft.BingTranslator*"
+		"*Microsoft.BingTravel*"
+		"*Microsoft.BingWeather*"
+
+
+		# Aponsored non-Microsoft Apps
+		"*2414FC7A.Viber*"
+		"*2FE3CB00.PicsArt-PhotoStudio*"
+		"*41038Axilesoft.ACGMediaPlayer*"
+		"*46928bounde.EclipseManager*"
+		"*4DF9E0F8.Netflix*"
+		"*64885BlueEdge.OneCalendar*"
+		"*6Wunderkinder.Wunderlist*"
+		"*7EE7776C.LinkedInforWindows*"
+		"*828B5831.HiddenCityMysteryofShadows*"
+		"*89006A2E.AutodeskSketchBook*"
+		"*9E2F88E3.Twitter*"
+		"*A278AB0D.DisneyMagicKingdoms*"
+		"*A278AB0D.DragonManiaLegends*"
+		"*A278AB0D.MarchofEmpires*"
+		"*ActiproSoftwareLLC*"
+		"*ActiproSoftwareLLC.562882FEEB491*"
+		"*AD2F1837.GettingStartedwithWindows8*"
+		"*AD2F1837.HPJumpStart*"
+		"*AD2F1837.HPRegistration*"
+		"*AdobeSystemsIncorporated.AdobePhotoshopExpress*"
+		"*Amazon.com.Amazon*"
+		"*BubbleWitch3Saga*"
+		"*C27EB4BA.DropboxOEM*"
+		"*CAF9E577.Plex*"
+		"*CandyCrush*"
+		"*ClearChannelRadioDigital.iHeartRadio*"
+		"*CyberLinkCorp.hs.PowerMediaPlayer14forHPConsumerPC*"
+		"*D52A8D61.FarmVille2CountryEscape*"
+		"*D5EA27B7.Duolingo-LearnLanguagesforFree*"
+		"*DB6EA5DB.CyberLinkMediaSuiteEssentials*"
+		"*Disney*"
+		#"*Dolby*"
+		#"*DolbyLaboratories.DolbyAccess*"
+		"*Drawboard.DrawboardPDF*"
+		"*Duolingo-LearnLanguagesforFree*"
+		"*EclipseManager*"
+		"*Facebook*"
+		"*Facebook.Facebook*"
+		"*Fitbit.FitbitCoach*"
+		"*flaregamesGmbH.RoyalRevolt2*"
+		"*Flipboard*"
+		"*Flipboard.Flipboard*"
+		"*GAMELOFTSA.Asphalt8Airborne*"
+		"*KeeperSecurityInc.Keeper*"
+		"*king.com.*"
+		"*king.com.BubbleWitch3Saga*"
+		"*king.com.CandyCrushFriends*"
+		"*king.com.CandyCrushSaga*"
+		"*king.com.CandyCrushSodaSaga*"
+		"*king.com.FarmHeroesSaga*"
+		"*Minecraft*"
+		"*Netflix*"
+		"*Nordcurrent.CookingFever*"
+		"*PandoraMediaInc*"
+		"*PandoraMediaInc.29680B314EFC2*"
+		"*Playtika.CaesarsSlotsFreeCasino*"
+		"*PricelinePartnerNetwork.Booking.comBigsavingsonhot*"
+		"*RoyalRevolt*"
+		"*ShazamEntertainmentLtd.Shazam*"
+		#"*SpeedTest*"
+		"*Spotify*"
+		"*SpotifyAB.SpotifyMusic*"
+		"*TheNewYorkTimes.NYTCrossword*"
+		"*ThumbmunkeysLtd.PhototasticCollage*"
+		"*TuneIn.TuneInRadio*"
+		"*Twitter*"
+		"*WinZipComputing.WinZipUniversal*"
+		"*Wunderlist*"
+		"*XINGAG.XING*"
+
+
+		# Apps which cannot be removed using Remove-AppxPackage
+		#"*Microsoft.BioEnrollment*"
+		#"*Microsoft.MicrosoftEdge*"
+		#"*Microsoft.Windows.Cortana*"
+		#"*Microsoft.WindowsFeedback*"
+		#"*Microsoft.WindowsFeedbackHub*"
+		#"*Microsoft.XboxGameCallableUI*"
+		#"*Microsoft.XboxIdentityProvider*"
+		#"*Windows.ContactSupport*"
+
+
+		# Optional: Typically not removed but you can if you need to for some reason
+		#"*Microsoft.Advertising.Xaml*"
+		#"*Microsoft.Advertising.Xaml_10.1712.5.0_x64__8wekyb3d8bbwe*"
+		#"*Microsoft.Advertising.Xaml_10.1712.5.0_x86__8wekyb3d8bbwe*"
+		#"*Microsoft.MicrosoftStickyNotes*"
+		#"*Microsoft.MSPaint*"
+		#"*Microsoft.Windows.Photos*"
+		#"*Microsoft.WindowsCalculator*"
+		#"*Microsoft.WindowsPhone*"
+		#"*Microsoft.WindowsStore*"
+
+	)
+	foreach ($Bloat in $Bloatware) {
+		Get-AppxPackage -Name $Bloat| Remove-AppxPackage
+		Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like $Bloat | Remove-AppxProvisionedPackage -Online
+		Start-Sleep 1
+		Write-Output "Trying to remove $Bloat"
+	}
+}
+
+
+
+Function AvoidDebloatReturn {
+	Write-Output "Adding Registry key to prevent bloatware apps from returning and removes some suggestions settings."
+	$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+	$registryOEM = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+	If (!(Test-Path $registryPath)) { 
+		New-Item $registryPath
+	}
+	Set-ItemProperty $registryPath DisableWindowsConsumerFeatures -Value 1
+
+	If (!(Test-Path $registryOEM)) {
+		New-Item $registryOEM
+	}
+	Set-ItemProperty $registryOEM  ContentDeliveryAllowed -Value 1 # Default 1
+	Set-ItemProperty $registryOEM  OemPreInstalledAppsEnabled -Value 0 # Default 1
+	Set-ItemProperty $registryOEM  PreInstalledAppsEnabled -Value 0 # Default 1
+	Set-ItemProperty $registryOEM  PreInstalledAppsEverEnabled -Value 0 # Default 1
+	Set-ItemProperty $registryOEM  SilentInstalledAppsEnabled -Value 0 # Default 1
+	Set-ItemProperty $registryOEM  SystemPaneSuggestionsEnabled -Value 0 # Default 1
+
+	
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0 #
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0 #
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0 # Spotlight fun tips and facts #Default 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0 # Show Suggestions Occasionally in Start
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0 # Tips and Suggestions Notifications #Default 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353696Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0 # Timeline Suggestions
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0 # Use Spotlight image as Desktop wallpaper
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 2 # Use Spotlight image as Desktop wallpaper
+
+	<#
+	Get-AppxPackage  | Where name -match windowscommunicationsapps | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
+	Get-AppxPackage -Name Microsoft.Windows.ContentDeliveryManager | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
+	Get-AppxPackage -AllUsers | Where name -match weather | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose }
+	LockApp XML located at "C:\Windows\SystemApps\Microsoft.LockApp_cw5n1h2txyewy" WindowsDefaultLockScreen
+	#>
+}
+
+
+
+Function SetMixedReality {
+	Write-Output "Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings."
+	$Holo = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic"
+	If (Test-Path $Holo) {
+		Set-ItemProperty $Holo  FirstRunSucceeded -Value 0
+	}
+}
+
+
+
+###							  ###
+### System/Performance Tweaks ###
+###							  ###
+
+
+
+Function DisableAppCompat {
+	Write-Host "Disabling Application Compatibility Program."
+	# See more at https://admx.help/?Category=Windows_11_2022
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Force | Out-Null
+	}
+
+	Write-Host "Prevent access to 16-bit applications"
+	# You can use this setting to turn off the MS-DOS subsystem, which will reduce resource usage and prevent users from running 16-bit applications.
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatPrevent16BitMach
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "VDMDisallowed" -Type DWord -Value 1	
+
+
+	Write-Host "Turn off Application Compatibility Engine."
+	<#
+	Turning off the application compatibility engine will boost system performance.
+	However, this will degrade the compatibility of many popular legacy applications,
+	and will not block known incompatible applications from installing.
+	(For Instance: This may result in a blue screen if an old anti-virus application is installed.)
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffEngine
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableEngine" -Type DWord -Value 1
+
+
+	Write-Host "Turn off Application Telemetry."
+	# If the customer Experience Improvement program is turned off, Application Telemetry will be turned off regardless of how this policy is set.
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffApplicationImpactTelemetry
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "AITEnable" -Type DWord -Value 0	
+
+	
+	Write-Host "Turn off Inventory Collector."
+	<#
+	The Inventory Collector inventories applications, files, devices, and drivers on the system and sends the information to Microsoft.
+	This information is used to help diagnose compatibility problems.
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffProgramInventory
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableInventory" -Type DWord -Value 1
+
+
+	Write-Host "Turn off Program Compatibility Assistant."
+	<#
+	If you enable this policy setting, the PCA will be turned off.
+	The user will not be presented with solutions to known compatibility issues when running applications.
+	Turning off the PCA can be useful for system administrators who require better performance and are already aware of application compatibility issues.
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffProgramCompatibilityAssistant_2
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisablePCA" -Type DWord -Value 1	
+
+
+	Write-Host "Turn off Steps Recorder."
+	<#
+	Steps Recorder keeps a record of steps taken by the user.
+	The data generated by Steps Recorder can be used in feedback systems such as Windows Error Reporting
+	to help developers understand and fix problems. The data includes user actions such as keyboard input and mouse input,
+	user interface data, and screen shots. Steps Recorder includes an option to turn on and off data collection.
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffUserActionRecord
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableUAR" -Type DWord -Value 1	
+
+	Write-Host "Turn off SwitchBack Compatibility Engine."
+	<#
+	If you enable this policy setting, Switchback will be turned off.
+	Turning Switchback off may degrade the compatibility of older applications.
+	This option is useful for server administrators who require performance and are aware of compatibility of the applications they are using.
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffSwitchBack
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "SbEnable" -Type DWord -Value 0	
+}
+
+
+
+function DisableBackgroundApp {
+	# Leaving Xiaomi Mi Blaze Unlock 'on' (8497DDF3*) you can continue using your band to unlock your computer.
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling All Background Application Access."
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Type DWord -Value 1
+		Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Type DWord -Value 0
+		
+	}
+	<#
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling All Background Application Access."
+		[string[]]$Excludes = @("8497DDF3*", "Microsoft.Windows.Cortana*")
+		Get-ChildItem -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Exclude $Excludes | ForEach-Object {
+			Set-ItemProperty -Path $_.PsPath -Name "Disabled" -Type DWord -Value 1
+			Set-ItemProperty -Path $_.PsPath -Name "DisabledByUser" -Type DWord -Value 1
+		}
+	}
+	#>
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Reverting all background app access to default. Windows 11 does a better job of this."
+		Get-ChildItem -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" | ForEach-Object {
+			Remove-ItemProperty -Path $_.PsPath -Name "Disabled" -ErrorAction SilentlyContinue
+			Remove-ItemProperty -Path $_.PsPath -Name "DisabledByUser" -ErrorAction SilentlyContinue
+		}
+	}
+}
+
+
+
+Function RemoveCloudStore {
+	Write-Output "Removing deprecated TileDataLayer from registry if it exists."
+	# See more at https://4sysops.com/archives/roaming-profiles-and-start-tiles-tiledatalayer-in-the-windows-10-1703-creators-update
+	$CloudStore = "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore"
+	#$p = Get-Process -Name "explorer"
+	If (Test-Path $CloudStore) {
+		Stop-Process -Name "explorer" -Force -ErrorAction SilentlyContinue
+		Get-Process | Where-Object {$_.HasExited}
+		Remove-Item $CloudStore -Force -Recurse -ErrorAction SilentlyContinue
+		Start-Process Explorer.exe -Wait
+	}
+}
+
+
+
+function DisableDeleteNotify {
+	<#
+	TRIM (also called Trim or Trim Command) allows your SSD drive to handle garbage more evidentially.
+	TRIM allows the operating system to decide which blocks are already in use so they can be wiped internally.
+	Anytime you delete something, TRIM automatically deletes that page or block.
+	The next time the page or block is written to, the operating system does not have to wait for that block to be deleted.
+	SSD TRIM can prolong the life and performance of your SSD drive.
+	#>
+	Write-Output "Force Trim state to ON."
+	fsutil behavior set DisableDeleteNotify 0
+	#fsutil behavior query DisableDeleteNotify
+}  
+
+
+
+function SetLastAccessTimeStamp {
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
+		#fsutil behavior query disablelastaccess
+		#fsutil behavior set disablelastaccess 0
+		fsutil behavior set disablelastaccess 2
+	}
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
+		#fsutil behavior query disablelastaccess
+		#fsutil behavior set disablelastaccess 1
+		fsutil behavior set disablelastaccess 3
+
+	}
+}
+
+
+
+Function EnableMemoryCompression {
+	Write-Output "Enabling Memory Compression."
+	<#
+	If the Windows Memory Manager detects low memory,
+	it tries to compress unused pages of memory instead of writing them to a paging file on disk to free up RAM for other processes.
+	No paging means a faster computer.
+	Disabling memory compression is a good idea, it conserves CPU resources, if you have lots of RAM.
+	#>
+	# See more at http://woshub.com/memory-compression-process-high-usage-windows-10/
+	Enable-MMAgent -mc -ErrorAction SilentlyContinue
+	#Get-MMAgent
+	#Get-Process -Name "Memory Compression"
+	#get-service sysmain
+	#Disable-MMAgent –MemoryCompression
+}
+
+
+
+Function DisablePerformanceCounters {
+	Write-Host "Disable All Performance Counters."
+	<#
+	Deprecated
+	If ((Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib")) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib" -Name "Disable" -Type DWord -Value 1
+	}
+	#>
+
+	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services" | ForEach-Object {
+	$Var = $_.PsPath + "\Performance"
+		If ((Test-Path $Var)) {
+			Set-ItemProperty -Path $Var -Name "Disable Performance Counters" -Type DWord -Value 1
+		}
+	}
+}
+
+
+
+function SetPowerManagment {
+	Write-Host "Disabling Hibernation and Optimizing Performance on Balanced Performance scheme."
+	<#
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\Power" -Name "HibernteEnabled" -Type Dword -Value 0
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Name "ShowHibernateOption" -Type Dword -Value 0
+	#>
+	powercfg -h off
+
+	Write-Output "Disabling Fast Startup."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -Type DWord -Value 0
+
+	# Force enable "traditional" power plans
+	#reg add HKLM\System\CurrentControlSet\Control\Power /v PlatformAoAcOverride /t REG_DWORD /d 0
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Power" -Name "PlatformAoAcOverride" -Type DWord -Value 0
+
+	# Balanced Performance
+	powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e
+
+	# High performance
+	#powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+
+	# Ultimate Performance
+	#powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61
+
+	#Disable display and sleep mode timeouts
+	powercfg /X monitor-timeout-ac 0
+	powercfg /X monitor-timeout-dc 3
+	powercfg /X standby-timeout-ac 0
+	powercfg /X standby-timeout-dc 0
+
+
+	<#
+	Tuning CPU performance boost
+	This feature determines how processors select a performance level when current operating conditions allow for boosting performance above the nominal level.
+	See more at https://docs.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning
+	See more at https://superuser.com/questions/1435110/why-does-windows-10-have-cpu-core-parking-disabled
+	#>
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" -Name "Attributes" -Type DWord -Value 2
+
+	#IF (Get-WmiObject -Class Win32_Processor | where {( $_.Manufacturer -like "*AMD*" ) -or ($_.Manufacturer -like "*Intel*")})
+
+	IF (Get-ComputerInfo | where {( $_.PowerPlatformRole -like "*mobile*" )}) {
+		Write-Host "Mobile platform detected. Disabling Performance Boost for less heat output and more sustainable performance over time providing full power to iGPU and dGPU."
+		<#
+		Load balancing should be automatic as both Intel and AMD have features for this and it usually works very well,
+		but if your laptop/notebook/ultrabook makes more noise than an airplane's engines,
+		you will be rewarded with performance slightly smaller on some tasks and better on some games and there will be an awkward silence.
+		It will be another computer!
+		#>
+		Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 0
+		Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0  
+	}
+
+	IF (Get-ComputerInfo | where {( $_.PowerPlatformRole -notlike "*mobile*" )}) {
+		IF (Get-WmiObject -Class Win32_Processor | where {( $_.Manufacturer -like "*AMD*" )}) {
+			Write-Host "AMD CPU Detected. Changing Performance Boost to Aggressive." # AMD CPUs with BOOST parameter other than "2" (Aggressive) usually disable Performance Boost completely
+			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 2
+			Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0
+		}
+
+		IF (Get-WmiObject -Class Win32_Processor | where {($_.Manufacturer -like "*Intel*")}) {
+			Write-Host "Intel CPU Detected. Changing Performance Boost to Efficient Aggressive At Guaranteed." # Intel CPUs generally run very well with BOOST 6
+			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 6
+			Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0
+		}
+	}
+
+	# Require a password on wakeup
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e fea3413e-7e05-4911-9a71-700331f1c294 0e796bdb-100d-47d6-a2d5-f7d2daa51f51 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e fea3413e-7e05-4911-9a71-700331f1c294 0e796bdb-100d-47d6-a2d5-f7d2daa51f51 0
+	
+	# Turn off hard disk after
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 300
+	
+	# JavaScript 
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 02f815b5-a5cf-4c84-bf20-649d1f75d3d8 4c793e7d-a264-42e1-87d3-7a0d2f523ccd 1
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 02f815b5-a5cf-4c84-bf20-649d1f75d3d8 4c793e7d-a264-42e1-87d3-7a0d2f523ccd 1
+	
+	# Desktop background settings - Slide show
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 0d7dbae2-4294-402a-ba8e-26777e8488cd 309dce9b-bef4-4119-9921-a851fb12f0f4 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 0d7dbae2-4294-402a-ba8e-26777e8488cd 309dce9b-bef4-4119-9921-a851fb12f0f4 0
+	
+	# Wireless Adapter Settings - Power Saving Mode
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 19cbb8fa-5279-450e-9fac-8a3d5fedd0c1 12bbebe6-58d6-4636-95bb-3217ef867c1a 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 19cbb8fa-5279-450e-9fac-8a3d5fedd0c1 12bbebe6-58d6-4636-95bb-3217ef867c1a 3
+	
+	# Sleep after - Never
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 29f6c1db-86da-48c5-9fdb-f2b67b1f44da 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 29f6c1db-86da-48c5-9fdb-f2b67b1f44da 0
+	
+	# Allow hybrid sleep - Off
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 94ac6d29-73ce-41a6-809f-6363ba21b47e 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 94ac6d29-73ce-41a6-809f-6363ba21b47e 0
+	
+	# Hibernate after
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 9d7815a6-7ee4-497e-8888-515a05f02364 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 9d7815a6-7ee4-497e-8888-515a05f02364 0
+	
+	# Allow wake timers - No
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0
+	
+	# USB selective suspend setting - Off
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 1
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 1
+	
+	# Lid close action - Do Nothing
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
+	
+	# Power button action - Shutdown
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 7648efa3-dd9c-4e3e-b566-50f929386280 3
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 7648efa3-dd9c-4e3e-b566-50f929386280 3
+	
+	# Sleep button action - Sleep
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 96996bc0-ad50-47ec-923b-6f41874dd9eb 1
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 96996bc0-ad50-47ec-923b-6f41874dd9eb 1
+	
+	# Start menu power button - Shutdown
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 a7066653-8d6c-40a8-910e-a1f54b84c7e5 2
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 a7066653-8d6c-40a8-910e-a1f54b84c7e5 2
+	
+	# PCI Express
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 501a4d13-42af-4429-9fd1-a8218c268e20 ee12f906-d277-404b-b6da-e5fa1a576df5 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 501a4d13-42af-4429-9fd1-a8218c268e20 ee12f906-d277-404b-b6da-e5fa1a576df5 2
+	
+	# CPU Min
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 893dee8e-2bef-41e0-89c6-b55d0929964c 5
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 893dee8e-2bef-41e0-89c6-b55d0929964c 5
+	
+	# CPU Max
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 bc5038f7-23e0-4960-96da-33abaf5935ec 100
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 bc5038f7-23e0-4960-96da-33abaf5935ec 100
+	
+	# CPU Fan
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 94d3a615-a899-4ac5-ae2b-e4d8f634367f 1
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 94d3a615-a899-4ac5-ae2b-e4d8f634367f 1
+	
+	# Enable Adaptive Brightness
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 fbd9aa66-9553-4097-ba44-ed6e9d65eab8 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 fbd9aa66-9553-4097-ba44-ed6e9d65eab8 1
+	
+	# Dim display after
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 17aaa29b-8b43-4b94-aafe-35f64daaf1ee 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 17aaa29b-8b43-4b94-aafe-35f64daaf1ee 300
+	
+	# Desligar Monitor (configured above)
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 180
+	
+	# Display brightness - %
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 aded5e82-b909-4619-9949-f5d71dac0bcb 100
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 aded5e82-b909-4619-9949-f5d71dac0bcb 50
+	
+	# Dimmed display brightness - %
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 f1fbfde2-a960-4165-9f88-50667911ce96 75
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 f1fbfde2-a960-4165-9f88-50667911ce96 50
+	
+	# When sharing media
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 9596fb26-9850-41fd-ac3e-f7c3c00afd4b 03680956-93bc-4294-bba6-4e0f09bb717f 2
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 9596fb26-9850-41fd-ac3e-f7c3c00afd4b 03680956-93bc-4294-bba6-4e0f09bb717f 2
+	
+	# Reproduzir Vídeo
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 9596fb26-9850-41fd-ac3e-f7c3c00afd4b 34c7b99f-9a6d-4b3c-8dc7-b6693b78cef4 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 9596fb26-9850-41fd-ac3e-f7c3c00afd4b 34c7b99f-9a6d-4b3c-8dc7-b6693b78cef4 2
+	
+	# Critical battery action - Shutdown
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 637ea02f-bbcb-4015-8e2c-a1c7b9c0b546 3
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 637ea02f-bbcb-4015-8e2c-a1c7b9c0b546 3
+	
+	# Critical battery level - 7%
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 9a66d8d7-4ff7-4ef9-b5a2-5a326ca2a469 7
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 9a66d8d7-4ff7-4ef9-b5a2-5a326ca2a469 7
+	
+	# Low battery level - 10%
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 8183ba9a-e910-48da-8769-14ae6dc1170a 10
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f 8183ba9a-e910-48da-8769-14ae6dc1170a 10
+	
+	# Low battery notification - On
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f bcded951-187b-4d05-bccc-f7e51960c258 1
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f bcded951-187b-4d05-bccc-f7e51960c258 1
+	
+	# Low battery action - Shutdown
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f d8742dcb-3e6a-4b3c-b3fe-374623cdcf06 3
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f d8742dcb-3e6a-4b3c-b3fe-374623cdcf06 3
+	
+	# Reserve battery level - 3min
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f f3c5027d-cd16-4930-aa6b-90db844a8f00 3
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e73a048d-bf27-4f12-9731-8b2076e8891f f3c5027d-cd16-4930-aa6b-90db844a8f00 3
+	
+	# AMD Graphics Power Settings
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e f693fb01-e858-4f00-b20f-f30e12ac06d6 191f65b5-d45c-4a4f-8aae-1ab8bfd980e6 1 # Maximize Performance
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e f693fb01-e858-4f00-b20f-f30e12ac06d6 191f65b5-d45c-4a4f-8aae-1ab8bfd980e6 0 # Optimize Battery
+	
+	# Switchable Dynamic Graphics
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 3 # Maximize performance
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 1 # Optimize power savings
+	
+	# AMD Power Slider
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e c763b4ec-0e50-4b6b-9bed-2b92a6ee884e 7ec1751b-60ed-4588-afb5-9819d3d77d90 3 # Best performance
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e c763b4ec-0e50-4b6b-9bed-2b92a6ee884e 7ec1751b-60ed-4588-afb5-9819d3d77d90 0 # Battery saver
+
+	# Intel(R) Graphics Power Plan 
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 44f3beca-a7c0-460e-9df2-bb8b99e0cba6 3619c3f2-afb2-4afc-b0e9-e7fef372de36 2 # Maximum Performance
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 44f3beca-a7c0-460e-9df2-bb8b99e0cba6 3619c3f2-afb2-4afc-b0e9-e7fef372de36 0 # Maximum Battery Life
+
+	# Intel(R) Dynamic Tuning Settings
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 48df9d60-4f68-11dc-8314-0800200c9a66 07029cd8-4664-4698-95d8-43b2e9666596 0 # 25.0W @ 2.1GHz
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 48df9d60-4f68-11dc-8314-0800200c9a66 07029cd8-4664-4698-95d8-43b2e9666596 2 # 10.0W @ 0.8GHz
+
+	# Hidden New CPU Optimizations
+	# Determines whether desired performance requests should be provided to the platform
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFAUTONOMOUS 1 # default 1
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFAUTONOMOUS 1 # default 1	
+
+	# Core Parking allows your processors to go into a sleep mode. The main purposes of core parking is to allow the computer/laptop/device to only use the processors when required, thus saving on energy.
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" -Name "Attributes" -Type DWord -Value 2
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 # default 100
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 # default 10
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\ea062031-0e34-4ff1-9b6d-eb1059334028" -Name "Attributes" -Type DWord -Value 2
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES 100 # default 100
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES 100 # default 100
+
+	# Processor performance core parking utility distribution
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR DISTRIBUTEUTIL 0 # High performance
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR DISTRIBUTEUTIL 0 # High performance
+
+	# Processor energy performance preference policy(Percent). Specify how much processors should favor energy savings over performance when operating in autonomous mode.
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\36687f9e-e3a5-4dbf-b1dc-15eb381c6863" -Name "Attributes" -Type DWord -Value 2
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 0 # default 50 
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 50 # default 25
+
+	# The Processor Performance Boost Policy is a percentage value from 0 to 100(hexa:00000064). In the default Balanced power plan this parameter is 35 percent and any value lower than 51 disables Turbo Boost.
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59" -Name "Attributes" -Type DWord -Value 2
+	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # default 60
+	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # default 40
+
+	Powercfg -setactive scheme_current
+
+	<#
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR CPMINCORES
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR PERFEPP
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE
+	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR DISTRIBUTEUTIL
+
+	powercfg /Q
+
+	PowerCfg: CPMINCORES, CPMINCORES1
+	PowerCfg: CPMAXCORES, CPMAXCORES1
+	PowerCfg: LATENCYHINTUNPARK, LATENCYHINTUNPARK1
+	PowerCfg: PROCTHROTTLEMAX, PROCTHROTTLEMAX1
+	PowerCfg: PROCTHROTTLEMIN, PROCTHROTTLEMIN1
+	PowerCfg: PERFINCTHRESHOLD, PERFINCTHRESHOLD1
+	PowerCfg: PERFINCTIME, PERFINCTIME1
+	PowerCfg: PERFDECTHRESHOLD, PERFDECTHRESHOLD1
+	PowerCfg: PERFDECTIME, PERFDECTIME1
+	PowerCfg: LATENCYHINTPERF, LATENCYHINTPERF1
+	PowerCfg: PERFAUTONOMOUS
+	PowerCfg: PERFEPP
+	#>
+}
+
+
+
+function revertPowerManagment {
+	Write-Output "Reset All Power Plans to Their Defaults."
+	powercfg -restoredefaultschemes
+	Start-Sleep 1
+	powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e
+}
+
+
+
+Function RemoveFeaturesKeys {
+
+	# These are the registry keys that it will delete.
+	$Keys = @(
+		# Remove Background Tasks
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
+		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
+
+		# Windows File
+		"HKCR:\Extensions\ContractId\Windows.File\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+
+		# Registry keys to delete if they aren't uninstalled by RemoveAppXPackage/RemoveAppXProvisionedPackage
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
+		
+
+		# Scheduled Tasks to delete
+		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
+
+		# Windows Protocol Keys
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy" 
+
+		# Windows Share Target
+		"HKCR:\Extensions\ContractId\Windows.ShareTarget\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+	)
+
+	# This writes the output of each key it is removing and also removes the keys listed above.
+    If (!(Test-Path "HKCR:")) {
+		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
+	}
+
+	ForEach ($Key in $Keys) {
+		Write-Output "Removing $Key from registry"
+		Remove-Item -Path $Key -Force -Recurse -ErrorAction SilentlyContinue
+	}
+}
+
+
+
+function RemoveXboxFeatures {
+	Write-Output "Disabling Xbox features."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 00000001 #W10
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 00000001
+
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "value" -Type DWord -Value 00000000
+
+	try	{
+	Stop-Service "xbgm" -ea Stop
+	Set-Service "xbgm" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "xbgm service does not exist on this device."	}
+
+	Write-Output "Disable GameDVR and Broadcast used for game recordings and live broadcasts."
+	try	{
+	Stop-Service "BcastDVRUserService" -ea Stop
+	Set-Service "BcastDVRUserService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_48486de" -ea Stop
+	Set-Service "BcastDVRUserService_48486de" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_48486de service does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_5a109" -ea Stop
+	Set-Service "BcastDVRUserService_5a109" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_5a109 service does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_6fa5a" -ea Stop
+	Set-Service "BcastDVRUserService_6fa5a" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_6fa5a service does not exist on this device."	}
+
+
+	# To change key below it is necessary to gain owner privilege and then full access
+	Write-Output "Elevating privileges for this process..."
+
+	<#
+	Due to the complex nature of authentication and privilege escalation mechanisms in Windows,
+	this variable $ErrorActionPreference is to minimize error warnings in this function.
+	I still haven't found a simple solution for some specific cases where the user is not enabled in any Group Member.
+	#>
+	$ErrorActionPreference = 'silentlycontinue'
+
+	do {} until (enable-privilege SeTakeOwnershipPrivilege)
+	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
+	$acl = $key.GetAccessControl()
+
+	Try{
+		$r = Get-LocalGroupMember -Group "Administrators"
+		$me = [System.Security.Principal.NTAccount]$r[1].Name
+	}
+	Catch{
+		Try{
+		$r = Get-LocalGroupMember -Group "Administradores"
+		$me = [System.Security.Principal.NTAccount]$r[1].Name
+		}
+		Catch{
+			$me = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+		}
+	}
+	$acl.SetOwner($me)
+	$key.SetAccessControl($acl)
+
+	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
+	$acl = $key.GetAccessControl()
+	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ("Users","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
+	$acl.SetAccessRule($rule)
+	$key.SetAccessControl($acl)
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 000000000
+
+	Write-Host "Finished Removing Xbox features."
+}
+
+
+
+# Another function to get owner privilege access on the above keys
+function enable-privilege {
+	param(
+		## The privilege to adjust. This set is taken from
+		## http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
+		[ValidateSet(
+			"SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
+			"SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
+			"SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
+			"SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
+			"SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
+			"SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
+			"SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
+			"SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
+			"SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
+			"SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
+			"SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
+		$Privilege,
+		## The process on which to adjust the privilege. Defaults to the current process.
+		$ProcessId = $pid,
+		## Switch to disable the privilege, rather than enable it.
+		[Switch] $Disable
+	)
+
+## Taken from P/Invoke.NET with minor adjustments.
+$definition = @'
+using System;
+using System.Runtime.InteropServices;
+   
+public class AdjPriv
+{
+	[DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+	internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
+		ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
+	
+	[DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+	internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
+	[DllImport("advapi32.dll", SetLastError = true)]
+	internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
+	[StructLayout(LayoutKind.Sequential, Pack = 1)]
+	internal struct TokPriv1Luid
+	{
+		public int Count;
+		public long Luid;
+		public int Attr;
+	}
+	
+	internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
+	internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
+	internal const int TOKEN_QUERY = 0x00000008;
+	internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
+	public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
+	{
+		bool retVal;
+		TokPriv1Luid tp;
+		IntPtr hproc = new IntPtr(processHandle);
+		IntPtr htok = IntPtr.Zero;
+		retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
+		tp.Count = 1;
+		tp.Luid = 0;
+		if(disable)
+		{
+			tp.Attr = SE_PRIVILEGE_DISABLED;
+		}else {
+			tp.Attr = SE_PRIVILEGE_ENABLED;
+		}
+		retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
+		retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+		return retVal;
+	}
+}
+'@
+
+	$processHandle = (Get-Process -id $ProcessId).Handle
+	$type = Add-Type $definition -PassThru
+	$type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
+}
+
+
+
+Function RemoveScheduledTasks {
+	Write-Output "`n"
+	Write-Output "`nDisables scheduled tasks that are considered unnecessary."
+	Write-Output "...If nothing happens within 30 seconds, please close this window and run the script again.`n"
+	Write-Output "`n"
+
+
+	# See more at http://wiki.webperfect.ch/index.php?title=Windows_Telemetry
+
+	Write-Output "Disabling scheduled Xbox service components."
+	if(Get-ScheduledTask XblGameSaveTaskLogon -ErrorAction Ignore) { Get-ScheduledTask  XblGameSaveTaskLogon | Disable-ScheduledTask } else { 'XblGameSaveTaskLogon does not exist on this device.'}
+	if(Get-ScheduledTask XblGameSaveTask -ErrorAction Ignore) { Get-ScheduledTask  XblGameSaveTask | Disable-ScheduledTask } else { 'XblGameSaveTask does not exist on this device.'}
+
+
+	Write-Output "Disabling scheduled group telemetry."
+	if(Get-ScheduledTask Consolidator -ErrorAction Ignore) { Get-ScheduledTask  Consolidator | Disable-ScheduledTask } else { 'Consolidator task does not exist on this device.'} # collects and sends usage data to Microsoft (if the user has consented to participate in the CEIP)
+	if(Get-ScheduledTask KernelCeipTask -ErrorAction Ignore) { Get-ScheduledTask  KernelCeipTask | Disable-ScheduledTask } else { 'KernelCeipTask does not exist on this device.'} # collects additional information related to customer experience and sends it to Microsoft (if the user consented to participate in the Windows CEIP)
+	if(Get-ScheduledTask UsbCeip -ErrorAction Ignore) { Get-ScheduledTask  UsbCeip | Disable-ScheduledTask } else { 'UsbCeip task does not exist on this device.'}
+	if(Get-ScheduledTask BthSQM -ErrorAction Ignore) { Get-ScheduledTask  BthSQM | Disable-ScheduledTask } else { 'BthSQM task does not exist on this device.'} # collects Bluetooth-related statistics and information about your machine and sends it to Microsoft (if you have consented to participate in the Windows CEIP). The information received is used to help.
+
+
+	Write-Output "Disabling Microsoft Office telemetry."
+	if(Get-ScheduledTask OfficeTelemetryAgentFallBack -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetryAgentFallBack | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack task does not exist on this device.'} # initiates the background task for the Office Telemetry Agent that scans and uploads usage and error information for Office solutions
+	if(Get-ScheduledTask 'OfficeTelemetryAgentFallBack2016' -ErrorAction Ignore) { Get-ScheduledTask  'OfficeTelemetryAgentFallBack2016' | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack2016 task does not exist on this device.'} #
+	if(Get-ScheduledTask OfficeTelemetryAgentLogOn -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetryAgentLogOn | Disable-ScheduledTask } else { 'OfficeTelemetryAgentLogOn task does not exist on this device.'} # initiates the Office Telemetry Agent that scans and uploads usage and error information for Office solutions when a user logs on to the computer
+	if(Get-ScheduledTask 'OfficeTelemetryAgentLogOn2016' -ErrorAction Ignore) { Get-ScheduledTask  'OfficeTelemetryAgentLogOn2016' | Disable-ScheduledTask } else { 'OfficeTelemetryAgentLogOn2016 task does not exist on this device.'} #
+
+
+	Write-Output "Disabling collects data for Microsoft SmartScreen."
+	if(Get-ScheduledTask SmartScreenSpecific -ErrorAction Ignore) { Get-ScheduledTask  SmartScreenSpecific | Disable-ScheduledTask } else { 'SmartScreenSpecific task does not exist on this device.'}
+
+
+	Write-Output "Disabling scheduled customer experience improvement program."
+	if(Get-ScheduledTask Proxy -ErrorAction Ignore) { Get-ScheduledTask  Proxy | Disable-ScheduledTask } else { 'Proxy task does not exist on this device.'} # collects and uploads Software Quality Management (SQM) data if opted-in to the CEIP
+	if(Get-ScheduledTask StartupAppTask -ErrorAction Ignore) { Get-ScheduledTask  StartupAppTask | Disable-ScheduledTask } else { 'StartupAppTask does not exist on this device.'}
+	if(Get-ScheduledTask ProgramDataUpdater -ErrorAction Ignore) { Get-ScheduledTask  ProgramDataUpdater | Disable-ScheduledTask } else { 'ProgramDataUpdater task does not exist on this device.'} # collects program telemetry information if opted-in to the Microsoft Customer Experience Improvement Program (CEIP)
+	if(Get-ScheduledTask 'Microsoft Compatibility Appraiser' -ErrorAction Ignore) { Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Disable-ScheduledTask } else { 'Microsoft Compatibility Appraiser task does not exist on this device.'} # collects program telemetry information if opted-in to the CEIP
+	if(Get-ScheduledTask Uploader -ErrorAction Ignore) { Get-ScheduledTask  Uploader | Disable-ScheduledTask } else { 'Uploader task does not exist on this device.'}
+
+
+	Write-Output "Disabling scheduled feedback."
+	if(Get-ScheduledTask DmClient -ErrorAction Ignore) { Get-ScheduledTask  DmClient | Disable-ScheduledTask } else { 'DmClient task does not exist on this device.'}
+	if(Get-ScheduledTask DmClientOnScenarioDownload -ErrorAction Ignore) { Get-ScheduledTask  DmClientOnScenarioDownload | Disable-ScheduledTask } else { 'DmClientOnScenarioDownload task does not exist on this device.'}
+
+
+	Write-Output "Disabling scheduled windows system assessment tool."
+	if(Get-ScheduledTask WinSAT -ErrorAction Ignore) { Get-ScheduledTask  WinSAT | Disable-ScheduledTask } else { 'WinSAT task does not exist on this device.'} # measures system performance and capabilities
+
+
+	Write-Output "Disabling scheduled family safety settings."
+	if(Get-ScheduledTask FamilySafetyMonitor -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyMonitor | Disable-ScheduledTask } else { 'FamilySafetyMonitor task does not exist on this device.'} # initializes family safety monitoring and enforcement
+	if(Get-ScheduledTask FamilySafetyRefresh -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyRefresh | Disable-ScheduledTask } else { 'FamilySafetyRefresh task does not exist on this device.'} # synchronizes the latest settings with the family safety website
+
+
+	Write-Output "Disabling scheduled collects network information."
+	if(Get-ScheduledTask GatherNetworkInfo -ErrorAction Ignore) { Get-ScheduledTask  GatherNetworkInfo | Disable-ScheduledTask } else { 'GatherNetworkInfo task does not exist on this device.'} # collects network information
+
+
+	Write-Output "Disabling scheduled legacy tasks."
+	if(Get-ScheduledTask AitAgent -ErrorAction Ignore) { Get-ScheduledTask  AitAgent | Disable-ScheduledTask } else { 'AitAgent task does not exist on this device.'} # aggregates and uploads application telemetry information if opted-in to the CEIP
+	if(Get-ScheduledTask ScheduledDefrag -ErrorAction Ignore) { Get-ScheduledTask  ScheduledDefrag | Disable-ScheduledTask } else { 'ScheduledDefrag task does not exist on this device.'}
+	if(Get-ScheduledTask 'SQM data sender' -ErrorAction Ignore) { Get-ScheduledTask  'SQM data sender' | Disable-ScheduledTask } else { 'SQM Data Sender task does not exist on this device.'} # sends SQM data to Microsoft
+	if(Get-ScheduledTask DiskDiagnosticResolver -ErrorAction Ignore) { Get-ScheduledTask  DiskDiagnosticResolver | Disable-ScheduledTask } else { 'DiskDiagnosticResolver task does not exist on this device.'}
+	if(Get-ScheduledTask Microsoft-Windows-DiskDiagnosticResolver -ErrorAction Ignore) { Get-ScheduledTask  Microsoft-Windows-DiskDiagnosticResolver | Disable-ScheduledTask } else { 'Microsoft-Windows-DiskDiagnosticResolver task does not exist on this device.'}
+	if(Get-ScheduledTask DiskDiagnosticDataCollector -ErrorAction Ignore) { Get-ScheduledTask  DiskDiagnosticDataCollector | Disable-ScheduledTask } else { 'DiskDiagnosticDataCollector task does not exist on this device.'} # collects general disk and system information and sends it to Microsoft (if the user users participates in the CEIP)
+	if(Get-ScheduledTask Microsoft-Windows-DiskDiagnosticDataCollector -ErrorAction Ignore) { Get-ScheduledTask  Microsoft-Windows-DiskDiagnosticDataCollector | Disable-ScheduledTask } else { 'Microsoft-Windows-DiskDiagnosticDataCollector task does not exist on this device.'} # collects general disk and system information and sends it to Microsoft (if the user users participates in the CEIP)
+
+
+	Write-Output "Disabling scheduled error reporting."
+	if(Get-ScheduledTask QueueReporting -ErrorAction Ignore) { Get-ScheduledTask  QueueReporting | Disable-ScheduledTask } else { 'QueueReporting task does not exist on this device.'}
+
+
+	Write-Output "Disabling other annoying scheduled tasks."
+	if(Get-ScheduledTask 'Adobe Acrobat Update Task' -ErrorAction Ignore) { Get-ScheduledTask  'Adobe Acrobat Update Task' | Disable-ScheduledTask } else { 'Adobe Acrobat Update Task does not exist on this device.'}
+	if(Get-ScheduledTask 'CCleaner Update' -ErrorAction Ignore) { Get-ScheduledTask  'CCleaner Update' | Disable-ScheduledTask } else { 'CCleaner Update task does not exist on this device.'}
+	$tempCCleaner = 'CCleanerSkipUAC - ' + $env:USERNAME
+	if(Get-ScheduledTask $tempCCleaner -ErrorAction Ignore) { Get-ScheduledTask  $tempCCleaner | Disable-ScheduledTask } else { 'CCleanerSkipUAC task does not exist on this device.'}
+	if(Get-ScheduledTask AMDRyzenMasterSDKTask -ErrorAction Ignore) { Get-ScheduledTask  AMDRyzenMasterSDKTask | Disable-ScheduledTask } else { 'AMDRyzenMasterSDKTask does not exist on this device.'}
+	if(Get-ScheduledTask SystemOptimizer -ErrorAction Ignore) { Get-ScheduledTask  SystemOptimizer | Disable-ScheduledTask } else { 'HP SystemOptimizer task does not exist on this device.'}
+	if(Get-ScheduledTask DuetUpdater -ErrorAction Ignore) { Get-ScheduledTask  DuetUpdater | Disable-ScheduledTask } else { 'DuetUpdater task does not exist on this device.'}
+	if(Get-ScheduledTask 'Duet Updater' -ErrorAction Ignore) { Get-ScheduledTask  'Duet Updater' | Disable-ScheduledTask } else { 'Duet Updater task does not exist on this device.'} # collects program telemetry information if opted-in to the CEIP
+}
+
+
+
+Function SetSplitThreshold {
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "SvcHostSplitThresholdInKB" -Type DWord -Value 4194304
+	#(systeminfo | Select-String 'Memória física total').ToString().Split(':')[1].Trim()
+	$ram = (Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1kb
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "SvcHostSplitThresholdInKB" -Type DWord -Value $ram -Force -ErrorAction SilentlyContinue
+	Write-Output "Setting SvcHostSplitThresholdInKB to $ram"
+}
+
+
+
+Function DisableStorageSense {
+	# Not applicable to Servers
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling Storage Sense."
+		#Remove-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force -Recurse -ErrorAction SilentlyContinue
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0
+	}
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling Storage Sense."
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0
+	}
+}
+
+
+
+function TurnWSLlight {
+	Write-Output "WSL Performance Tweaks."
+	$user_home = "$env:USERPROFILE\.wslconfig"
+$wslconfig = @'
+[wsl2]
+kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off  spectre_v2=off kvm.nx_huge_pages=off kvm-intel.vmentry_l1d_flush=never ssbd=force-off tsx=on
+'@
+	New-Item -Path $user_home -Value $wslconfig -Force -ErrorAction SilentlyContinue
+}
+
+
+
+function DisableVBS_HVCI {
+	<#
+	Not recommended if you use it as a server in production. It can reduce your computer security capabilities.
+	See more at https://www.tomshardware.com/how-to/disable-vbs-windows-11
+	#>
+
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Turn off Virtualization-based security."
+	#reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\CredentialGuard" /v "Enabled" /t REG_DWORD /d 0 /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f
+	}
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Turn off Virtualization-based security."
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f
+
+	}
+}
+
+
+
+###				   ###
+### Privacy Tweaks ###
+###				   ###
+
+
+
+Function AcceptedPrivacyPolicy {
+	Write-Output "Turning off AcceptedPrivacyPolicy."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 00000000
+}
+
+
+
+Function DisableActivityHistory {
+	Write-Host "Disabling activity history."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0
+
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 00000000
+}
+
+
+
+Function DisableAdvertisingID {
+	Write-Host "Disabling Advertising ID."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 1
+}
+
+
+
+Function DisableAdvertisingInfo {
+
+	Write-Output "Disabling Windows Feedback Experience program."
+	$Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
+	If (Test-Path $Advertising) {
+		Set-ItemProperty $Advertising Enabled -Value 0
+	}
+}
+
+
+
+Function DisableAppDiagnostics {
+	Write-Output "Turning off AppDiagnostics."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"
+}
+
+
+
+Function DisableCEIP {
+	Write-Host "Microsoft Customer Experience Improvement Program (CEIP)."
+	<#
+	The program collects information about computer hardware and how you use Microsoft Application Virtualization without interrupting you.
+	This helps Microsoft identify which Microsoft Application Virtualization features to improve.
+	No information collected is used to identify or contact you.
+	#>
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.AppV::CEIP_Enable
+
+	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+	If (Test-Path $SQMClient1) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0
+	}
+
+	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
+	If (Test-Path $SQMClient2) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnabled" -Type DWord -Value 0
+	}
+
+	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
+	If (Test-Path $SQMClient3) {
+		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0
+	}
+
+	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+	If (Test-Path $SQMClient4) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0
+	}
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0
+}
+
+
+
+Function DisableDataCollection {
+	Write-Output "Turning off Data Collection via the AllowTelemtry key by changing it to 0"
+	$DataCollection1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+	$DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
+	$DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+	If (Test-Path $DataCollection1) {
+		Set-ItemProperty $DataCollection1  AllowTelemetry -Value 0
+	}
+	If (Test-Path $DataCollection2) {
+		Set-ItemProperty $DataCollection2  AllowTelemetry -Value 0
+	}
+	If (Test-Path $DataCollection3) {
+		Set-ItemProperty $DataCollection3  AllowTelemetry -Value 0
+	}
+}
+
+
+
+function DisableDiagTrack {
+	Write-Output "Stopping and disabling Connected User Experiences and Telemetry Service."
+	try	{
+	Stop-Service "DiagTrack" -ea Stop
+	Set-Service "DiagTrack" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "DiagTrack service does not exist on this device."	}
+
+	try	{
+	Stop-Service "diagnosticshub.standardcollector.service" -ea Stop
+	Set-Service "diagnosticshub.standardcollector.service" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "diagnosticshub.standardcollector.service does not exist on this device."	}
+} 
+
+
+
+Function DisableErrorReporting {
+	Write-Host "Disabling Error reporting."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 1
+}
+
+
+
+Function DisableFeedbackExperience {
+	Write-Output "Stops the Windows Feedback Experience from sending anonymous data."
+	$Period1 = "HKCU:\Software\Microsoft\Siuf\Rules"
+	$Period2 = "HKCU:\Software\Microsoft\Siuf"
+	If (!(Test-Path $Period1)) { 
+		If (!(Test-Path $Period2)) { 
+			New-Item $Period2
+		}
+		New-Item $Period1
+	}
+	Set-ItemProperty $Period1 PeriodInNanoSeconds -Value 0
+	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 1
+}
+
+
+
+Function DisableLocationTracking {
+	# Disabling this will break Microsoft Find My Device functionality.
+	Write-Output "Disabling Location Tracking."
+	$SensorState = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}"
+	$LocationConfig = "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration"
+	If (!(Test-Path $SensorState)) {
+		New-Item $SensorState
+	}
+	Set-ItemProperty $SensorState SensorPermissionState -Value 0
+	If (!(Test-Path $LocationConfig)) {
+		New-Item $LocationConfig
+	}
+	Set-ItemProperty $LocationConfig Status -Value 0
+
+	try	{
+	Stop-Service "lfsvc" -ea Stop
+	Set-Service "lfsvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "lfsvc service does not exist on this device."	}
+
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"
+
+}
+
+
+
+Function DisableTailoredExperiences {
+	Write-Host "Disabling Tailored Experiences."
+	If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
+		New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 1
+}
+
+
+
+###					###
+### Security Tweaks ###
+###					###
+
+
+
+Function RemoveAutoLogger {
+	Write-Host "Removing AutoLogger file and restricting directory."
+	$autoLoggerDir = "$env:ProgramData\Microsoft\Diagnosis\ETLLogs\Autologger"
+	If (Test-Path "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl") {
+		Remove-Item "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl" -Force -ErrorAction SilentlyContinue
+	}
+	icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
+}
+
+
+
+Function DisableRemoteAssistance {
+	Write-Host "Disabling Remote Assistance."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0
+}
+
+
+
+###					###
+### Network Tweaks  ###
+###					###
+
+
+
+# Improve network performance by improving how many buffers your computer can use simultaneously on your LAN. 
+Function SetIRPStackSize {
+	Write-Output "Setting IRPStackSize."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "IRPStackSize" -Type DWord -Value 20
+}
+
+
+
+function SettingTimeService {
+	Write-Host "Setting BIOS time to UTC and fixing any inconsistency."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" -Name "RealTimeIsUniversal" -Type DWord -Value 1
+
+	# Secure Time Seeding – improving time keeping in Windows. This resolve a lot of problems with VM's & WSL time out of sync in some devices.
+	# See more at http://byronwright.blogspot.com/2016/03/windows-10-time-synchronization-and.html
+
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\w32time\SecureTimeLimits\RunTime" -Name "SecureTimeTickCount" -Type QWORD -Value 8735562
+
+	net stop w32time
+
+	w32tm /unregister
+	w32tm /register
+
+	net start w32time
+	w32tm /resync /nowait
+}
+
+
+
+Function DisableWiFiSense {
+	Write-Output "Disabling Wi-Fi Sense."
+	$WifiSense1 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting"
+	$WifiSense2 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots"
+	$WifiSense3 = "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
+	If (!(Test-Path $WifiSense1)) {
+		New-Item $WifiSense1
+	}
+	Set-ItemProperty $WifiSense1  Value -Value 0
+	If (!(Test-Path $WifiSense2)) {
+		New-Item $WifiSense2
+	}
+	Set-ItemProperty $WifiSense2  Value -Value 0
+	Set-ItemProperty $WifiSense3  AutoConnectAllowedOEM -Value 0
+}
+
+
+
+###					###
+### Service Tweaks 	###
+###					###
+
+
+
+<#
+Device Management Wireless Application Protocol (WAP) Push Message Routing Service
+Useful for Windows tablet devices with mobile (3G/4G) connectivity
+#>
+function DisableWAPPush {
+	Write-Host "Stopping and disabling WAP Push Service."
+	try	{
+	Stop-Service "dmwappushservice" -ea Stop
+	Set-Service "dmwappushservice" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "dmwappushservice does not exist on this device."	}
+} 
+
+
+
+function DisableServices {
+
+	Write-Output "Stopping and disabling AdobeARM Service."
+	try	{
+	Stop-Service "AdobeARMservice" -ea Stop
+	Set-Service "AdobeARMservice" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "AdobeARMservice does not exist on this device."	}
+
+
+	Write-Host "Disables Application Management."
+	try	{
+	Stop-Service "AppMgmt" -ea Stop
+	Set-Service "AppMgmt" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "AppMgmt service does not exist on this device."	}
+
+
+	Write-Host "Disables ActiveX Installer."
+	try	{
+	Stop-Service "AxInstSV" -ea Stop
+	Set-Service "AxInstSV" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "AxInstSV service does not exist on this device." }
+
+
+	Write-Host "Disables offline files service."
+	try	{
+	Stop-Service "CscService" -ea Stop
+	Set-Service "CscService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "CscService does not exist on this device." }
+
+
+	Write-Host "Disables fax."
+	try	{
+	Stop-Service "Fax" -ea Stop
+	Set-Service "Fax" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "Fax service does not exist on this device."	}
+
+
+	Write-Host "Disables File History Service."
+	try	{
+	Stop-Service "fhsvc" -ea Stop
+	Set-Service "fhsvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "fhsvc service does not exist on this device." }
+
+
+	Write-Host "Stopping and disabling Home Groups services."
+	try	{
+	Stop-Service "HomeGroupListener" -ea Stop
+	Set-Service "HomeGroupListener" -StartupType Disabled
+	Stop-Service "HomeGroupProvider" -ea Stop
+	Set-Service "HomeGroupProvider" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HomeGroupListener/HomeGroupProvider services does not exist on this device."	}
+
+
+	<#
+	Write-Output "Stopping and disabling HP App Helper Service."
+	try	{
+	Stop-Service "HPAppHelperCap" -ea Stop
+	Set-Service "HPAppHelperCap" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPAppHelperCap service does not exist on this device."	}
+	#>
+
+
+	Write-Output "Stopping and disabling HP Diagnostics Service."
+	try	{
+	Stop-Service "HPDiagsCap" -ea Stop
+	Set-Service "HPDiagsCap" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPDiagsCap service does not exist on this device."	}
+
+
+	<#
+	Write-Output "Stopping and disabling HP Network Service."
+	try	{
+	Stop-Service "HPNetworkCap" -ea Stop
+	Set-Service "HPNetworkCap" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPNetworkCap service does not exist on this device."	}
+	#>
+
+
+	<#
+	Write-Output "Stopping and disabling HP Omen Service."
+	try	{
+	Stop-Service "HPOmenCap" -ea Stop
+	Set-Service "HPOmenCap" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPOmenCap service does not exist on this device."	}
+	#>
+
+
+	Write-Output "Stopping and disabling HP Print Scan Doctor Service."
+	try	{
+	Stop-Service "HPPrintScanDoctorService" -ea Stop
+	Set-Service "HPPrintScanDoctorService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPPrintScanDoctorService service does not exist on this device."	}
+
+
+	<#
+	Write-Output "Stopping and disabling HP System Info Service."
+	try	{
+	Stop-Service "HPSysInfoCap" -ea Stop
+	Set-Service "HPSysInfoCap" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HPSysInfoCap service does not exist on this device."	}
+	#>
+
+
+	Write-Output "Stopping and disabling HP Telemetry Service."
+	try	{
+	Stop-Service "HpTouchpointAnalyticsService" -ea Stop
+	Set-Service "HpTouchpointAnalyticsService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "HpTouchpointAnalyticsService does not exist on this device."	}
+
+
+	Write-Host "Disables Microsoft iSCSI Initiator Service."
+	try	{
+	Stop-Service "MSiSCSI" -ea Stop
+	Set-Service "MSiSCSI" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "MSiSCSI service does not exist on this device."	}
+
+
+	Write-Host "Disable the Network Data Usage Monitoring Driver."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Ndu" -Name "Start" -Type DWord -Value 4
+
+
+	Write-Host "Disables Peer Networking Identity Manager."
+	try	{
+	Stop-Service "p2pimsvc" -ea Stop
+	Set-Service "p2pimsvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "p2pimsvc service does not exist on this device."	}
+
+
+	Write-Host "Disables Peer Networking Grouping."	
+	try	{
+	Stop-Service "p2psvc" -ea Stop
+	Set-Service "p2psvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "p2psvc service does not exist on this device."	}
+
+
+	Write-Host "Disable Performance Logs and Alerts Service."
+	try	{
+	Stop-Service "pla" -ea Stop
+	Set-Service "pla" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "pla service does not exist on this device."	}
+
+
+	Write-Host "Disables Peer Name Resolution Protocol."
+	try	{
+	Stop-Service "PNRPsvc" -ea Stop
+	Set-Service "PNRPsvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "PNRPsvc service does not exist on this device."	}
+
+
+	Write-Host "Disables Windows Remote Registry service."
+	try	{
+	Stop-Service "RemoteRegistry" -ea Stop
+	Set-Service "RemoteRegistry" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "RemoteRegistry service does not exist on this device."	}
+
+
+	<#
+	The smart card removal policy service is applicable when a user has signed in with a smart card and then removes that smart card from the reader. 
+	The action that is performed when the smart card is removed is controlled by Group Policy settings. 
+	For more information, see Smart Card Group Policy and Registry Settings.
+	Write-Host "Disabling Smart Card Removal Policy Service."
+	try	{
+	Stop-Service "ScPolicySvc" -ea Stop
+	Set-Service "ScPolicySvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "ScPolicySvc service does not exist on this device."	}
+	#>
+
+
+	<#
+	The Memory Compression process is serviced by the SysMain (formerly SuperFetch) service.
+	SysMain reduces disk writes (paging) by compressing and consolidating memory pages.
+	If this service is stopped, then Windows does not use RAM compression.
+	Write-Host "Disables Superfetch service."
+	try	{
+	Stop-Service "SysMain" -ea Stop
+	Set-Service "SysMain" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "SysMain service does not exist on this device."	}
+	#>
+
+
+	<#
+	Disabling this will break WSL keyboard functionality.
+	Write-Output "Stopping and disabling Touch Keyboard and Handwriting Panel Service."
+	try	{
+	Stop-Service "TabletInputService" -ea Stop
+	Set-Service "TabletInputService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "TabletInputService does not exist on this device."	}
+	#>
+
+
+	Write-Host "Disables WebClient service."
+	try	{
+	Stop-Service "WebClient" -ea Stop
+	Set-Service "WebClient" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "WebClient service does not exist on this device."	}
+
+
+	Write-Host "Disables Windows Error Reporting."
+	try	{
+	Stop-Service "WerSvc" -ea Stop
+	Set-Service "WerSvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "WerSvc service does not exist on this device."	}
+
+
+	Write-Host "Disables Windows Remote Management."
+	try	{
+	Stop-Service "WinRM" -ea Stop
+	Set-Service "WinRM" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "WinRM service does not exist on this device."	}
+
+
+	Write-Host "Disables Windows Insider Service. Caution! Windows Insider will not work anymore."
+	try	{
+	Stop-Service "wisvc" -ea Stop
+	Set-Service "wisvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "wisvc service does not exist on this device."	}
+
+
+	Write-Host "Stopping and disabling Windows Search Indexing service."
+	try	{
+	Stop-Service "WSearch" -ea Stop
+	Set-Service "WSearch" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "WSearch service does not exist on this device."	}
+}
+
+
+
+###				###
+### UI Tweaks 	###
+###				###
+
+
+
+Function DisableAutoplay {
+	Write-Output "Disabling Autoplay."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 1
+}
+
+
+
+Function DisableBingSearch {
+	Write-Output "Disabling Bing Search in Start Menu."
+	$WebSearch = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0
+
+	If (!(Test-Path $WebSearch)) {
+		New-Item $WebSearch
+	}
+	Set-ItemProperty $WebSearch DisableWebSearch -Value 1
+}
+
+
+
+Function DisableCortanaSearch {
+	Write-Output "Stopping Cortana from being used as part of your Windows Search Function."
+	$Search = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
+	If (Test-Path $Search) {
+		Set-ItemProperty $Search AllowCortana -Value 0
+	}
+}
+
+
+
+Function TweakExplorer {
+	Write-Output "Some Disk Cache and File System Optimizations."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000" 
+
+	# Disable automatically restarting explorer.exe
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value "1"
+
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type String -Value "150000"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value "1"
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value "1" 
+	<#
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling NtfsDisableLastAccessUpdate."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisableLastAccessUpdate" -Type DWord -Value "2"
+	}
+	
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling NtfsDisableLastAccessUpdate."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisableLastAccessUpdate" -Type DWord -Value "3"
+	}
+	#>
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value "38"
+
+}
+
+
+
+Function GetFullContextMenu {
+	Write-Output "Setting Full Context Menus."
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Setting Full Context Menus in Windows 11."
+		If (!(Test-Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}")) {
+			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" -Force | Out-Null
+			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null
+			Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Name "@" -Type String -Value ""
+		}
+	}
+}
+
+
+
+Function DisableLiveTiles {
+	Write-Output "Disabling live tiles."
+	$Live = "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications"
+	If (!(Test-Path $Live)) {  
+		New-Item $Live
+	}
+	Set-ItemProperty $Live  NoTileApplicationNotification -Value 1
+}
+
+
+
+Function AllowMiracast {
+	Write-Host "Allow Projection To PC."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 1
+}
+
+
+
+###						  ###
+### Server-related Tweaks ###
+###						  ###
+
+
+
+Function DisableEventTracker {
+	Write-Output "Disabling Shutdown Event Tracker."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0
+}
+
+
+
+### 		  ###
+### Unpinning ###
+### 		  ###
+
+
+
+Function RemovingFax {
+	Write-Output "Removing Default Fax Printer."
+	Remove-Printer -Name "Fax" -ErrorAction SilentlyContinue
+}
+
+
+
+<#
+PropertyTypes
+Specifies the type of property that this cmdlet adds. The acceptable values for this parameter are:
+
+	String: Specifies a null-terminated string. Used for REG_SZ values.
+	ExpandString: Specifies a null-terminated string that contains unexpanded references to environment variables that are expanded when the value is retrieved. Used for REG_EXPAND_SZ values.
+	Binary: Specifies binary data in any form. Used for REG_BINARY values.
+	DWord: Specifies a 32-bit binary number. Used for REG_DWORD values.
+	MultiString: Specifies an array of null-terminated strings terminated by two null characters. Used for REG_MULTI_SZ values.
+	Qword: Specifies a 64-bit binary number. Used for REG_QWORD values.
+	Unknown: Indicates an unsupported registry data type, such as REG_RESOURCE_LIST values.
+#>
+
+
+
+# Export functions
+Export-ModuleMember -Function *

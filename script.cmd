@@ -1,0 +1,1 @@
+@powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0facet4.ps1" -include "%~dp0facet4.psm1" -preset "%~dpn0.preset"
