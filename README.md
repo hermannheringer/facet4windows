@@ -145,7 +145,10 @@ If you want to revert some specific function, create and add this opposite (or e
 
 
 ## **Finally**
-If you understand what you are doing, consider downloading and running Microsoft's Autorun later and checking your system.
+If you understand what you are doing, consider downloading and running Microsoft Autoruns to check your system.
+
+This utility, which has the most comprehensive knowledge of auto-starting locations of any startup monitor, shows you what programs are configured to run during system bootup or login, and when you start various built-in Windows applications like Internet Explorer, Explorer and media players. These programs and drivers include ones in your startup folder, Run, RunOnce, and other Registry keys. Autoruns reports Explorer shell extensions, toolbars, browser helper objects, Winlogon notifications, auto-start services, and much more. Autoruns goes way beyond other autostart utilities.
+
 https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns
 
 ![autoruns_v13.png](README/autoruns_v13.png)
