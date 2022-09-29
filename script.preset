@@ -1,26 +1,25 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.0
+# Version : 0.1.5
 # Source: https://github.com/hermannheringer/
 
 
 
-### If the name starts with an exclamation point (!), the function will not be executed ###
+### If the name starts with an exclamation point (!), the function will not be executed. ###
 
 
 
 ### Require administrator privileges ###
 RequireAdmin
-ElevatingPrivileges
 
 
 
-###Transcript everything that happens during a session to a LOG file ###
+###Transcript everything that happens during a session to a LOG file. ###
 LogScript
 
 
 
-###Creating a System Restore Point on the local computer before starting ###
+###Creating a System Restore Point on the local computer before starting. ###
 RestorePoint
 
 
@@ -31,76 +30,113 @@ InstallWinget
 
 
 ### Debloat Windows ###
-DebloatBlacklist                    #Get rid of nonsense apps that come with the OS
-AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings
-SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings
+DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
+AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings.
+SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
 
 
-### System/Performance Tweaks ###
-DisableAppCompat                    #Disabling Application Compatibility Program
-DisableBackgroundApp                #Disabling All Background Application Access
-RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists
-DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially
-SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates
-EnableMemoryCompression             #Enabling Memory Compression
-DisablePerformanceCounters          #Disable All Performance Counters
-SetPowerManagment                   #Optimizing Power Managment scheme             
-RemoveFeaturesKeys                  #Removing registry keys where features will be deleted
-RemoveXboxFeatures                  #Disabling Xbox features
-RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary
-SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold
-DisableStorageSense                 #Disabling Storage Sense
-TurnWSLlight                        #Set some WSL Performance Tweaks
-DisableVBS_HVCI                     #Turn off Virtualization-based security
+### Features Tweaks ###
+DisableAppCompat                    #Disabling Application Compatibility Program.
+DisableBackgroundApp                #Disabling All Background Application Access.
+RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists.
+DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially.
+SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
+EnableMemoryCompression             #Enabling Memory Compression.
+DisablePerformanceCounters          #Disable All Performance Counters.
+SetPowerManagment                   #Optimizing Power Managment scheme.             
+RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
+RemoveXboxFeatures                  #Disabling Xbox features.
+RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
+SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold.
+DisableStorageSense                 #Disabling Storage Sense.
+AllowMiracast                       #Allow Projection To PC Miracast feature.
+TurnWSLlight                        #Set some WSL Performance Tweaks.
+DisableVBS_HVCI                     #Turn off Virtualization-based security.
 
 
 
 ### Privacy Tweaks ###
-AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy
-DisableActivityHistory              #Disabling activity history
-DisableAdvertisingID                #Disabling Advertising ID
-DisableAdvertisingInfo              #Disabling Windows Feedback Experience program
-DisableAppDiagnostics               #Turning off AppDiagnostics
-DisableCEIP                         #Disabling Microsoft Customer Experience Improvement Program
-DisableDataCollection               #Turning off Data Collection via the AllowTelemtry key
-DisableDiagTrack                    #Stopping and disabling Connected User Experiences and Telemetry Service
-DisableErrorReporting               #Disabling Error reporting
-DisableFeedbackExperience           #Stops the Windows Feedback Experience from sending anonymous data
+AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
+DisableActivityHistory              #Disabling activity history.
+DisableAdvertisingID                #Disabling Advertising ID.
+DisableAdvertisingInfo              #Disabling Windows Feedback Experience program.
+DisableAppDiagnostics               #Turning off AppDiagnostics.
+DisableCEIP                         #Disabling Microsoft Customer Experience Improvement Program.
+DisableDataCollection               #Turning off Data Collection via the AllowTelemtry key.
+DisableDiagTrack                    #Stopping and disabling Connected User Experiences and Telemetry Service.
+DisableErrorReporting               #Disabling Error reporting.
+DisableFeedbackExperience           #Stops the Windows Feedback Experience from sending anonymous data.
 !DisableLocationTracking            #Disabling this will break Microsoft 'Find My Device' functionality.
-DisableTailoredExperiences          #Disabling Tailored Experiences
-
+DisableTailoredExperiences          #Disabling Tailored Experiences.
 
 
 
 ### Security Tweaks ###
-RemoveAutoLogger                    #Removing AutoLogger file and restricting directory
-DisableRemoteAssistance             #Disabling Remote Assistance
-
+RemoveAutoLogger                    #Removing AutoLogger file and restricting directory.
+DisableRemoteAssistance             #Disabling Remote Assistance.
 
 
 
 ### Network Tweaks ###
-SetIRPStackSize                     #Improve network performance
-SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency
-DisableWiFiSense                    #Disabling Wi-Fi Sense
+SetIRPStackSize                     #Improve network performance.
+SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
+DisableWiFiSense                    #Disabling Wi-Fi Sense.
 
 
 
 ### Service Tweaks ###
-DisableWAPPush                      #Stopping and disabling Device Management Wireless Application Protocol (WAP) Push message Routing Service
-DisableServices                     #Stopping and disabling unnecessary services
+DisableWAPPush                      #Stopping and disabling Device Management Wireless Application Protocol (WAP) Push message Routing Service.
+DisableServices                     #Stopping and disabling unnecessary services.
 
 
 
-### UI Tweaks ###
-DisableAutoplay                     #Disabling Autoplay
-DisableBingSearch                   #Disabling Bing Search in Start Menu
-DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function
-TweakExplorer                       #Some Disk Cache and File System Optimizations
-GetFullContextMenu                  #Setting Full Context Menus
-DisableLiveTiles                    #Disabling live tiles
-AllowMiracast                       #Allow Projection To PC Miracast feature
+### Speed Up System ###
+DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
+DisableBingSearch                   #Disabling Bing Search in Start Menu.
+DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
+GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
+DisableLiveTiles                    #Disabling live tiles.
 
+# Disk Cache Optimization
+SetWaitToKillAppTimeout             #Optimize program response time to improve system response speed.
+SetHungAppTimeout                   #Shorten the wait time for unresponsive mouse and keyboard caused by error program.
+SetPriorityControl                  #Optimize processor resource allocation to make multimedia smoother.
+SetAutoEndTasks                     #Automatically end unresponsive programs to avoid system crash.
+SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
+# Desktop Menu Optimization
+SetMinAnimate                       #Disable useless visual effects to speed up response and display of desktop.
+SetDesktopProcess                   #Optimize the priority of program processes and independent processes to avoid system crash.
+SetTaskbarAnimations                #Play animations in the taskbar and start menu.
+SetWaitToKillServiceTimeout         #Optimize the speed of ending processes.
+SetNoSimpleNetIDList                #Optimize the refresh strategy of the system file list.
+SetMouseHoverTime                   #Reduce the display time of taskbar preview.
+SetMenuShowDelay                    #Speed up the response and display of system commands.
+SetForegroundLockTimeout            #Improve the response speed of foreground program.
+SetAlwaysUnloadDLL                  #Release unused dlls in memory.
+SetFontStyleShortcut                #Remove the font style of the desktop shortcut.
+SetAutoRestartShell                 #Optimize user interface components. Auto-refresh when there is an error to avoid system crash.
+SetVisualEffects                    #Optimize the visual effects of system menus and lists to improve system performance.
+# File System Optimization
+SetAeDebug                          #Turn off Just-In-Time Debugging function to improve system performance.
+SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
+SetNtfsDisable8dot3NameCreation     #Disable short file names feature.
+SetDoReport                         #Disable Windows error reporting function to get better system response speed.
+SetMaxCachedIcons                   #Increase the system image buffer to display images faster.
+SetNoDriveTypeAutoRun               #Disable AutoPlay for external devices to avoid potential risks such as malware.
+# Network Optimization
+SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
+SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
+SetMaxConnectionsPerServer          #Add more IE concurrent connections.
+SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
+SetKeyboardDelay                    #Adjust the keyboards delayed response time.
+SetAutoDetectionMTUsize             #Enable auto-detection of MTU size and black hole router detection to get better internet speed.
+SetNameSrvQueryTimeout              #Optimize network WINS name query time to enhance network data transmission capacity.
+SetDnsCache                         #Optimize DNS to get better parsing speed.
+SetNoUpdateCheckonIE                #Disable automatic updates on IE.
+SetTcp1323Opts                      #Enable auto-adjustment of transport unit buffer to shorten network response time.
+SetMaxCmds                          #Optimize network parameter configuration to improve network performance and throughput.
+SetNoNetCrawling                    #Optimize LAN connection.
+SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
 
 
 
@@ -109,11 +145,12 @@ DisableEventTracker                 #Disabling Shutdown Event Tracker
 
 
 
-### Unpinning ###
+### Unpin ###
 RemovingFax                         #Who needs this?
 
 
 
-### Finalizing the Script ###
+### Finally ###
+OptimizeVolume
 WaitForKey
 Restart

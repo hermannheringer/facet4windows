@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.0
+Version : 0.1.5
 Source: https://github.com/hermannheringer/
 #>
 
@@ -12,87 +12,6 @@ Function RequireAdmin {
 		Write-Host "This script will self elevate to run as an Administrator and continue."
 		Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSCommandArgs" -Verb RunAs
 		Exit
-	}
-}
-
-
-
-Function ElevatingPrivileges {
-	Write-Output "Elevating owner privileges for some registry keys."
-	# See more at https://www.remkoweijnen.nl/blog/2012/01/16/take-ownership-of-a-registry-key-in-powershell/
-
-<#
-Due to the complex nature of authentication and privilege escalation mechanisms in Windows,
-this variable $ErrorActionPreference is to minimize error warnings in this function.
-I still haven't found a simple solution for some specific cases where the user is not enabled in any Group Member.
-#>
-$ErrorActionPreference = 'silentlycontinue'
-
-
-$definition = @"
-using System;
-using System.Runtime.InteropServices; 
-
-namespace Win32Api
-{
-
-	public class NtDll
-	{
-		[DllImport("ntdll.dll", EntryPoint="RtlAdjustPrivilege")]
-		public static extern int RtlAdjustPrivilege(ulong Privilege, bool Enable, bool CurrentThread, ref bool Enabled);
-	}
-}
-"@ 
-
-	Add-Type -TypeDefinition $definition -PassThru
-
-	#$bEnabled = $false
-	#$res = [Win32Api.NtDll]::RtlAdjustPrivilege(9, $true, $false, [ref]$bEnabled)
-	Try{
-		$r = Get-LocalGroupMember -Group "Administrators"
-		$me = [System.Security.Principal.NTAccount]$r[1].Name 
-	}
-	Catch{
-		Try{
-		$r = Get-LocalGroupMember -Group "Administradores"
-		$me = [System.Security.Principal.NTAccount]$r[1].Name
-		}
-		Catch{
-			$me = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-		}
-	}
-
-	Write-Output $me
-	#$me = [System.Security.Principal.NTAccount]"computer\login"
-
-	$Reg_keys = @(
-	"SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter"
-	)
-
-	foreach ($Reg_key in $Reg_keys) {
-		$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("$Reg_key",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
-		$acl = $key.GetAccessControl()
-		$acl.SetOwner($me)
-		$key.SetAccessControl($acl)
-
-		$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("$Reg_key",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
-		$acl = $key.GetAccessControl()
-		Try{
-			$rule = New-Object System.Security.AccessControl.RegistryAccessRule ("Users","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow") 
-			$acl.SetAccessRule($rule)
-		}
-		Catch{
-			Try{
-			$rule = New-Object System.Security.AccessControl.RegistryAccessRule ("Usuários","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
-			$acl.SetAccessRule($rule)
-			}
-			Catch{
-				$rule = New-Object System.Security.AccessControl.RegistryAccessRule ("usuarios","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
-				$acl.SetAccessRule($rule)
-			}
-		}
-		$key.SetAccessControl($acl)
-		Write-Output "key -> $Reg_key"
 	}
 }
 
@@ -132,12 +51,33 @@ Function RestorePoint {
 # Restore points are essentially frozen copies of what your computer's operating system looked like at a given time without having to touch any of your personal files.
 Write-Output "Creating a System Restore Point on the local computer. Please wait..."
 $LocalDrives = Get-CimInstance -Class 'Win32_LogicalDisk' | Where-Object { $_.DriveType -eq 3 } | Select-Object -ExpandProperty DeviceID
-Enable-ComputerRestore -Drive $LocalDrives
+$LocalDrive = $LocalDrives[0][0] + ":"  # This hack is required when there is more than 1 HD in the computer, generating a call error due to a change in array behaviour.
+Enable-ComputerRestore -Drive $LocalDrive
+Start-Sleep 1
+Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" -Name "SystemRestorePointCreationFrequency" -Type DWord -Value 0
 Start-Sleep 1
 $startTime = Get-Date
 Checkpoint-Computer -Description "<System Restore Point dated $startTime before running facet4 script.>" -RestorePointType "MODIFY_SETTINGS"
 Start-Sleep 1
 Write-Output "System Restore Point created."
+}
+
+
+
+<#
+The Optimize-Volume cmdlet optimizes a volume, performing defragmentation, trim, slab consolidation, and storage tier processing.
+If no parameter is specified, then the default operation will be performed per the drive type as follows.
+
+·HDD, Fixed VHD, Storage Space. -Analyze -Defrag.
+·Tiered Storage Space. -TierOptimize.
+·SSD with TRIM support. -Retrim.
+·Storage Space (Thinly provisioned), SAN Virtual Disk (Thinly provisioned), Dynamic VHD, Differencing VHD. -Analyze -SlabConsolidate -Retrim.
+·SSD without TRIM support, Removable FAT, Unknown. No operation.
+#>
+Function OptimizeVolume {
+	Write-Host "Performs volume optimization according to storage technology..."
+	$LocalDrives = Get-CimInstance -Class 'Win32_LogicalDisk' | Where-Object { $_.DriveType -eq 3 } | Select-Object -ExpandProperty DeviceID
+	Optimize-Volume -DriveLetter $LocalDrives[0][0] -Verbose
 }
 
 

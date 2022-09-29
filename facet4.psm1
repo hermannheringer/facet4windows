@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.0
+Version : 0.1.5
 Source: https://github.com/hermannheringer/
 #>
 
@@ -226,25 +226,25 @@ Function AvoidDebloatReturn {
 	If (!(Test-Path $registryOEM)) {
 		New-Item $registryOEM
 	}
-	Set-ItemProperty $registryOEM  ContentDeliveryAllowed -Value 1 # Default 1
-	Set-ItemProperty $registryOEM  OemPreInstalledAppsEnabled -Value 0 # Default 1
-	Set-ItemProperty $registryOEM  PreInstalledAppsEnabled -Value 0 # Default 1
-	Set-ItemProperty $registryOEM  PreInstalledAppsEverEnabled -Value 0 # Default 1
-	Set-ItemProperty $registryOEM  SilentInstalledAppsEnabled -Value 0 # Default 1
-	Set-ItemProperty $registryOEM  SystemPaneSuggestionsEnabled -Value 0 # Default 1
+	Set-ItemProperty $registryOEM  ContentDeliveryAllowed  -Type DWord -Value 0x00000001		# Default 1
+	Set-ItemProperty $registryOEM  OemPreInstalledAppsEnabled  -Type DWord -Value 0x00000000	# Default 1
+	Set-ItemProperty $registryOEM  PreInstalledAppsEnabled  -Type DWord -Value 0x00000000		# Default 1
+	Set-ItemProperty $registryOEM  PreInstalledAppsEverEnabled  -Type DWord -Value 0x00000000	# Default 1
+	Set-ItemProperty $registryOEM  SilentInstalledAppsEnabled  -Type DWord -Value 0x00000000	# Default 1
+	Set-ItemProperty $registryOEM  SystemPaneSuggestionsEnabled  -Type DWord -Value 0x00000000	# Default 1
 
 	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0 #
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0 #
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0 # Spotlight fun tips and facts #Default 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0 # Show Suggestions Occasionally in Start
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0 # Tips and Suggestions Notifications #Default 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353696Enabled" -Type DWord -Value 0 # Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0 # Timeline Suggestions
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0 # Use Spotlight image as Desktop wallpaper
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 2 # Use Spotlight image as Desktop wallpaper
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0x00000000	#
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0x00000000	#
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0x00000000	# Spotlight fun tips and facts #Default 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0x00000000	# Show Suggestions Occasionally in Start
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0x00000000	# Tips and Suggestions Notifications #Default 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0x00000000	# Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0x00000000	# Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353696Enabled" -Type DWord -Value 0x00000000	# Suggest new content and apps you may find interesting
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0x00000000	# Timeline Suggestions
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0x00000000 # Use Spotlight image as Desktop wallpaper
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 0x00000002		# Use Spotlight image as Desktop wallpaper
 
 	<#
 	Get-AppxPackage  | Where name -match windowscommunicationsapps | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
@@ -267,7 +267,7 @@ Function SetMixedReality {
 
 
 ###							  ###
-### System/Performance Tweaks ###
+### 	Features Tweaks		  ###
 ###							  ###
 
 
@@ -283,7 +283,7 @@ Function DisableAppCompat {
 	Write-Host "Prevent access to 16-bit applications"
 	# You can use this setting to turn off the MS-DOS subsystem, which will reduce resource usage and prevent users from running 16-bit applications.
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatPrevent16BitMach
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "VDMDisallowed" -Type DWord -Value 1	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "VDMDisallowed" -Type DWord -Value 0x00000001	
 
 
 	Write-Host "Turn off Application Compatibility Engine."
@@ -294,13 +294,13 @@ Function DisableAppCompat {
 	(For Instance: This may result in a blue screen if an old anti-virus application is installed.)
 	#>
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffEngine
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableEngine" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableEngine" -Type DWord -Value 0x00000001
 
 
 	Write-Host "Turn off Application Telemetry."
 	# If the customer Experience Improvement program is turned off, Application Telemetry will be turned off regardless of how this policy is set.
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffApplicationImpactTelemetry
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "AITEnable" -Type DWord -Value 0	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "AITEnable" -Type DWord -Value 0x00000000
 
 	
 	Write-Host "Turn off Inventory Collector."
@@ -309,7 +309,7 @@ Function DisableAppCompat {
 	This information is used to help diagnose compatibility problems.
 	#>
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffProgramInventory
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableInventory" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableInventory" -Type DWord -Value 0x00000001
 
 
 	Write-Host "Turn off Program Compatibility Assistant."
@@ -319,7 +319,7 @@ Function DisableAppCompat {
 	Turning off the PCA can be useful for system administrators who require better performance and are already aware of application compatibility issues.
 	#>
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffProgramCompatibilityAssistant_2
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisablePCA" -Type DWord -Value 1	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisablePCA" -Type DWord -Value 0x00000001
 
 
 	Write-Host "Turn off Steps Recorder."
@@ -330,7 +330,7 @@ Function DisableAppCompat {
 	user interface data, and screen shots. Steps Recorder includes an option to turn on and off data collection.
 	#>
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffUserActionRecord
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableUAR" -Type DWord -Value 1	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "DisableUAR" -Type DWord -Value 0x00000001
 
 	Write-Host "Turn off SwitchBack Compatibility Engine."
 	<#
@@ -339,7 +339,8 @@ Function DisableAppCompat {
 	This option is useful for server administrators who require performance and are aware of compatibility of the applications they are using.
 	#>
 	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffSwitchBack
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "SbEnable" -Type DWord -Value 0	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "SbEnable" -Type DWord -Value 0x00000000
+
 }
 
 
@@ -348,15 +349,15 @@ function DisableBackgroundApp {
 	# Leaving Xiaomi Mi Blaze Unlock 'on' (8497DDF3*) you can continue using your band to unlock your computer.
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling All Background Application Access."
 		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Type DWord -Value 1
-		Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Type DWord -Value 0x00000000
 		
 	}
 	<#
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling All Background Application Access."
 		[string[]]$Excludes = @("8497DDF3*", "Microsoft.Windows.Cortana*")
 		Get-ChildItem -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Exclude $Excludes | ForEach-Object {
-			Set-ItemProperty -Path $_.PsPath -Name "Disabled" -Type DWord -Value 1
-			Set-ItemProperty -Path $_.PsPath -Name "DisabledByUser" -Type DWord -Value 1
+			Set-ItemProperty -Path $_.PsPath -Name "Disabled" -Type DWord -Value 0x00000001
+			Set-ItemProperty -Path $_.PsPath -Name "DisabledByUser" -Type DWord -Value 0x00000001
 		}
 	}
 	#>
@@ -430,7 +431,7 @@ Function EnableMemoryCompression {
 	Enable-MMAgent -mc -ErrorAction SilentlyContinue
 	#Get-MMAgent
 	#Get-Process -Name "Memory Compression"
-	#get-service sysmain
+
 	#Disable-MMAgent –MemoryCompression
 }
 
@@ -448,7 +449,7 @@ Function DisablePerformanceCounters {
 	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services" | ForEach-Object {
 	$Var = $_.PsPath + "\Performance"
 		If ((Test-Path $Var)) {
-			Set-ItemProperty -Path $Var -Name "Disable Performance Counters" -Type DWord -Value 1
+			Set-ItemProperty -Path $Var -Name "Disable Performance Counters" -Type DWord -Value 0x00000001
 		}
 	}
 }
@@ -458,20 +459,20 @@ Function DisablePerformanceCounters {
 function SetPowerManagment {
 	Write-Host "Disabling Hibernation and Optimizing Performance on Balanced Performance scheme."
 	<#
-	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\Power" -Name "HibernteEnabled" -Type Dword -Value 0
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\Power" -Name "HibernteEnabled" -Type DWord -Value 0x00000000
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Name "ShowHibernateOption" -Type Dword -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Name "ShowHibernateOption" -Type DWord -Value 0x00000000
 	#>
 	powercfg -h off
 
 	Write-Output "Disabling Fast Startup."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -Type DWord -Value 0x00000000
 
 	# Force enable "traditional" power plans
 	#reg add HKLM\System\CurrentControlSet\Control\Power /v PlatformAoAcOverride /t REG_DWORD /d 0
-	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Power" -Name "PlatformAoAcOverride" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Power" -Name "PlatformAoAcOverride" -Type DWord -Value 0x00000000
 
 	# Balanced Performance
 	powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e
@@ -495,7 +496,7 @@ function SetPowerManagment {
 	See more at https://docs.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning
 	See more at https://superuser.com/questions/1435110/why-does-windows-10-have-cpu-core-parking-disabled
 	#>
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" -Name "Attributes" -Type DWord -Value 2
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" -Name "Attributes" -Type DWord -Value 0x00000002
 
 	#IF (Get-WmiObject -Class Win32_Processor | where {( $_.Manufacturer -like "*AMD*" ) -or ($_.Manufacturer -like "*Intel*")})
 
@@ -675,10 +676,10 @@ function SetPowerManagment {
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFAUTONOMOUS 1 # default 1	
 
 	# Core Parking allows your processors to go into a sleep mode. The main purposes of core parking is to allow the computer/laptop/device to only use the processors when required, thus saving on energy.
-	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" -Name "Attributes" -Type DWord -Value 2
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" -Name "Attributes" -Type DWord -Value 0x00000002
 	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 # default 100
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 # default 10
-	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\ea062031-0e34-4ff1-9b6d-eb1059334028" -Name "Attributes" -Type DWord -Value 2
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\ea062031-0e34-4ff1-9b6d-eb1059334028" -Name "Attributes" -Type DWord -Value 0x00000002
 	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES 100 # default 100
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES 100 # default 100
 
@@ -687,12 +688,12 @@ function SetPowerManagment {
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR DISTRIBUTEUTIL 0 # High performance
 
 	# Processor energy performance preference policy(Percent). Specify how much processors should favor energy savings over performance when operating in autonomous mode.
-	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\36687f9e-e3a5-4dbf-b1dc-15eb381c6863" -Name "Attributes" -Type DWord -Value 2
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\36687f9e-e3a5-4dbf-b1dc-15eb381c6863" -Name "Attributes" -Type DWord -Value 0x00000002
 	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 0 # default 50 
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 50 # default 25
 
 	# The Processor Performance Boost Policy is a percentage value from 0 to 100(hexa:00000064). In the default Balanced power plan this parameter is 35 percent and any value lower than 51 disables Turbo Boost.
-	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59" -Name "Attributes" -Type DWord -Value 2
+	#Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59" -Name "Attributes" -Type DWord -Value 0x00000002
 	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # default 60
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # default 40
 
@@ -797,15 +798,15 @@ function RemoveXboxFeatures {
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 00000001 #W10
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001
 
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "value" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "value" -Type DWord -Value 0x00000000
 
 	try	{
 	Stop-Service "xbgm" -ea Stop
@@ -839,41 +840,26 @@ function RemoveXboxFeatures {
 	write-host "BcastDVRUserService_6fa5a service does not exist on this device."	}
 
 
-	# To change key below it is necessary to gain owner privilege and then full access
+	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
 	Write-Output "Elevating privileges for this process..."
 
-	<#
-	Due to the complex nature of authentication and privilege escalation mechanisms in Windows,
-	this variable $ErrorActionPreference is to minimize error warnings in this function.
-	I still haven't found a simple solution for some specific cases where the user is not enabled in any Group Member.
-	#>
-	$ErrorActionPreference = 'silentlycontinue'
+	$myIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 
-	do {} until (enable-privilege SeTakeOwnershipPrivilege)
+	enable-privilege SeTakeOwnershipPrivilege 
 	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
-	$acl = $key.GetAccessControl()
-
-	Try{
-		$r = Get-LocalGroupMember -Group "Administrators"
-		$me = [System.Security.Principal.NTAccount]$r[1].Name
-	}
-	Catch{
-		Try{
-		$r = Get-LocalGroupMember -Group "Administradores"
-		$me = [System.Security.Principal.NTAccount]$r[1].Name
-		}
-		Catch{
-			$me = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-		}
-	}
+	# You must get a blank acl for the key b/c you do not currently have access
+	$acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::None)
+	$me = [System.Security.Principal.NTAccount]$myIdentity.ToString()
 	$acl.SetOwner($me)
 	$key.SetAccessControl($acl)
 
-	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
+	# After you have set owner you need to get the acl with the perms so you can modify it.
 	$acl = $key.GetAccessControl()
-	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ("Users","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
+	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ($myIdentity.ToString(),"FullControl","Allow")
 	$acl.SetAccessRule($rule)
 	$key.SetAccessControl($acl)
+
+	$key.Close()
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 000000000
 
@@ -882,82 +868,83 @@ function RemoveXboxFeatures {
 
 
 
-# Another function to get owner privilege access on the above keys
 function enable-privilege {
-	param(
-		## The privilege to adjust. This set is taken from
-		## http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
-		[ValidateSet(
-			"SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
-			"SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
-			"SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
-			"SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
-			"SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
-			"SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
-			"SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
-			"SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
-			"SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
-			"SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
-			"SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
-		$Privilege,
-		## The process on which to adjust the privilege. Defaults to the current process.
-		$ProcessId = $pid,
-		## Switch to disable the privilege, rather than enable it.
-		[Switch] $Disable
-	)
+ param(
+  ## The privilege to adjust. This set is taken from
+  ## http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
+  [ValidateSet(
+   "SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
+   "SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
+   "SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
+   "SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
+   "SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
+   "SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
+   "SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
+   "SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
+   "SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
+   "SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
+   "SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
+  $Privilege,
+  ## The process on which to adjust the privilege. Defaults to the current process.
+  $ProcessId = $pid,
+  ## Switch to disable the privilege, rather than enable it.
+  [Switch] $Disable
+ )
 
-## Taken from P/Invoke.NET with minor adjustments.
-$definition = @'
-using System;
-using System.Runtime.InteropServices;
-   
-public class AdjPriv
-{
-	[DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-	internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
-		ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
-	
-	[DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-	internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
-	[DllImport("advapi32.dll", SetLastError = true)]
-	internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
-	[StructLayout(LayoutKind.Sequential, Pack = 1)]
-	internal struct TokPriv1Luid
-	{
-		public int Count;
-		public long Luid;
-		public int Attr;
-	}
-	
-	internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
-	internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
-	internal const int TOKEN_QUERY = 0x00000008;
-	internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-	public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
-	{
-		bool retVal;
-		TokPriv1Luid tp;
-		IntPtr hproc = new IntPtr(processHandle);
-		IntPtr htok = IntPtr.Zero;
-		retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
-		tp.Count = 1;
-		tp.Luid = 0;
-		if(disable)
-		{
-			tp.Attr = SE_PRIVILEGE_DISABLED;
-		}else {
-			tp.Attr = SE_PRIVILEGE_ENABLED;
-		}
-		retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
-		retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-		return retVal;
-	}
-}
+ ## Taken from P/Invoke.NET with minor adjustments.
+ $definition = @'
+ using System;
+ using System.Runtime.InteropServices;
+  
+ public class AdjPriv
+ {
+  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+  internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
+   ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
+  
+  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+  internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
+  [DllImport("advapi32.dll", SetLastError = true)]
+  internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
+  internal struct TokPriv1Luid
+  {
+   public int Count;
+   public long Luid;
+   public int Attr;
+  }
+  
+  internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
+  internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
+  internal const int TOKEN_QUERY = 0x00000008;
+  internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
+  public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
+  {
+   bool retVal;
+   TokPriv1Luid tp;
+   IntPtr hproc = new IntPtr(processHandle);
+   IntPtr htok = IntPtr.Zero;
+   retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
+   tp.Count = 1;
+   tp.Luid = 0;
+   if(disable)
+   {
+    tp.Attr = SE_PRIVILEGE_DISABLED;
+   }
+   else
+   {
+    tp.Attr = SE_PRIVILEGE_ENABLED;
+   }
+   retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
+   retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+   return retVal;
+  }
+ }
 '@
 
-	$processHandle = (Get-Process -id $ProcessId).Handle
-	$type = Add-Type $definition -PassThru
-	$type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
+ $processHandle = (Get-Process -id $ProcessId).Handle
+ $type = Add-Type $definition -PassThru
+ $type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
 }
 
 
@@ -1061,14 +1048,24 @@ Function DisableStorageSense {
 	# Not applicable to Servers
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling Storage Sense."
 		#Remove-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force -Recurse -ErrorAction SilentlyContinue
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000
 	}
 
 	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling Storage Sense."
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000
 	}
+}
+
+
+
+Function AllowMiracast {
+	Write-Host "Allow Projection To PC."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001
 }
 
 
@@ -1114,18 +1111,21 @@ function DisableVBS_HVCI {
 
 Function AcceptedPrivacyPolicy {
 	Write-Output "Turning off AcceptedPrivacyPolicy."
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000
 }
 
 
 
 Function DisableActivityHistory {
 	Write-Host "Disabling activity history."
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000
 
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000
 }
 
 
@@ -1135,7 +1135,7 @@ Function DisableAdvertisingID {
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001
 }
 
 
@@ -1145,7 +1145,7 @@ Function DisableAdvertisingInfo {
 	Write-Output "Disabling Windows Feedback Experience program."
 	$Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
 	If (Test-Path $Advertising) {
-		Set-ItemProperty $Advertising Enabled -Value 0
+		Set-ItemProperty $Advertising Enabled -Type DWord -Value 0x00000000
 	}
 }
 
@@ -1170,28 +1170,28 @@ Function DisableCEIP {
 
 	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
 	If (Test-Path $SQMClient1) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
 	}
 
 	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
 	If (Test-Path $SQMClient2) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnabled" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
 	}
 
 	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
 	If (Test-Path $SQMClient3) {
-		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000
 	}
 
 	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
 	If (Test-Path $SQMClient4) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
 	}
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000
 }
 
 
@@ -1202,13 +1202,13 @@ Function DisableDataCollection {
 	$DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
 	$DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
 	If (Test-Path $DataCollection1) {
-		Set-ItemProperty $DataCollection1  AllowTelemetry -Value 0
+		Set-ItemProperty $DataCollection1  AllowTelemetry -Type DWord -Value 0x00000000
 	}
 	If (Test-Path $DataCollection2) {
-		Set-ItemProperty $DataCollection2  AllowTelemetry -Value 0
+		Set-ItemProperty $DataCollection2  AllowTelemetry -Type DWord -Value 0x00000000
 	}
 	If (Test-Path $DataCollection3) {
-		Set-ItemProperty $DataCollection3  AllowTelemetry -Value 0
+		Set-ItemProperty $DataCollection3  AllowTelemetry -Type DWord -Value 0x00000000
 	}
 }
 
@@ -1233,7 +1233,7 @@ function DisableDiagTrack {
 
 Function DisableErrorReporting {
 	Write-Host "Disabling Error reporting."
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
 }
 
 
@@ -1248,9 +1248,13 @@ Function DisableFeedbackExperience {
 		}
 		New-Item $Period1
 	}
-	Set-ItemProperty $Period1 PeriodInNanoSeconds -Value 0
-	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 1
+	Set-ItemProperty $Period1 PeriodInNanoSeconds -Type DWord -Value 0x00000000
+	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0x00000000
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 0x00000001
 }
 
 
@@ -1263,11 +1267,11 @@ Function DisableLocationTracking {
 	If (!(Test-Path $SensorState)) {
 		New-Item $SensorState
 	}
-	Set-ItemProperty $SensorState SensorPermissionState -Value 0
+	Set-ItemProperty $SensorState SensorPermissionState -Type DWord -Value 0x00000000
 	If (!(Test-Path $LocationConfig)) {
 		New-Item $LocationConfig
 	}
-	Set-ItemProperty $LocationConfig Status -Value 0
+	Set-ItemProperty $LocationConfig Status -Type DWord -Value 0x00000000
 
 	try	{
 	Stop-Service "lfsvc" -ea Stop
@@ -1291,7 +1295,7 @@ Function DisableTailoredExperiences {
 	If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
 		New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 0x00000001
 }
 
 
@@ -1315,7 +1319,7 @@ Function RemoveAutoLogger {
 
 Function DisableRemoteAssistance {
 	Write-Host "Disabling Remote Assistance."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000
 }
 
 
@@ -1329,7 +1333,7 @@ Function DisableRemoteAssistance {
 # Improve network performance by improving how many buffers your computer can use simultaneously on your LAN. 
 Function SetIRPStackSize {
 	Write-Output "Setting IRPStackSize."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "IRPStackSize" -Type DWord -Value 20
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "IRPStackSize" -Type DWord -Value 0x0000000c 	# Values may range from 1 to 12 in decimal notation.
 }
 
 
@@ -1362,12 +1366,12 @@ Function DisableWiFiSense {
 	If (!(Test-Path $WifiSense1)) {
 		New-Item $WifiSense1
 	}
-	Set-ItemProperty $WifiSense1  Value -Value 0
+	Set-ItemProperty $WifiSense1  Value -Type DWord -Value 0x00000000
 	If (!(Test-Path $WifiSense2)) {
 		New-Item $WifiSense2
 	}
-	Set-ItemProperty $WifiSense2  Value -Value 0
-	Set-ItemProperty $WifiSense3  AutoConnectAllowedOEM -Value 0
+	Set-ItemProperty $WifiSense2  Value -Type DWord -Value 0x00000000
+	Set-ItemProperty $WifiSense3  AutoConnectAllowedOEM -Type DWord -Value 0x00000000
 }
 
 
@@ -1411,12 +1415,20 @@ function DisableServices {
 	write-host "AppMgmt service does not exist on this device."	}
 
 
+	Write-Host "Disables Certificate Propagation Service. Copies user certificates and root certificates from smart cards into the current user's certificate store."
+	try	{
+	Stop-Service "CertPropSvc" -ea Stop
+	Set-Service "CertPropSvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "CertPropSvc does not exist on this device."	}
+
+
 	Write-Host "Disables ActiveX Installer."
 	try	{
 	Stop-Service "AxInstSV" -ea Stop
 	Set-Service "AxInstSV" -StartupType Disabled
 	} catch [SystemException]{
-	write-host "AxInstSV service does not exist on this device." }
+	write-host "AxInstSV service does not exist on this device."	}
 
 
 	Write-Host "Disables offline files service."
@@ -1424,7 +1436,7 @@ function DisableServices {
 	Stop-Service "CscService" -ea Stop
 	Set-Service "CscService" -StartupType Disabled
 	} catch [SystemException]{
-	write-host "CscService does not exist on this device." }
+	write-host "CscService does not exist on this device."	}
 
 
 	Write-Host "Disables fax."
@@ -1440,7 +1452,7 @@ function DisableServices {
 	Stop-Service "fhsvc" -ea Stop
 	Set-Service "fhsvc" -StartupType Disabled
 	} catch [SystemException]{
-	write-host "fhsvc service does not exist on this device." }
+	write-host "fhsvc service does not exist on this device."	}
 
 
 	Write-Host "Stopping and disabling Home Groups services."
@@ -1525,6 +1537,14 @@ function DisableServices {
 	write-host "MSiSCSI service does not exist on this device."	}
 
 
+	Write-Host "Disables The Network Access Protection (NAP) agent service. It collects and manages health information for client computers on a network."
+	try	{
+	Stop-Service "napagent" -ea Stop
+	Set-Service "napagent" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "napagent service does not exist on this device."	}
+
+
 	Write-Host "Disable the Network Data Usage Monitoring Driver."
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Ndu" -Name "Start" -Type DWord -Value 4
 
@@ -1543,6 +1563,14 @@ function DisableServices {
 	Set-Service "p2psvc" -StartupType Disabled
 	} catch [SystemException]{
 	write-host "p2psvc service does not exist on this device."	}
+
+
+	Write-Host "Disable BranchCache service.This service caches network content from peers on the local subnet."	
+	try	{
+	Stop-Service "PeerDistSvc" -ea Stop
+	Set-Service "PeerDistSvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "PeerDistSvc does not exist on this device."	}
 
 
 	Write-Host "Disable Performance Logs and Alerts Service."
@@ -1573,13 +1601,27 @@ function DisableServices {
 	The smart card removal policy service is applicable when a user has signed in with a smart card and then removes that smart card from the reader. 
 	The action that is performed when the smart card is removed is controlled by Group Policy settings. 
 	For more information, see Smart Card Group Policy and Registry Settings.
+	#>
 	Write-Host "Disabling Smart Card Removal Policy Service."
 	try	{
 	Stop-Service "ScPolicySvc" -ea Stop
 	Set-Service "ScPolicySvc" -StartupType Disabled
 	} catch [SystemException]{
 	write-host "ScPolicySvc service does not exist on this device."	}
+
+
+
+	<#
+	An SNMP trap message is an unsolicited message sent from an agent to the the manager.
+	The objective of this message is to allow the remote devices to alert the manager in case an important event happens,
+	commonly used in companies.
 	#>
+	Write-Host "Disables Simple Network Management Protocol (SNMP) service."
+	try	{
+	Stop-Service "SNMPTRAP" -ea Stop
+	Set-Service "SNMPTRAP" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "SNMPTRAP service does not exist on this device."	}
 
 
 	<#
@@ -1593,7 +1635,7 @@ function DisableServices {
 	} catch [SystemException]{
 	write-host "SysMain service does not exist on this device."	}
 	#>
-
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\SysMain" -Name "DelayedAutoStart" -Type DWord -Value 00000001
 
 	<#
 	Disabling this will break WSL keyboard functionality.
@@ -1644,19 +1686,20 @@ function DisableServices {
 	Set-Service "WSearch" -StartupType Disabled
 	} catch [SystemException]{
 	write-host "WSearch service does not exist on this device."	}
+
 }
 
 
 
-###				###
-### UI Tweaks 	###
-###				###
+###					###
+### Speed Up System	###
+###					###
 
 
-
-Function DisableAutoplay {
-	Write-Output "Disabling Autoplay."
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 1
+#The AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
+Function DisableAutoplayHandler {
+	Write-Output "Disabling AutoplayHandlers."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 0x00000001
 }
 
 
@@ -1664,12 +1707,12 @@ Function DisableAutoplay {
 Function DisableBingSearch {
 	Write-Output "Disabling Bing Search in Start Menu."
 	$WebSearch = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0x00000000
 
 	If (!(Test-Path $WebSearch)) {
 		New-Item $WebSearch
 	}
-	Set-ItemProperty $WebSearch DisableWebSearch -Value 1
+	Set-ItemProperty $WebSearch DisableWebSearch -Type DWord -Value 0x00000001
 }
 
 
@@ -1678,43 +1721,8 @@ Function DisableCortanaSearch {
 	Write-Output "Stopping Cortana from being used as part of your Windows Search Function."
 	$Search = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
 	If (Test-Path $Search) {
-		Set-ItemProperty $Search AllowCortana -Value 0
+		Set-ItemProperty $Search AllowCortana -Type DWord -Value 0x00000000
 	}
-}
-
-
-
-Function TweakExplorer {
-	Write-Output "Some Disk Cache and File System Optimizations."
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000" 
-
-	# Disable automatically restarting explorer.exe
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value "1"
-
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000"
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000"
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1"
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type String -Value "150000"
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"
-
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value "1"
-
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value "1" 
-	<#
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling NtfsDisableLastAccessUpdate."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisableLastAccessUpdate" -Type DWord -Value "2"
-	}
-	
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling NtfsDisableLastAccessUpdate."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisableLastAccessUpdate" -Type DWord -Value "3"
-	}
-	#>
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value "38"
-
 }
 
 
@@ -1738,17 +1746,300 @@ Function DisableLiveTiles {
 	If (!(Test-Path $Live)) {  
 		New-Item $Live
 	}
-	Set-ItemProperty $Live  NoTileApplicationNotification -Value 1
+	Set-ItemProperty $Live  NoTileApplicationNotification -Type DWord -Value 0x00000001
 }
 
 
+### Disk Cache Optimization ###
 
-Function AllowMiracast {
-	Write-Host "Allow Projection To PC."
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
+
+Function SetWaitToKillAppTimeout {
+	Write-Output "Optimize program response time to improve system response speed."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value 10000		#Default 20000
+}
+
+
+Function SetHungAppTimeout {
+	Write-Output "Shorten the wait time for unresponsive mouse and keyboard caused by error program."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value 3000			#Default 5000
+}
+
+
+Function SetPriorityControl {
+	Write-Output "Optimize processor resource allocation to make multimedia smoother."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000026		#Default 00000002
+}
+
+
+Function SetAutoEndTasks {
+	Write-Output "Automatically end unresponsive programs to avoid system crash."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value 1					#Default ""
+}
+
+
+Function SetBootOptimizeFunction {
+	Write-Output "Disable Windows auto disk defragmetation and automatically optimize boot partition to make the bootup speed faster."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value "Y"					#Default ""	
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
+	}	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value "Y"		#Default ""
+}
+
+
+### Desktop Menu Optimization ###
+
+
+Function SetMinAnimate {
+	Write-Output "Disable useless visual effects to speed up response and display of desktop."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type String -Value "0"
+}
+
+
+Function SetDesktopProcess {
+	Write-Output "Optimize the priority of program processes and independent processes to avoid system crash."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "DesktopProcess" -Type DWord -Value 0x00000001					#Default 00000000
+}
+
+
+Function SetTaskbarAnimations {
+	Write-Output "Play animations in the taskbar and start menu."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type DWord -Value 0x00000000		#Default 00000001
+}
+
+
+Function SetWaitToKillServiceTimeout {
+	Write-Output "Optimize the speed of ending processes."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "WaitToKillServiceTimeout" -Type String -Value "2000"								#Default "5000"
+}
+
+
+Function SetNoSimpleNetIDList {
+	Write-Output "Optimize the refresh strategy of the system file list."
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoSimpleNetIDList" -Type DWord -Value 0x00000001
+}
+
+
+Function SetMouseHoverTime {
+	Write-Output "Reduce the display time of taskbar preview."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Type String -Value "100"						#Default "400"
+}
+
+
+Function SetMenuShowDelay {
+	Write-Output "Speed up the response and display of system commands."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"
+}
+
+
+Function SetForegroundLockTimeout {
+	Write-Output "Improve the response speed of foreground program."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type DWord -Value 0x000249f0		#Default 00030d40
+
+}
+
+
+Function SetAlwaysUnloadDLL {
+	Write-Output "Release unused dlls in memory."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "AlwaysUnloadDLL" -Type DWord -Value 0x00000001
+}
+
+
+Function SetFontStyleShortcut{
+	Write-Output "Remove the font style of the desktop shortcut."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "link" -Type String -Value "0"					#Default "1E 00 00 00"
+}
+
+
+Function SetAutoRestartShell {
+	Write-Output "Optimize user interface components. Auto-refresh when there is an error to avoid system crash."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001					#Default 00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001					#Default 00000000
+}
+
+
+Function SetVisualEffects {
+	Write-Output "Optimize the visual effects of system menus and lists to improve system performance."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Type DWord -Value 0x00000000						#Default 00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Type DWord -Value 0x00000002
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000			#Default 00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000			#Default 00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name "DefaultApplied" -Type DWord -Value 0x00000000		#Default 00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name "DefaultApplied" -Type DWord -Value 0x00000000	#Default 00000001
+}
+
+
+### File System Optimization ###
+
+
+Function SetAeDebug {
+	Write-Output "Turn off Just-In-Time Debugging function to improve system performance."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"								#Default "1"
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"		#Default "1"
+}
+
+
+Function SetNoLowDiskSpaceChecks {
+	Write-Output "Improve hard disk performance to enhance disk read/write capacity."
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value 0x00000001	#Default 00000000
+}
+
+
+Function SetNtfsDisable8dot3NameCreation {
+	Write-Output "Disable short file names feature."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value 0x00000001		#Default 00000000
+}
+
+
+Function SetDoReport {
+	Write-Output "Disable Windows error reporting function to get better system response speed."
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000
+}
+
+
+Function SetMaxCachedIcons {
+	Write-Output "Increase the system image buffer to display images faster."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"
+}
+
+
+Function SetNoDriveTypeAutoRun {
+	Write-Output "Disable AutoPlay for external devices to avoid potential risks such as malware."
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 0x000000dd		#Default 00000091
+}
+
+
+### Network Optimization ###
+
+
+Function SetDefaultTTL {
+	Write-Output "Optimize default TTL to decrease bandwidth loss and increase available bandwidth."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "DefaultTTL" -Type DWord -Value 0x00000040
+}
+
+
+Function SetFastForwarding {
+	Write-Output "Optimize network fast forwarding mechanism to get better internet speed."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "SackOpts" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TcpMaxDupAcks" -Type DWord -Value 0x00000002
+}
+
+
+Function SetMaxConnectionsPerServer {
+	Write-Output "Add more IE concurrent connections."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
+	
+	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+	Set-ItemProperty -Path "HKU:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKU:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKU:\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKU:\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a
+
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a
+}
+
+
+Function SetMaxConnectionsPerServer {
+	Write-Output "Optimize Network Adapter performance to get better Internet speed."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x00000000
+}
+
+
+Function SetKeyboardDelay {
+	Write-Output "Adjust the keyboards delayed response time."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "InitialKeyboardIndicators" -Type String -Value "2"		#Default "0"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Type String -Value "0"					#Default "1"
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Type String -Value "48"				#Default "31"
+}
+
+
+Function SetAutoDetectionMTUsize {
+	Write-Output "Enable auto-detection of MTU size and black hole router detection to get better internet speed."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUDiscovery" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUBHDetect" -Type DWord -Value 0x00000001
+}
+
+
+Function SetNameSrvQueryTimeout {
+	Write-Output "Optimize network WINS name query time to enhance network data transmission capacity."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" -Name "NameSrvQueryTimeout" -Type DWord -Value 0x00000bb8
+}
+
+
+Function SetDnsCache {
+	Write-Output "Optimize DNS to get better parsing speed."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NegativeSOACacheTime" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NetFailureCacheTime" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheEntryTtlLimit" -Type DWord -Value 0x00002a30
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheTtl" -Type DWord -Value 0x00002a30
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxNegativeCacheTtl" -Type DWord -Value 0x00000000
+}
+
+
+Function SetNoUpdateCheckonIE {
+	Write-Output "Disable automatic updates on IE."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001
+	
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001
+}
+
+
+Function SetTcp1323Opts {
+	Write-Output "Enable auto-adjustment of transport unit buffer to shorten network response time."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "Tcp1323Opts" -Type DWord -Value 0x00000001
+}
+
+
+Function SetMaxCmds {
+	Write-Output "Optimize network parameter configuration to improve network performance and throughput."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCmds" -Type DWord -Value 0x0000001e
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxThreads" -Type DWord -Value 0x0000001e
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCollectionCount" -Type DWord -Value 0x00000020
+}
+
+
+Function SetNoNetCrawling {
+	Write-Output "Optimize LAN connection."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "NoNetCrawling" -Type DWord -Value 0x00000001		#Default 00000000
+}
+
+
+Function SetGlobalMaxTcpWindowSize {
+	Write-Output "Speed up the broadband network."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "GlobalMaxTcpWindowSize" -Type DWord -Value 0x00007fff
 }
 
 
@@ -1764,13 +2055,13 @@ Function DisableEventTracker {
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0x00000000
 }
 
 
 
 ### 		  ###
-### Unpinning ###
+###   Unpin   ###
 ### 		  ###
 
 
