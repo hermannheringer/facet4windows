@@ -64,6 +64,34 @@ Write-Output "System Restore Point created."
 
 
 
+Function DeepSystemClean {
+Write-Host "Performing a deep system clean..."
+
+Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" | ForEach-Object {
+	If ((Test-Path $_.PsPath)) {
+		Set-ItemProperty -Path $_.PsPath -Name "StateFlags0011" -Type DWord -Value 0x00000002
+	}
+}
+
+Start-Process cleanmgr -ArgumentList “/sagerun:11” -Wait -NoNewWindow -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+
+Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" | ForEach-Object {
+	If ((Test-Path $_.PsPath)) {
+		Remove-ItemProperty -Path $_.PsPath -Name "StateFlags0011" -ErrorAction SilentlyContinue
+		Remove-ItemProperty -Path $_.PsPath -Name "StateFlags" -ErrorAction SilentlyContinue
+	}
+}
+
+Get-ChildItem $Env:windir\temp -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:windir\logs\CBS -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:temp -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+
+Write-Host "Clean Up the WinSxS Folder. This process can take a few minutes..."
+dism /online /cleanup-Image /StartComponentCleanup /ResetBase
+}
+
+
+
 <#
 The Optimize-Volume cmdlet optimizes a volume, performing defragmentation, trim, slab consolidation, and storage tier processing.
 If no parameter is specified, then the default operation will be performed per the drive type as follows.
@@ -77,7 +105,7 @@ If no parameter is specified, then the default operation will be performed per t
 Function OptimizeVolume {
 	Write-Host "Performs volume optimization according to storage technology..."
 	$LocalDrives = Get-CimInstance -Class 'Win32_LogicalDisk' | Where-Object { $_.DriveType -eq 3 } | Select-Object -ExpandProperty DeviceID
-	Optimize-Volume -DriveLetter $LocalDrives[0][0] -Verbose
+	Optimize-Volume -DriveLetter $LocalDrives[0][0]
 }
 
 

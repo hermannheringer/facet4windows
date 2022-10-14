@@ -52,7 +52,7 @@ DisableStorageSense                 #Disabling Storage Sense.
 AllowMiracast                       #Allow Projection To PC Miracast feature.
 TurnWSLlight                        #Set some WSL Performance Tweaks.
 DisableVBS_HVCI                     #Turn off Virtualization-based security.
-
+DisableWindowsDefender              #Disables Windows Defender
 
 
 ### Privacy Tweaks ###
@@ -103,6 +103,7 @@ SetHungAppTimeout                   #Shorten the wait time for unresponsive mous
 SetPriorityControl                  #Optimize processor resource allocation to make multimedia smoother.
 SetAutoEndTasks                     #Automatically end unresponsive programs to avoid system crash.
 SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
+
 # Desktop Menu Optimization
 SetMinAnimate                       #Disable useless visual effects to speed up response and display of desktop.
 SetDesktopProcess                   #Optimize the priority of program processes and independent processes to avoid system crash.
@@ -116,6 +117,9 @@ SetAlwaysUnloadDLL                  #Release unused dlls in memory.
 SetFontStyleShortcut                #Remove the font style of the desktop shortcut.
 SetAutoRestartShell                 #Optimize user interface components. Auto-refresh when there is an error to avoid system crash.
 SetVisualEffects                    #Optimize the visual effects of system menus and lists to improve system performance.
+SetSystemResponsiveness             #Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS).
+DisableHPET                         #Disable HPET, Synthetic Timers and Dynamic Ticks.
+
 # File System Optimization
 SetAeDebug                          #Turn off Just-In-Time Debugging function to improve system performance.
 SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
@@ -123,6 +127,7 @@ SetNtfsDisable8dot3NameCreation     #Disable short file names feature.
 SetDoReport                         #Disable Windows error reporting function to get better system response speed.
 SetMaxCachedIcons                   #Increase the system image buffer to display images faster.
 SetNoDriveTypeAutoRun               #Disable AutoPlay for external devices to avoid potential risks such as malware.
+
 # Network Optimization
 SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
 SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
@@ -151,6 +156,7 @@ RemovingFax                         #Who needs this?
 
 
 ### Finally ###
+DeepSystemClean
 OptimizeVolume
 WaitForKey
 Restart
