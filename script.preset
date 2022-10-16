@@ -131,7 +131,7 @@ SetNoDriveTypeAutoRun               #Disable AutoPlay for external devices to av
 # Network Optimization
 SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
 SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
-SetMaxConnectionsPerServer          #Add more IE concurrent connections.
+SetMaxConnectionsPerServerIE        #Add more IE concurrent connections.
 SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
 SetKeyboardDelay                    #Adjust the keyboards delayed response time.
 SetAutoDetectionMTUsize             #Enable auto-detection of MTU size and black hole router detection to get better internet speed.

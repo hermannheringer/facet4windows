@@ -1996,7 +1996,7 @@ Function SetFastForwarding {
 }
 
 
-Function SetMaxConnectionsPerServer {
+Function SetMaxConnectionsPerServerIE {
 	Write-Output "Add more IE concurrent connections."
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a
