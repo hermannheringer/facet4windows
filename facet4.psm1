@@ -7,6 +7,14 @@ Source: https://github.com/hermannheringer/
 
 
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+function Unzip {
+    param([string]$zipfile, [string]$outpath)
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+}
+
+
+
 ###					   ###
 ### Application Tweaks ###
 ###					   ###
@@ -15,18 +23,55 @@ Source: https://github.com/hermannheringer/
 
 # Check if winget is installed
 Function InstallWinget {
-Write-Host "Checking winget"
-if (Test-Path ~\AppData\Local\Microsoft\WindowsApps\winget.exe){
-	'Winget were already installed'
-	}else {
-		# Installing winget from the Microsoft Store
-		Write-Host "Winget not found, installing it now... Please Wait"
-		Start-Process "ms-appinstaller:?source=https://aka.ms/getwinget"
-		$nid = (Get-Process AppInstaller).Id
-		Wait-Process -Id $nid
-		Write-Host "Winget Installed"
+	# Check if winget is installed
+		Write-Host "Checking if Winget is Installed..."
+		if (Test-Path ~\AppData\Local\Microsoft\WindowsApps\winget.exe) {
+			#Checks if winget executable exists and if the Windows Version is 1809 or higher
+			Write-Host "Winget Already Installed."
+		}
+		else {
+			if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
+				#Checks if Windows edition is LTSC/Server 2019+
+				#Manually Installing Winget
+				Write-Host "Running Alternative Installer for LTSC/Server Editions"
+	
+				#Download Needed Files
+				Write-Host "Downloading Needed Files to install Winget. Please wait..."
+
+				Start-BitsTransfer -Source "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx" -Destination "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+				Start-BitsTransfer -Source "https://globalcdn.nuget.org/packages/microsoft.ui.xaml.2.7.3.nupkg" -Destination "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg"
+
+				Unzip "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" "$facet4Folder\microsoft.ui.xaml"
+			
+				#& ${env:ProgramFiles}\7-Zip\7z.exe x "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" "-o$("$facet4Folder\microsoft.ui.xaml")" -y > $null
+				
+				Start-BitsTransfer -Source "https://github.com/microsoft/winget-cli/releases/download/v1.2.10271/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -Destination "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+				Start-BitsTransfer -Source "https://github.com/microsoft/winget-cli/releases/download/v1.2.10271/b0a0692da1034339b76dce1c298a1e42_License1.xml" -Destination "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml"
+	
+				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx" -SkipLicense
+				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\microsoft.ui.xaml\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx" -SkipLicense
+				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -LicensePath "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml"
+	
+				Remove-Item -Path "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx" -Force -ErrorAction SilentlyContinue
+				Remove-Item -Path "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" -Force -ErrorAction SilentlyContinue
+				Remove-Item -Path "$facet4Folder\microsoft.ui.xaml" -Force -Recurse -ErrorAction SilentlyContinue
+				Remove-Item -Path "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -Force -ErrorAction SilentlyContinue
+				Remove-Item -Path "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml" -Force -ErrorAction SilentlyContinue
+	
+			}
+			elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
+				Write-Host "Winget is not supported on this version of Windows (Pre-1809)"
+			}
+			else {
+				#Installing Winget from the Microsoft Store
+				Write-Host "Winget not found, installing it now."
+				Start-Process "ms-appinstaller:?source=https://aka.ms/getwinget"
+				$nid = (Get-Process AppInstaller).Id
+				Wait-Process -Id $nid
+				Write-Host "Winget Installed"
+			}
+		}
 	}
-}
 
 
 
@@ -861,7 +906,7 @@ function RemoveXboxFeatures {
 
 	$key.Close()
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 000000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 0x00000000
 
 	Write-Host "Finished Removing Xbox features."
 }
@@ -1061,11 +1106,32 @@ Function DisableStorageSense {
 
 
 Function AllowMiracast {
-	Write-Host "Allow Projection To PC."
+	#See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
+	Write-Host "Allowing Projection To PC."
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
 	}
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001
+
+	if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
+		Write-Host "Manually Installing Wireless Display App..."
+
+		Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
+		Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1-zh-CN.cab" /IgnoreCheck
+
+		Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
+
+		Write-Host "Wireless Display App installed."
+	}
+	elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
+		Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
+	}
+	else {
+		#Installing Wireless Display App from Windows Feature Repository
+		Write-Host "Installing Wireless Display App..."
+		DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
+		Write-Host "Wireless Display App installed."
+	}
 }
 
 
@@ -1102,13 +1168,24 @@ function DisableVBS_HVCI {
 }
 
 function DisableWindowsDefender {
+	Write-Output "`nTrying to disable Windows Defender. First, you need to manually modify it by going to the:"
+	Write-Output "`nSettings -> Privacy & Security -> Windows Security -> Virus & threat protection -> Manage settings -> Tamper Protection -> Off"
+
+	Write-Output "`nAfter manual modification, press any key to continue the script."
+	[Console]::ReadKey($true) | Out-Null
+
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Type DWord -Value 0x00000001
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRealtimeMonitoring" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRoutinelyTakingAction" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiVirus" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableSpecialRunningModes" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "ServiceKeepAlive" -Type DWord -Value 0x00000000
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Type DWord -Value 0x00000001
 
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection")) {
@@ -1118,6 +1195,12 @@ function DisableWindowsDefender {
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableOnAccessProtection" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableBehaviorMonitoring" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableScanOnRealtimeEnable" -Type DWord -Value 0x00000001
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -Type DWord -Value 0x00000001
 
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates")) {
@@ -1130,6 +1213,15 @@ function DisableWindowsDefender {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Force | Out-Null
 	}
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "DisableBlockAtFirstSeen" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "SpynetReporting" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "SubmitSamplesConsent" -Type DWord -Value 0x00000002
+
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Name "EnableControlledFolderAccess" -Type DWord -Value 0x00000000
+
 
 }
 
@@ -1266,7 +1358,19 @@ function DisableDiagTrack {
 Function DisableErrorReporting {
 	Write-Host "Disabling Error reporting."
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
 }
+
 
 
 
@@ -1719,6 +1823,23 @@ function DisableServices {
 	} catch [SystemException]{
 	write-host "WSearch service does not exist on this device."	}
 
+
+	Write-Host "Stopping and disabling Diagnostic Policy service."
+	try	{
+	Stop-Service "DPS" -ea Stop
+	Set-Service "DPS" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "DPS service does not exist on this device."	}
+
+
+
+	Write-Host "Stopping and disabling Program Compatibility Assistant service."
+	try	{
+	Stop-Service "PcaSvc" -ea Stop
+	Set-Service "PcaSvc" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "PcaSvc service does not exist on this device."	}
+
 }
 
 
@@ -2135,7 +2256,6 @@ Specifies the type of property that this cmdlet adds. The acceptable values for 
 	Qword: Specifies a 64-bit binary number. Used for REG_QWORD values.
 	Unknown: Indicates an unsupported registry data type, such as REG_RESOURCE_LIST values.
 #>
-
 
 
 # Export functions
