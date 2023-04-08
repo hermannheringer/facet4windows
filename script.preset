@@ -45,14 +45,20 @@ EnableMemoryCompression             #Enabling Memory Compression.
 DisablePerformanceCounters          #Disable All Performance Counters.
 SetPowerManagment                   #Optimizing Power Managment scheme.             
 RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
-RemoveXboxFeatures                  #Disabling Xbox features.
 RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
 SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold.
 DisableStorageSense                 #Disabling Storage Sense.
 AllowMiracast                       #Allow Projection To PC Miracast feature.
 TurnWSLlight                        #Set some WSL Performance Tweaks.
 DisableVBS_HVCI                     #Turn off Virtualization-based security.
-DisableWindowsDefender              #Disables Windows Defender
+DisableWindowsDefender              #Disables Windows Defender.
+
+
+### Features Tweaks-GPU ###
+RemoveXboxFeatures                  #Disabling Xbox features.
+EnableGPUScheduling                 #Turn On Hardware Accelerated GPU Scheduling.
+EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
+EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
 
 
 ### Privacy Tweaks ###
@@ -80,7 +86,7 @@ DisableRemoteAssistance             #Disabling Remote Assistance.
 ### Network Tweaks ###
 SetIRPStackSize                     #Improve network performance.
 SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
-DisableWiFiSense                    #Disabling Wi-Fi Sense.
+!DisableWiFiSense                    #Disabling Wi-Fi Sense.
 
 
 
@@ -95,6 +101,7 @@ DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP 
 DisableBingSearch                   #Disabling Bing Search in Start Menu.
 DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
 GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
+PrintScreenToSnippingTool           #Use print screen to open snipping tool.
 DisableLiveTiles                    #Disabling live tiles.
 
 # Disk Cache Optimization

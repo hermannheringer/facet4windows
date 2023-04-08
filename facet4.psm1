@@ -837,163 +837,6 @@ Function RemoveFeaturesKeys {
 }
 
 
-
-function RemoveXboxFeatures {
-	Write-Output "Disabling Xbox features."
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001
-
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "value" -Type DWord -Value 0x00000000
-
-	try	{
-	Stop-Service "xbgm" -ea Stop
-	Set-Service "xbgm" -StartupType Disabled
-	} catch [SystemException]{
-	write-host "xbgm service does not exist on this device."	}
-
-	Write-Output "Disable GameDVR and Broadcast used for game recordings and live broadcasts."
-	try	{
-	Stop-Service "BcastDVRUserService" -ea Stop
-	Set-Service "BcastDVRUserService" -StartupType Disabled
-	} catch [SystemException]{
-	write-host "BcastDVRUserService does not exist on this device."	}
-
-	try	{
-	Stop-Service "BcastDVRUserService_48486de" -ea Stop
-	Set-Service "BcastDVRUserService_48486de" -StartupType Disabled
-	} catch [SystemException]{
-	write-host "BcastDVRUserService_48486de service does not exist on this device."	}
-
-	try	{
-	Stop-Service "BcastDVRUserService_5a109" -ea Stop
-	Set-Service "BcastDVRUserService_5a109" -StartupType Disabled
-	} catch [SystemException]{
-	write-host "BcastDVRUserService_5a109 service does not exist on this device."	}
-
-	try	{
-	Stop-Service "BcastDVRUserService_6fa5a" -ea Stop
-	Set-Service "BcastDVRUserService_6fa5a" -StartupType Disabled
-	} catch [SystemException]{
-	write-host "BcastDVRUserService_6fa5a service does not exist on this device."	}
-
-
-	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
-	Write-Output "Elevating privileges for this process..."
-
-	$myIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-
-	enable-privilege SeTakeOwnershipPrivilege 
-	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
-	# You must get a blank acl for the key b/c you do not currently have access
-	$acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::None)
-	$me = [System.Security.Principal.NTAccount]$myIdentity.ToString()
-	$acl.SetOwner($me)
-	$key.SetAccessControl($acl)
-
-	# After you have set owner you need to get the acl with the perms so you can modify it.
-	$acl = $key.GetAccessControl()
-	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ($myIdentity.ToString(),"FullControl","Allow")
-	$acl.SetAccessRule($rule)
-	$key.SetAccessControl($acl)
-
-	$key.Close()
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 0x00000000
-
-	Write-Host "Finished Removing Xbox features."
-}
-
-
-
-function enable-privilege {
- param(
-  ## The privilege to adjust. This set is taken from
-  ## http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
-  [ValidateSet(
-   "SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
-   "SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
-   "SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
-   "SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
-   "SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
-   "SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
-   "SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
-   "SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
-   "SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
-   "SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
-   "SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
-  $Privilege,
-  ## The process on which to adjust the privilege. Defaults to the current process.
-  $ProcessId = $pid,
-  ## Switch to disable the privilege, rather than enable it.
-  [Switch] $Disable
- )
-
- ## Taken from P/Invoke.NET with minor adjustments.
- $definition = @'
- using System;
- using System.Runtime.InteropServices;
-  
- public class AdjPriv
- {
-  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-  internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
-   ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
-  
-  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-  internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
-  [DllImport("advapi32.dll", SetLastError = true)]
-  internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
-  [StructLayout(LayoutKind.Sequential, Pack = 1)]
-  internal struct TokPriv1Luid
-  {
-   public int Count;
-   public long Luid;
-   public int Attr;
-  }
-  
-  internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
-  internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
-  internal const int TOKEN_QUERY = 0x00000008;
-  internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-  public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
-  {
-   bool retVal;
-   TokPriv1Luid tp;
-   IntPtr hproc = new IntPtr(processHandle);
-   IntPtr htok = IntPtr.Zero;
-   retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
-   tp.Count = 1;
-   tp.Luid = 0;
-   if(disable)
-   {
-    tp.Attr = SE_PRIVILEGE_DISABLED;
-   }
-   else
-   {
-    tp.Attr = SE_PRIVILEGE_ENABLED;
-   }
-   retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
-   retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-   return retVal;
-  }
- }
-'@
-
- $processHandle = (Get-Process -id $ProcessId).Handle
- $type = Add-Type $definition -PassThru
- $type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
-}
-
-
-
 Function RemoveScheduledTasks {
 	Write-Output "`n"
 	Write-Output "`nDisables scheduled tasks that are considered unnecessary."
@@ -1227,6 +1070,205 @@ function DisableWindowsDefender {
 
 
 
+###							  ###
+### 	Features Tweaks-GPU	  ###
+###							  ###
+
+
+
+function RemoveXboxFeatures {
+	Write-Output "Disabling Xbox features."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001
+
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "value" -Type DWord -Value 0x00000000
+
+	try	{
+	Stop-Service "xbgm" -ea Stop
+	Set-Service "xbgm" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "xbgm service does not exist on this device."	}
+
+	Write-Output "Disable GameDVR and Broadcast used for game recordings and live broadcasts."
+	try	{
+	Stop-Service "BcastDVRUserService" -ea Stop
+	Set-Service "BcastDVRUserService" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_48486de" -ea Stop
+	Set-Service "BcastDVRUserService_48486de" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_48486de service does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_5a109" -ea Stop
+	Set-Service "BcastDVRUserService_5a109" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_5a109 service does not exist on this device."	}
+
+	try	{
+	Stop-Service "BcastDVRUserService_6fa5a" -ea Stop
+	Set-Service "BcastDVRUserService_6fa5a" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "BcastDVRUserService_6fa5a service does not exist on this device."	}
+
+
+	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
+	Write-Output "Elevating privileges for this process..."
+
+	$myIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+	enable-privilege SeTakeOwnershipPrivilege 
+	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
+	# You must get a blank acl for the key b/c you do not currently have access
+	$acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::None)
+	$me = [System.Security.Principal.NTAccount]$myIdentity.ToString()
+	$acl.SetOwner($me)
+	$key.SetAccessControl($acl)
+
+	# After you have set owner you need to get the acl with the perms so you can modify it.
+	$acl = $key.GetAccessControl()
+	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ($myIdentity.ToString(),"FullControl","Allow")
+	$acl.SetAccessRule($rule)
+	$key.SetAccessControl($acl)
+
+	$key.Close()
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Force -Name "ActivationType" -Type DWord -Value 0x00000000
+
+	Write-Host "Finished Removing Xbox features."
+}
+
+
+
+function enable-privilege {
+ $ErrorActionPreference = 'silentlycontinue'
+ param(
+  ## The privilege to adjust. This set is taken from
+  ## http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
+  [ValidateSet(
+   "SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
+   "SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
+   "SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
+   "SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
+   "SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
+   "SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
+   "SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
+   "SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
+   "SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
+   "SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
+   "SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
+  $Privilege,
+  ## The process on which to adjust the privilege. Defaults to the current process.
+  $ProcessId = $pid,
+  ## Switch to disable the privilege, rather than enable it.
+  [Switch] $Disable
+ )
+
+ ## Taken from P/Invoke.NET with minor adjustments.
+ $definition = @'
+ using System;
+ using System.Runtime.InteropServices;
+  
+ public class AdjPriv
+ {
+  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+  internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
+   ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
+  
+  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+  internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
+  [DllImport("advapi32.dll", SetLastError = true)]
+  internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
+  internal struct TokPriv1Luid
+  {
+   public int Count;
+   public long Luid;
+   public int Attr;
+  }
+  
+  internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
+  internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
+  internal const int TOKEN_QUERY = 0x00000008;
+  internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
+  public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
+  {
+   bool retVal;
+   TokPriv1Luid tp;
+   IntPtr hproc = new IntPtr(processHandle);
+   IntPtr htok = IntPtr.Zero;
+   retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
+   tp.Count = 1;
+   tp.Luid = 0;
+   if(disable)
+   {
+    tp.Attr = SE_PRIVILEGE_DISABLED;
+   }
+   else
+   {
+    tp.Attr = SE_PRIVILEGE_ENABLED;
+   }
+   retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
+   retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+   return retVal;
+  }
+ }
+'@
+
+ $processHandle = (Get-Process -id $ProcessId).Handle
+ $type = Add-Type $definition -PassThru
+ $type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
+}
+
+
+
+Function EnableGPUScheduling {
+	Write-Host "Turn On Hardware Accelerated GPU Scheduling."
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers")) {
+		New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Type DWord -Value 0x00000002
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "PlatformSupportMiracast" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "UnsupportedMonitorModesAllowed" -Type DWord -Value 0x00000001
+}
+
+
+
+Function EnableVRR_AutoHDR {
+	Write-Host "Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games."
+	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
+		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -Type String -Value "VRROptimizeEnable=1;AutoHDREnable=1;SwapEffectUpgradeEnable=1;"
+	
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001
+
+}
+
+
+
+Function EnableEdge_GPU {
+	Write-Host "Turn On Hardware Accelerated GPU on Microsoft Edge Canary."
+	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
+		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge" -Type String -Value "GpuPreference=2;"
+
+}
+
+
+
 ###				   ###
 ### Privacy Tweaks ###
 ###				   ###
@@ -1316,6 +1358,27 @@ Function DisableCEIP {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
 	}
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000
+
+
+	#Disable CEIP for SSDT and SSDT-BI for Visual studio 2013.
+	If (!(Test-Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Name "CustomerFeedback" -Type DWord -Value 0x00000000
+
+
+	#Disable SSDT for Visual Studio 2015 is the data modeling tool that ships with SQL Server 2016.
+	If (!(Test-Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM")) {
+		New-Item -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
+
+
+	#Disable SSDT for Visual Studio 2017 is the data modeling tool that ships with SQL Server 2017.
+	If (!(Test-Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM")) {
+		New-Item -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
 }
 
 
@@ -1746,6 +1809,13 @@ function DisableServices {
 	write-host "ScPolicySvc service does not exist on this device."	}
 
 
+	Write-Host "Disables Windows Remote Registry service."
+	try	{
+	Stop-Service "SQLTELEMETRY$SQLEXPRESS" -ea Stop
+	Set-Service "SQLCEIP" -StartupType Disabled
+	} catch [SystemException]{
+	write-host "SQLTELEMETRY service does not exist on this device."	}
+
 
 	<#
 	An SNMP trap message is an unsolicited message sent from an agent to the the manager.
@@ -1889,8 +1959,17 @@ Function GetFullContextMenu {
 			Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" '(Default)' -Value ""
 		}
 	}
+# reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+
 }
 
+Function PrintScreenToSnippingTool {
+	Write-Output "Use print screen to open snipping tool."
+	If (!(Test-Path "HKCU:\Control Panel\Keyboard")) {
+		New-Item -Path "HKCU:\Control Panel\Keyboard" -Force | Out-Null
+	}
+		Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "PrintScreenKeyForSnippingEnabled" -Type DWord -Value 0x00000001
+}
 
 
 Function DisableLiveTiles {

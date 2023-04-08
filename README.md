@@ -23,6 +23,8 @@ This is by no means an `anti-tracking` script, a script for IT administrators -t
 
 It would be very daring on my part, given the simplicity of the script, to further optimize a system of this complexity and quality supported by thousands of intelligent minds around the globe by Microsoft and its collaborators without a significant loss of OS functionality, so we always have to reflect on what point we can give up functionality at the expense of gaining performance while trying to maintain the general characteristics and broad compatibility of the system. It's not a matter of leaving the system as a barebone "featureless" because I don't believe in this strategy via code. It has no purpose for most users, specially because specific distributions are designed for these requirements.
 
+You can test scripts for tools like NTlite for this purpose, but in most cases, they are implemented by "trial and error", that is, wanting to strain a system that we don't know in depth in all its nuances. Don't go around disabling everything you see like crazy. Understand and respect the work of the system's developers. I've lost years trying to optimize Windows Services, and this is my conclusion. Leave it as is and be happy.
+
 
 ## **Before you run!**
 
