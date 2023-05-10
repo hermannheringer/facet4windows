@@ -43,6 +43,7 @@ DisableDeleteNotify                 #Allows your SSD drive to handle garbage mor
 SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
 EnableMemoryCompression             #Enabling Memory Compression.
 DisablePerformanceCounters          #Disable All Performance Counters.
+DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
 SetPowerManagment                   #Optimizing Power Managment scheme.             
 RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
 RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
