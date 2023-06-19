@@ -87,8 +87,8 @@ DisableRemoteAssistance             #Disabling Remote Assistance.
 ### Network Tweaks ###
 SetIRPStackSize                     #Improve network performance.
 SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
-!DisableWiFiSense                    #Disabling Wi-Fi Sense.
-
+DisableWiFiSense                   #Disabling Wi-Fi Sense.
+DisableWFPlogs                      #Disable WFP logs.
 
 
 ### Service Tweaks ###
@@ -126,7 +126,8 @@ SetFontStyleShortcut                #Remove the font style of the desktop shortc
 SetAutoRestartShell                 #Optimize user interface components. Auto-refresh when there is an error to avoid system crash.
 SetVisualEffects                    #Optimize the visual effects of system menus and lists to improve system performance.
 SetSystemResponsiveness             #Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS).
-DisableHPET                         #Disable HPET, Synthetic Timers and Dynamic Ticks.
+MisconceptionHPET                   #Reverting this misconception about HPET-TSC-PMT to system default values.
+SomeKernelTweaks                    #Applying some tweaks chosen by the author and disable Meltdown/Spectre/Zombieload patches.
 
 # File System Optimization
 SetAeDebug                          #Turn off Just-In-Time Debugging function to improve system performance.

@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.2.1
+Version : 0.2.3
 Source: https://github.com/hermannheringer/
 #>
 
@@ -510,10 +510,6 @@ Function DisableStartupEventTraceSession  {
 	<#
 	Event tracing sessions record events from one or more providers that a controller enables. The session is also responsible for managing and flushing the buffers. 
 	The controller defines the session, which typically includes specifying the session and log file name, type of log file to use, and the resolution of the time stamp used to record the events.
-	Event Tracing supports a maximum of 64 event tracing sessions executing simultaneously. 
-	Of these sessions, there are two special purpose sessions. The remaining sessions are available for general use. The two special purpose sessions are:
-		-Global Logger Session
-		-NT Kernel Logger Session
 	#>
 		Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger" | ForEach-Object {
 			$Var = $_.PsPath
@@ -521,8 +517,21 @@ Function DisableStartupEventTraceSession  {
 					Set-ItemProperty -Path $Var -Name "Start" -Type DWord -Value 0x00000000 -erroraction SilentlyContinue
 				}
 			}
-}
+	<#
+	The operating system should not allow changes to the events below as it would cause chronic anomalies, however, we will ensure everything works as it should.
+	As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
+	#>		
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-System" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Security" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\UBPM" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\NetCore" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\RadioMgr" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderApiLogger" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderAuditLogger" -Name "Start" -Type DWord -Value 0x00000001 -erroraction SilentlyContinue
 
+#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
+}
 
 
 function SetPowerManagment {
@@ -577,7 +586,7 @@ function SetPowerManagment {
 		you will be rewarded with performance slightly smaller on some tasks and better on some games and there will be an awkward silence.
 		It will be another computer!
 		#>
-		Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 0
+		Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 6
 		Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0  
 	}
 
@@ -724,7 +733,7 @@ function SetPowerManagment {
 	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e f693fb01-e858-4f00-b20f-f30e12ac06d6 191f65b5-d45c-4a4f-8aae-1ab8bfd980e6 0 # Optimize Battery
 	
 	# Switchable Dynamic Graphics
-	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 3 # Maximize performance
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 2 # Maximize performance
 	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 1 # Optimize power savings
 	
 	# AMD Power Slider
@@ -932,6 +941,9 @@ Function RemoveScheduledTasks {
 	Write-Output "Disabling scheduled error reporting."
 	if(Get-ScheduledTask QueueReporting -ErrorAction Ignore) { Get-ScheduledTask  QueueReporting | Disable-ScheduledTask } else { 'QueueReporting task does not exist on this device.'}
 
+	Write-Output "Disabling scheduled Power Efficiency Diagnostics."
+	if(Get-ScheduledTask AnalyzeSystem -ErrorAction Ignore) { Get-ScheduledTask  AnalyzeSystem | Disable-ScheduledTask } else { 'AnalyzeSystem task does not exist on this device.'}
+
 
 	Write-Output "Disabling other annoying scheduled tasks."
 	if(Get-ScheduledTask 'Adobe Acrobat Update Task' -ErrorAction Ignore) { Get-ScheduledTask  'Adobe Acrobat Update Task' | Disable-ScheduledTask } else { 'Adobe Acrobat Update Task does not exist on this device.'}
@@ -973,31 +985,50 @@ Function DisableStorageSense {
 
 
 Function AllowMiracast {
-	#See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
-	Write-Host "Allowing Projection To PC."
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001
-
-	if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
-		Write-Host "Manually Installing Wireless Display App..."
-
-		Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
-		Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1-zh-CN.cab" /IgnoreCheck
-
-		Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
-
-		Write-Host "Wireless Display App installed."
-	}
-	elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
-		Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
+	Write-Host "Checking if Wireless Display App is installed..."
+	if (Test-Path C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\Receiver.exe) {
+		Write-Host "Wireless Display App already installed."
 	}
 	else {
-		#Installing Wireless Display App from Windows Feature Repository
-		Write-Host "Installing Wireless Display App..."
-		DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
-		Write-Host "Wireless Display App installed."
+		#See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
+		Write-Host "Allowing Projection To PC."
+		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
+			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
+		}
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001
+
+		if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
+			Write-Host "Manually Installing Wireless Display App..."
+
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-US~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-GB~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~es-ES~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~pt-BR~.cab" /IgnoreCheck
+
+			Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
+
+			Write-Host "Wireless Display App installed."
+		}
+		elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
+			Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
+		}
+		else {
+			#Installing Wireless Display App from Windows Feature Repository
+			Write-Host "Installing Wireless Display App..."
+			If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU")) {
+				New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Force | Out-Null
+			}
+
+			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000000
+			Get-Service wuauserv | Restart-Service
+			Start-Sleep 1
+			DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
+			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000001
+			Get-Service wuauserv | Restart-Service
+			Start-Sleep 1
+			Write-Host "Wireless Display App installed."
+		}
 	}
 }
 
@@ -1024,11 +1055,13 @@ function DisableVBS_HVCI {
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Turn off Virtualization-based security."
 	#reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\CredentialGuard" /v "Enabled" /t REG_DWORD /d 0 /f
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "HVCIMATRequired" /t REG_DWORD /d 0 /f
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f
 	}
 
 	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Turn off Virtualization-based security."
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "HVCIMATRequired" /t REG_DWORD /d 0 /f
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f
 
 	}
@@ -1040,6 +1073,17 @@ function DisableWindowsDefender {
 
 	Write-Output "`nAfter manual modification, press any key to continue the script."
 	[Console]::ReadKey($true) | Out-Null
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" -Name "DisableEnhancedNotifications" -Type DWord -Value 0x00000001
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration" -Name "Notification_Suppress" -Type DWord -Value 0x00000001
 
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Type DWord -Value 0x00000001
@@ -1062,7 +1106,8 @@ function DisableWindowsDefender {
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableOnAccessProtection" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableBehaviorMonitoring" -Type DWord -Value 0x00000001
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableScanOnRealtimeEnable" -Type DWord -Value 0x00000001
-
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableIOAVProtection" -Type DWord -Value 0x00000001
+	
 
 	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection")) {
 		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection" -Force | Out-Null
@@ -1132,6 +1177,10 @@ function RemoveXboxFeatures {
 
 	#Stop-Service "BcastDVRUserService_6fa5a" -ea Stop
 	Set-Service "BcastDVRUserService_6fa5a" -StartupType Disabled -erroraction SilentlyContinue
+
+	#Stop-Service "BcastDVRUserService_13da07" -ea Stop
+	Set-Service "BcastDVRUserService_13da07" -StartupType Disabled -erroraction SilentlyContinue
+
 
 
 	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
@@ -1331,7 +1380,7 @@ Function DisableAdvertisingInfo {
 Function DisableAppDiagnostics {
 	Write-Output "Turning off AppDiagnostics."
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"
+
 }
 
 
@@ -1347,12 +1396,12 @@ Function DisableCEIP {
 
 	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
 	If (Test-Path $SQMClient1) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnable" -Type DWord -Value 0x00000000
 	}
 
 	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
 	If (Test-Path $SQMClient2) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000
 	}
 
 	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
@@ -1362,13 +1411,32 @@ Function DisableCEIP {
 
 	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
 	If (Test-Path $SQMClient4) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnable" -Type DWord -Value 0x00000000
 	}
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
 	}
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000
+
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Name "CEIP" -Type DWord -Value 0x00000002
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Name "CEIP" -Type DWord -Value 0x00000002
+
 
 
 	#Disable CEIP for SSDT and SSDT-BI for Visual studio 2013.
@@ -1408,6 +1476,8 @@ Function DisableDataCollection {
 	If (Test-Path $DataCollection3) {
 		Set-ItemProperty $DataCollection3  AllowTelemetry -Type DWord -Value 0x00000000
 	}
+
+#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
 }
 
 
@@ -1420,6 +1490,8 @@ function DisableDiagTrack {
 
 	#Stop-Service "diagnosticshub.standardcollector.service" -ea Stop
 	Set-Service "diagnosticshub.standardcollector.service" -StartupType Disabled -erroraction SilentlyContinue
+
+#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
 } 
 
 
@@ -1514,6 +1586,8 @@ Function RemoveAutoLogger {
 		Remove-Item "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl" -Force -ErrorAction SilentlyContinue
 	}
 	icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
+
+#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
 }
 
 
@@ -1573,6 +1647,14 @@ Function DisableWiFiSense {
 	}
 	Set-ItemProperty $WifiSense2  Value -Type DWord -Value 0x00000000
 	Set-ItemProperty $WifiSense3  AutoConnectAllowedOEM -Type DWord -Value 0x00000000
+}
+
+
+Function DisableWFPlogs {
+	Write-Output "Disabling WFP logs."
+	# https://social.technet.microsoft.com/Forums/en-US/7d0d2721-35ea-418e-9e7c-0bef1366a25f/wfpdiagetl-disk-usage-constantly-writing?forum=win10itprogeneral
+	# wfpdiag.etl disk usage, constantly writing
+	netsh wfp set options netevents=off
 }
 
 
@@ -2044,22 +2126,74 @@ Function SetVisualEffects {
 
 
 Function SetSystemResponsiveness {
+	# https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service
 	Write-Output "Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS)."
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0x0000000a			#Default 00000014
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0x0000000a			#Default 00000014 (20)
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0x0000000a			#Default 0x0000000a (10)
 }
 
 
-Function DisableHPET {
-	Write-Output "Disable HPET, Synthetic Timers and Dynamic Ticks."
-	bcdedit /set useplatformclock no
-	#bcdedit /deletevalue useplatformclock
-	bcdedit /set useplatformtick yes
-	bcdedit /set disabledynamictick yes
+Function MisconceptionHPET {
+	Write-Output "Reverting misconception about HPET-TSC-PMT to system default values."
+	<#
+	"Unless you need to run a very very certain and specific program that requires HPET, useplatformclock + HPET is not suggested.
+	HPET should only used as a platform source for synchronization purposes or different purposes when actually required.
+	While TSC runs at an average frequency of 3 MHz, depending on your processor characteristics, HPET is a high precision timer, and can run at up to 22 MHz on modern computers!
+	This makes your computer perform poorly due to using HPET when not needed.
+	Such a level of precision is not required on every single application and will slowdown your computer's performance."
+	
+	https://sites.google.com/view/melodystweaks/misconceptions-about-timers-hpet-tsc-pmt
+	#>
+
+	# Reverting this misconception about HPET-TSC-PMT to system default values as below.
+
+	bcdedit /deletevalue useplatformclock
+	bcdedit /deletevalue useplatformtick
+	bcdedit /deletevalue disabledynamictick
+	bcdedit /deletevalue tscsyncpolicy
+	
 }
 
+Function SomeKernelTweaks {
+
+	Write-Output "Disable Meltdown/Spectre/Zombieload patches."
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management")) {
+		New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Force | Out-Null
+	}
+	
+	# https://support.microsoft.com/en-us/topic/kb4072698-windows-server-and-azure-stack-hci-guidance-to-protect-against-silicon-based-microarchitectural-and-speculative-execution-side-channel-vulnerabilities-2f965763-00e2-8f98-b632-0d96f30c8c8e
+	# https://support.microsoft.com/en-us/topic/guidance-for-disabling-intel-transactional-synchronization-extensions-intel-tsx-capability-0e3a560c-ab73-11d2-12a6-ed316377c99c
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettings" -Type DWord -Value 0x00000001			#Default 00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverride" -Type DWord -Value 0x00000003			#Default 00000001
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverrideMask" -Type DWord -Value 0x00000003			#Default 00000003
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel" -Name "DisableTsx" -Type DWord -Value 0x00000000		#Default 00000003
+
+
+	Write-Output "Use big system memory caching to improve microstuttering."
+	# Yeah, that might sound the opposite of the project's objective, but that's right. Free up and optimize resources to the maximum and provide comfort for the system kernel simultaneously.
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management")) {
+		New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "LargeSystemCache" -Type DWord -Value 0x00000001			#Default 00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000026			#Default 00000026
+	
+
+	Write-Output "Fix system error 85."
+	# System error 85 that occurs when a non-administrative user attempts to reconnect to a shared network drive that the user has already used.
+	# https://learn.microsoft.com/en-US/troubleshoot/windows-client/networking/system-error-85-net-use-command
+	If (!(Test-Path "HKLM:\Disable additional NTFS/ReFS mitigationsSYSTEM\CurrentControlSet\Control\Session Manager")) {
+		New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "ProtectionMode" -Type DWord -Value 0x00000000			#Default 00000001
+
+
+}
 
 ### File System Optimization ###
 
