@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.5
+Version : 0.1.6
 Source: https://github.com/hermannheringer/
 #>
 
@@ -77,14 +77,16 @@ Start-Process cleanmgr -ArgumentList “/sagerun:11” -Wait -NoNewWindow -Error
 
 Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" | ForEach-Object {
 	If ((Test-Path $_.PsPath)) {
-		Remove-ItemProperty -Path $_.PsPath -Name "StateFlags0011" -ErrorAction SilentlyContinue
-		Remove-ItemProperty -Path $_.PsPath -Name "StateFlags" -ErrorAction SilentlyContinue
+		#Remove-ItemProperty -Path $_.PsPath -Name "StateFlags0011" -ErrorAction SilentlyContinue
+		Remove-ItemProperty -Path $_.PsPath -Name "StateFlags*" -ErrorAction SilentlyContinue
 	}
 }
 
-Get-ChildItem $Env:windir\temp -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-Get-ChildItem $Env:windir\logs\CBS -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-Get-ChildItem $Env:temp -rec | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:windir\temp | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:windir\logs\CBS | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:temp | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:windir\Prefetch | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Get-ChildItem $Env:HOMEPATH\AppData\Local\Temp | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
 Write-Host "Clean Up the WinSxS Folder. This process can take a few minutes..."
 dism /online /cleanup-Image /StartComponentCleanup /ResetBase

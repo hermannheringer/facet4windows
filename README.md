@@ -23,11 +23,11 @@ This is by no means an `"anti-tracking"` script, a script for IT administrators 
 
 It would be very daring on my part, given the simplicity of the script, to further optimize a system of this complexity and quality supported by thousands of intelligent minds around the globe by Microsoft and its collaborators without a significant loss of OS functionality, so we always have to reflect on what point we can give up functionality at the expense of gaining performance while trying to maintain the general characteristics and broad compatibility of the system. It's not a matter of leaving the system as a barebone "featureless" because I don't believe in this strategy via code, nor in distributions that are at least suspicious (note: I'm not criticizing the effort and dedication on the part of the developers) like `ATLAS` and `TINY 11`. It has no purpose for most users, specially because specific `"official"` distributions are designed for these requirements.
 
-Tools like `NTlite` can be used to test scripts for this purpose, but in most cases, they are implemented by `“trial and error”`, that is, wanting to strain a system that we don’t know in depth in all its nuances. It’s important to understand and respect the work of the system’s developers. Disabling everything you see like crazy or changing the kernel behaviour is not the way to go. It's tough to see that you can spend thousands of hours searching through official documentation, looking at misconception information, and trying to separate all the existing noise. At some point, we inevitably come to conclusions such as:
-1- Functions that work and are beneficial for the project, 
-2- Functions that are currently obsolete, 
-3- Purely cosmetic functions outside the scope of the project, 
-4- Functions that do not exist and can impact the system; Items 2, 3 and 4 are pure noise in abundance on the web.
+Tools like `NTlite` can be used to test scripts for this purpose, but in most cases, they are implemented by `“trial and error”`, that is, wanting to strain a system that we don’t know in depth in all its nuances. It’s important to understand and respect the work of the system’s developers. Disabling everything you see like crazy or changing the kernel behaviour is not the way to go. It's tough to see that you can spend thousands of hours searching through official documentation, looking at misconception information, and trying to separate all the existing noise. At some point, we inevitably come to conclusions such as:  
+**1** Functions that work and are beneficial for the project,  
+**2** Functions that are currently obsolete,  
+**3** Purely cosmetic functions outside the scope of the project,  
+**4** Functions that do not exist and can impact the system; Items **2**, **3** and **4** are pure noise in abundance on the web.
 
 I've lost years trying to optimize Windows Services, and this is my conclusion. Leave it as is and be happy or specialize in Low-level programming language and kernel customization.
 

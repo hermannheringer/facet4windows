@@ -1,6 +1,6 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.5
+# Version : 0.1.6
 # Source: https://github.com/hermannheringer/
 
 
@@ -14,29 +14,30 @@ RequireAdmin
 
 
 
-###Transcript everything that happens during a session to a LOG file. ###
+### Transcript everything that happens during a session to a LOG file. ###
 LogScript
 
 
 
-###Creating a System Restore Point on the local computer before starting. ###
+### Creating a System Restore Point on the local computer before starting. ###
 RestorePoint
 
 
 
-### Application Tweaks ###
+### Application  ###
 InstallWinget
 
 
 
-### Debloat Windows ###
+###  Debloat  ###
 DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
 AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings.
 SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
 
 
-### Features Tweaks ###
+### Features ###
 DisableAppCompat                    #Disabling Application Compatibility Program.
+RemoveThirdPartyTelemetry           #Remove Telemetry from Third-Party Apps.
 DisableBackgroundApp                #Disabling All Background Application Access.
 RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists.
 DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially.
@@ -44,7 +45,8 @@ SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates
 EnableMemoryCompression             #Enabling Memory Compression.
 DisablePerformanceCounters          #Disable All Performance Counters.
 DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
-SetPowerManagment                   #Optimizing Power Managment scheme.             
+SetPowerManagment                   #Platform-customized power management optimization scheme.
+!revertPowerManagment               #Revert power management customizations.
 RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
 RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
 SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold.
@@ -55,14 +57,14 @@ DisableVBS_HVCI                     #Turn off Virtualization-based security.
 DisableWindowsDefender              #Disables Windows Defender.
 
 
-### Features Tweaks-GPU ###
+### Features GPU ###
 RemoveXboxFeatures                  #Disabling Xbox features.
 EnableGPUScheduling                 #Turn On Hardware Accelerated GPU Scheduling.
 EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
 EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
 
 
-### Privacy Tweaks ###
+### Privacy ###
 AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
 DisableActivityHistory              #Disabling activity history.
 DisableAdvertisingID                #Disabling Advertising ID.
@@ -78,32 +80,33 @@ DisableTailoredExperiences          #Disabling Tailored Experiences.
 
 
 
-### Security Tweaks ###
+### Security ###
 RemoveAutoLogger                    #Removing AutoLogger file and restricting directory.
 DisableRemoteAssistance             #Disabling Remote Assistance.
 
 
 
-### Network Tweaks ###
+### Network ###
 SetIRPStackSize                     #Improve network performance.
 SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
 DisableWiFiSense                   #Disabling Wi-Fi Sense.
 DisableWFPlogs                      #Disable WFP logs.
 
 
-### Service Tweaks ###
+### Service ###
 DisableWAPPush                      #Stopping and disabling Device Management Wireless Application Protocol (WAP) Push message Routing Service.
 DisableServices                     #Stopping and disabling unnecessary services.
 
 
 
-### Speed Up System ###
+### System ###
 DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
 DisableBingSearch                   #Disabling Bing Search in Start Menu.
 DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
 GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
 PrintScreenToSnippingTool           #Use print screen to open snipping tool.
 DisableLiveTiles                    #Disabling live tiles.
+DisableWidgets                      #Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off.
 
 # Disk Cache Optimization
 SetWaitToKillAppTimeout             #Optimize program response time to improve system response speed.
@@ -154,7 +157,7 @@ SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
 
 
 
-### Server-related Tweaks ###
+### Server-related ###
 DisableEventTracker                 #Disabling Shutdown Event Tracker
 
 
