@@ -42,6 +42,7 @@ DisableBackgroundApp                #Disabling All Background Application Access
 RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists.
 DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially.
 SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
+SetPagedPoolMemoryUsage             #Configures the internal cache levels of NTFS paged-pool memory and NTFS nonpaged-pool memory.
 EnableMemoryCompression             #Enabling Memory Compression.
 DisablePerformanceCounters          #Disable All Performance Counters.
 DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
@@ -83,7 +84,7 @@ DisableTailoredExperiences          #Disabling Tailored Experiences.
 ### Security ###
 RemoveAutoLogger                    #Removing AutoLogger file and restricting directory.
 DisableRemoteAssistance             #Disabling Remote Assistance.
-
+DisableRDP                          #Remote Desktop consumes system resources, including CPU processing power, memory, and network bandwidth.
 
 
 ### Network ###
