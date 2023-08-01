@@ -17,15 +17,39 @@
 ## **Description**
 
 
-Firstly, this PowerShell script is designed to automate routine tasks on Windows 10 and 11 distributions, focusing on improving performance for computers and notebooks with limited CPU and RAM resources.While it is not intended to be an ``"anti-tracking"`` script or targeted at IT administrators, it aims to balance retaining desired functionality and optimising system performance.
+#### Enhancing PowerShell Script for Windows Performance Optimization
 
-Unlike the multitude of available ``"debloatware"`` scripts found on the web, this script incorporates various elements beyond removing unnecessary features, recognising that such removals contribute significantly to the overall lightweight nature of the system. It combines different approaches and best practices, exploring specific areas that the author believes warrant further exploration.
+Introduction:
 
-Considering the complexity and quality of the system supported by Microsoft and its collaborators, it would be audacious to attempt further optimisation without sacrificing essential operating system functionality. Therefore, the script identifies points where functionality can be offered in favour of performance gains while maintaining the system's overall characteristics and broad compatibility. The aim is not to create a barebones and featureless system through code, as the author does not believe in this strategy, nor does the script endorse suspicious distributions like ``ATLAS`` or ``TINY 11`` (while acknowledging their developers' efforts). It is essential to rely on ``official`` distributions designed to meet specific requirements for most users.
+The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions, specifically focusing on improving performance for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.
 
-While tools like ``NTlite`` can be used to test scripts for optimisation purposes, it is crucial to approach the task with respect for the system's developers and a deep understanding of its nuances. Disabling features or altering kernel behaviour without comprehensive knowledge can lead to adverse effects. Filtering through official documentation, addressing misconceptions, and separating signal from noise can be time-consuming and challenging. Eventually, conclusions are drawn regarding which functions are helpful for the project, which are obsolete, which are purely cosmetic and unrelated to the project scope, and which parts can potentially impact the system. The latter three categories often represent a significant amount of noise on the web.
+Approach and Scope:
 
-Based on the author's experience, optimising Windows Services extensively proved to be a fruitless endeavour. The conclusion is that it is better to accept the system as is and find contentment or specialise in low-level programming languages and kernel customisation for those seeking further customisation.
+Unlike conventional ``"debloatware"`` scripts available on the web, this comprehensive script encompasses various elements beyond removing unnecessary features. Acknowledging that such deletions can lighten the system, my approach combines different methodologies and best practices to explore specific areas that warrant further optimisation.
+
+It is crucial to recognise the complexity and quality of the operating system developed by Microsoft and its collaborators. Attempting further optimisation without compromising essential functionality would be audacious. Therefore, my script identifies areas where functionality can be optimised to gain performance while retaining the system's overall characteristics and ensuring broad compatibility.
+
+Respecting Official Distributions:
+
+My philosophy does not endorse creating a barebones and featureless system through code. Suspicious distributions like ``"ATLAS"`` or ``"TINY 11"`` are not recommended, despite acknowledging the developers' efforts. Instead, I emphasise relying on official distributions designed to meet most users' requirements.
+
+Challenges and Best Practices:
+
+While tools like ``"NTlite"`` can help test scripts for optimisation purposes, I must approach this task with the utmost respect for the system's developers and a deep understanding of its nuances. Disabling features or altering kernel behaviour without comprehensive knowledge can lead to adverse effects. Thoroughly filtering through official documentation, addressing misconceptions, and distinguishing signal from noise can be time-consuming, yet essential.
+
+Windows Services Optimisation:
+
+Based on my experience, extensive optimisation of Windows Services proved to be a fruitless endeavour. Accepting the system as it is maybe the wiser choice for most scenarios. However, individuals seeking further customisation may explore options involving low-level programming languages and kernel customisation.
+
+#### Fresh installation of Windows LTSC 21H2 with all drivers installed after applying this script :
+
+CPU:
+
+![cpu.png](README/cpu.png)
+
+Memory:
+
+![mem.png](README/mem.png)
 
 
 ## **Before you run!**
@@ -145,8 +169,11 @@ To revert the entire script, follow these steps:
 
 ### Revert functions
 
-If you want to revert some specific function, create and add this opposite (or equivalent) name function that reverts the required behaviour to the default and append it to the present file.
+To undo the effects of a specific function, you can write and add a complementary function that restores the original behavior and append it to the current file.
 
+The code at the end of each instruction contains the default values for Windows 11 22H2 and Windows 10 LTSC 21H2 distributions.
+
+You are welcome to experiment and modify the functions as you wish.
 
 ## **Finally**
 If you understand what you are doing, consider downloading and running Microsoft Autoruns to check your system.
