@@ -21,7 +21,7 @@
 
 Introduction:
 
-The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions, specifically focusing on improving performance for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.
+The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions, specifically focusing on improving performance and reducing overall latency for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.
 
 Approach and Scope:
 
@@ -41,7 +41,7 @@ Windows Services Optimisation:
 
 Based on my experience, extensive optimisation of Windows Services proved to be a fruitless endeavour. Accepting the system as it is maybe the wiser choice for most scenarios. However, individuals seeking further customisation may explore options involving low-level programming languages and kernel customisation.
 
-#### Fresh installation of Windows LTSC 21H2 with all drivers installed after applying this script :
+#### Fresh installation of Windows LTSC 21H2 with all drivers and updates installed after applying this script :
 
 CPU:
 

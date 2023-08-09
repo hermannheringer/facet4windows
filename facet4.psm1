@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.0
+Version : 0.3.3
 Source: https://github.com/hermannheringer/
 #>
 
@@ -610,12 +610,14 @@ function DisableDeleteNotify {
 	
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Allows TRIM operations to be sent to the storage device."
 		# fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 1	# LTSC 0 (Disabled)
+		fsutil behavior set DisableDeleteNotify 0			# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
+		fsutil behavior set DisableDeleteNotify ReFS 0		# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
 	}
 
 	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Allows TRIM operations to be sent to the storage device."
 		# fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 0	# Win11 Home 0 (Allows TRIM operations to be sent to the storage device)
+		fsutil behavior set DisableDeleteNotify 0			# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
+		fsutil behavior set DisableDeleteNotify ReFS 0		# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
 	} 
 }  
 
@@ -625,18 +627,20 @@ function SetLastAccessTimeStamp {
 	
 	<#
 		https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
+
+		# The disablelastaccess parameter can affect programs such as Backup and Remote Storage, which rely on this feature.
 	#>
 
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
 		# fsutil behavior query disablelastaccess
 		# fsutil behavior set disablelastaccess 0
-		fsutil behavior set disablelastaccess 2 # LTSC 2 (System Managed, Last Access Time Updates DISABLED)
+		fsutil behavior set disablelastaccess 3 # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
 	}
 
 	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
 		# fsutil behavior query disablelastaccess
 		# fsutil behavior set disablelastaccess 1
-		fsutil behavior set disablelastaccess 3 # Win11 Home 2 (System Managed, Last Access Time Updates ENABLED)
+		fsutil behavior set disablelastaccess 2 # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
 	}
 }
 
@@ -1527,22 +1531,22 @@ function RemoveXboxFeatures {
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000						# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
 
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001									# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001									# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000							# Win11 Home 0		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000								# Win11 Home 0		LTSC NA
 
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000											# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Type DWord -Value 0x00000002									# Win11 Home 2		LTSC 0
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000												# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Type DWord -Value 0x00000002										# Win11 Home 2		LTSC 0
 
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "CursorCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "EchoCancellationEnabled" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "HistoricalCaptureEnabled" -Type DWord -Value 0x00000000		# Win11 Home 0		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "MicrophoneCaptureEnabled" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "CursorCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "EchoCancellationEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "HistoricalCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 0		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "MicrophoneCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "Value" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
 
@@ -1554,117 +1558,29 @@ function RemoveXboxFeatures {
 		New-Item -Path "HKCR:\ms-gamingoverlay" -Force | Out-Null
 	}
 	# reg add HKEY_CLASSES_ROOT\ms-gamingoverlay /t REG_SZ /d "URL:ms-gamingoverlay" /f
-	Set-ItemProperty -Path "HKCR:\ms-gamingoverlay" '(Default)' -Type String -Value "URL:ms-gamingoverlay" -Force										# Win11 Home "URL:ms-gamingoverlay"
+	Set-ItemProperty -Path "HKCR:\ms-gamingoverlay" '(Default)' -Type String -Value "URL:ms-gamingoverlay" -Force											# Win11 Home "URL:ms-gamingoverlay"
 
 
-	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
-	Write-Output "Elevating privileges for this process..."
-
-	
-	$myIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-
-	enable-privilege SeTakeOwnershipPrivilege 
-	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::takeownership)
-	# You must get a blank acl for the key b/c you do not currently have access
-	$acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::None)
-	$me = [System.Security.Principal.NTAccount]$myIdentity.ToString()
-	$acl.SetOwner($me)
-	$key.SetAccessControl($acl)
-
-	# After you have set owner you need to get the acl with the perms so you can modify it.
+	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
 	$acl = $key.GetAccessControl()
-	$rule = New-Object System.Security.AccessControl.RegistryAccessRule ($myIdentity.ToString(),"FullControl","Allow")
+	$rule = New-Object System.Security.AccessControl.RegistryAccessRule (".\USERS","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
 	$acl.SetAccessRule($rule)
 	$key.SetAccessControl($acl)
 
 	$key.Close()
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Type DWord -Value 0x00000000 -Force		# Win11 Home 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Type DWord -Value 0x00000000 -Force		# Win11 Home 1	LTSC 1
+
+	Start-Sleep 1
+
+	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
+	if ((Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter').ActivationType -eq 1) {
+		Write-Output 'GameBar Presence Writer feature is still active.' '' 'Disable it manually, go to:' '' 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\' 'Microsoft\WindowsRuntime\ActivatableClassId\' 'Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter' '' 'in Registry Editor and change the parameter' '' 'ActivationType to 0' | msg /w *
+	}
 
 	Write-Host "Finished Removing Xbox features."
 }
 
-
-
-function enable-privilege {
- $ErrorActionPreference = 'silentlycontinue'
- param(
-  # The privilege to adjust. This set is taken from
-  # http://msdn.microsoft.com/en-us/library/bb530716(VS.85).aspx
-  [ValidateSet(
-   "SeAssignPrimaryTokenPrivilege", "SeAuditPrivilege", "SeBackupPrivilege",
-   "SeChangeNotifyPrivilege", "SeCreateGlobalPrivilege", "SeCreatePagefilePrivilege",
-   "SeCreatePermanentPrivilege", "SeCreateSymbolicLinkPrivilege", "SeCreateTokenPrivilege",
-   "SeDebugPrivilege", "SeEnableDelegationPrivilege", "SeImpersonatePrivilege", "SeIncreaseBasePriorityPrivilege",
-   "SeIncreaseQuotaPrivilege", "SeIncreaseWorkingSetPrivilege", "SeLoadDriverPrivilege",
-   "SeLockMemoryPrivilege", "SeMachineAccountPrivilege", "SeManageVolumePrivilege",
-   "SeProfileSingleProcessPrivilege", "SeRelabelPrivilege", "SeRemoteShutdownPrivilege",
-   "SeRestorePrivilege", "SeSecurityPrivilege", "SeShutdownPrivilege", "SeSyncAgentPrivilege",
-   "SeSystemEnvironmentPrivilege", "SeSystemProfilePrivilege", "SeSystemtimePrivilege",
-   "SeTakeOwnershipPrivilege", "SeTcbPrivilege", "SeTimeZonePrivilege", "SeTrustedCredManAccessPrivilege",
-   "SeUndockPrivilege", "SeUnsolicitedInputPrivilege")]
-  $Privilege,
-  # The process on which to adjust the privilege. Defaults to the current process.
-  $ProcessId = $pid,
-  # Switch to disable the privilege, rather than enable it.
-  [Switch] $Disable
- )
-
- # Taken from P/Invoke.NET with minor adjustments.
- $definition = @'
- using System;
- using System.Runtime.InteropServices;
-  
- public class AdjPriv
- {
-  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-  internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
-   ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
-  
-  [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-  internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
-  [DllImport("advapi32.dll", SetLastError = true)]
-  internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
-  [StructLayout(LayoutKind.Sequential, Pack = 1)]
-  internal struct TokPriv1Luid
-  {
-   public int Count;
-   public long Luid;
-   public int Attr;
-  }
-  
-  internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
-  internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
-  internal const int TOKEN_QUERY = 0x00000008;
-  internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-  public static bool EnablePrivilege(long processHandle, string privilege, bool disable)
-  {
-   bool retVal;
-   TokPriv1Luid tp;
-   IntPtr hproc = new IntPtr(processHandle);
-   IntPtr htok = IntPtr.Zero;
-   retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
-   tp.Count = 1;
-   tp.Luid = 0;
-   if(disable)
-   {
-    tp.Attr = SE_PRIVILEGE_DISABLED;
-   }
-   else
-   {
-    tp.Attr = SE_PRIVILEGE_ENABLED;
-   }
-   retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
-   retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-   return retVal;
-  }
- }
-'@
-
- $processHandle = (Get-Process -id $ProcessId).Handle
- $type = Add-Type $definition -PassThru
- $type[0]::EnablePrivilege($processHandle, $Privilege, $Disable)
-}
 
 
 
@@ -1698,9 +1614,10 @@ Function EnableVRR_AutoHDR {
 	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings")) {
 		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Type DWord -Value 0x00000001			# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA Adjust Video Based on Lighting
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC 1
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Type DWord -Value 0x00000001						# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Type DWord -Value 0x00000001				# Win11 Home NA		LTSC NA Adjust Video Based on Lighting
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableAutoEnhanceDuringPlayback" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
 
 }
 
@@ -2667,8 +2584,20 @@ Function SetSystemResponsiveness {
 	
 	Write-Output "Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS)."
 	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0x0000000a		# Win11 Home 0x0000000a (10)	LTSC 0x0000000a (10)
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0x0000000a			# Win11 Home 0x00000014 (20)	LTSC 0x00000014 (20)
+
+	# Disable throttling mechanism to control network performance
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0xffffffff		# Win11 Home 0x0000000a (10)	LTSC 0x0000000a (10)
+		
+	# Disable Nagle’s Algorithm
+
+	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" | ForEach-Object {
+		if(Get-ItemProperty -Path $_.PsPath -Name "DhcpServer" -ErrorAction SilentlyContinue )	 {
+			Set-ItemProperty -Path $_.PsPath -Name "TcpNoDelay" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue												# Win11 Home NA	LTSC NA
+			Set-ItemProperty -Path $_.PsPath -Name "TcpAckFrequency" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue											# Win11 Home NA	LTSC NA
+		}	
+	}
+
 }
 
 
