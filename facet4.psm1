@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.3
+Version : 0.3.4
 Source: https://github.com/hermannheringer/
 #>
 
@@ -295,7 +295,7 @@ Function DebloatBlacklist {
 
 Function AvoidDebloatReturn {
 	
-	Write-Output "Adding Registry key to prevent bloatware apps from returning and removes some suggestions settings."
+	Write-Output "Adding Registry key to prevent bloatware Apps from returning and removes some suggestions settings."
 	
 	$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
 	If (!(Test-Path $registryPath)) { 
@@ -542,6 +542,23 @@ function RemoveThirdPartyTelemetry {
 
 
 	if(Get-ScheduledTask OfficeTelemetry* -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetry* | Stop-ScheduledTask ; Get-ScheduledTask  OfficeTelemetry* | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack task does not exist on this device.'} # initiates the background task for the Office Telemetry Agent that scans and uploads usage and error information for Office solutions
+
+
+	Write-Host "Disable Nvidia Driver Telemetry."
+
+	If (!(Test-Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client")) { 
+		New-Item "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Force | Out-Null															# Win11 Home NA	LTSC NA
+	}
+
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup")) { 
+		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Force | Out-Null													# Win11 Home NA	LTSC NA
+	}	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Name "OptInOrOutPreference" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Name "SendTelemetryData" -Type DWord -Value 0x00000000	# Win11 Home NA	LTSC NA
+
+
+
+
 }
 
 
@@ -634,13 +651,13 @@ function SetLastAccessTimeStamp {
 	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
 		# fsutil behavior query disablelastaccess
 		# fsutil behavior set disablelastaccess 0
-		fsutil behavior set disablelastaccess 3 # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
+		fsutil behavior set disablelastaccess 1 # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
 	}
 
 	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
 		# fsutil behavior query disablelastaccess
 		# fsutil behavior set disablelastaccess 1
-		fsutil behavior set disablelastaccess 2 # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
+		fsutil behavior set disablelastaccess 1 # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
 	}
 }
 
@@ -754,6 +771,14 @@ Function DisableStartupEventTraceSession  {
 
 		# Delete all entries from Windows event logs on a computer or a server.
 		Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }
+
+		# https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
+
+		$events = @('SleepStudy','Kernel-Processor-Power','UserModePowerService')
+		foreach ($event in $events) {
+
+			wevtutil sl Microsoft-Windows-"$event"/Diagnostic /e:false
+		}
 
 #This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
 }
@@ -890,7 +915,11 @@ function SetPowerManagment {
 	# USB selective suspend setting - Off
 	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 1
 	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 1
-	
+
+
+	# USB 3 Link Power Management
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 d4e98f31-5ffe-4ce1-be31-1b38b384c009 0
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 2a737441-1930-4402-8d77-b2bebba308a3 d4e98f31-5ffe-4ce1-be31-1b38b384c009 3
 
 	# Lid close action - Do Nothing
 	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
@@ -2446,6 +2475,8 @@ Function SetPriorityControl {
 	15 Hex = Long, Variable, Medium foreground boost.
 	14 Hex = Long, Variable, No foreground boost.
 	#>
+
+	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md
 }
 
 
@@ -2656,6 +2687,12 @@ Function SomeKernelTweaks {
 	
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "ProtectionMode" -Type DWord -Value 0x00000000									# Win11 Home 1		LTSC 1
 
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Build greater than 22000 detected. Fixed requesting a higher resolution timer from Jurassic Period apps."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" -Name "GlobalTimerResolutionRequests" -Type DWord -Value 0x00000001				# Win11 NA		LTSC NA
+	} 
+
+	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md#fixing-timing-precision-in-windows-after-the-great-rule-change
 
 }
 

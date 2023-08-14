@@ -39,7 +39,7 @@ While tools like ``"NTlite"`` can help test scripts for optimisation purposes, I
 
 Windows Services Optimisation:
 
-Based on my experience, extensive optimisation of Windows Services proved to be a fruitless endeavour. Accepting the system as it is maybe the wiser choice for most scenarios. However, individuals seeking further customisation may explore options involving low-level programming languages and kernel customisation.
+Based on my experience, extensive optimisation of Windows Services proved to be a fruitless endeavour. Accepting the system as it is maybe the wiser choice for most scenarios. However, individuals seeking further customisation may explore options involving low-level programming languages and kernel customisations.
 
 #### Fresh installation of Windows LTSC 21H2 with all drivers and updates installed after applying this script :
 

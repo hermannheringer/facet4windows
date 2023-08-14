@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.6
+Version : 0.1.7
 Source: https://github.com/hermannheringer/
 #>
 
@@ -87,6 +87,11 @@ Get-ChildItem $Env:windir\logs\CBS | Remove-Item -rec -for -ErrorAction Silently
 Get-ChildItem $Env:temp | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 Get-ChildItem $Env:windir\Prefetch | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 Get-ChildItem $Env:HOMEPATH\AppData\Local\Temp | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+
+logman stop -ets UserNotPresentTraceSession | Out-Null
+logman stop -ets ScreenOnPowerStudyTraceSession | Out-Null
+
+Get-ChildItem $Env:windir\System32\SleepStudy | Remove-Item -rec -for -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
 Write-Host "Clean Up the WinSxS Folder. This process can take a few minutes..."
 dism /online /cleanup-Image /StartComponentCleanup /ResetBase
