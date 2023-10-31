@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.4
+Version : 0.3.5
 Source: https://github.com/hermannheringer/
 #>
 
@@ -20,9 +20,9 @@ function Unzip {
 
 
 
-###					   ###
-###     Application    ###
-###					   ###
+###				 ###
+###  Application ###
+###				 ###
 
 
 
@@ -86,9 +86,9 @@ Function InstallWinget {
 
 
 
-###					###
-###      Debloat    ###
-###					###
+###		      ###
+###  Debloat  ###
+###		      ###
 
 
 
@@ -311,17 +311,18 @@ Function AvoidDebloatReturn {
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SilentInstalledAppsEnabled"  -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1 Automatic Installation of apps
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SystemPaneSuggestionsEnabled"  -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
 
+	# Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContentEnabled" -Type DWord -Value 0x00000000
 	
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC NA Spotlight fun tips and facts
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0x00000001	# Win11 Home 1		LTSC NA Spotlight fun tips and facts
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA Show Suggestions Occasionally in Start
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC NA Tips and Suggestions Notifications
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353696Enabled" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC NA Timeline Suggestions
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0x00000000 # Win11 Home 0		LTSC NA Use Spotlight image as Desktop wallpaper
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0x00000001 # Win11 Home 0		LTSC NA Use Spotlight image as Desktop wallpaper
 	
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 0x00000002						# Win11 Home NA	LTSC NA Use Spotlight image as Desktop wallpaper
 
@@ -330,6 +331,7 @@ Function AvoidDebloatReturn {
 	Get-AppxPackage  | Where name -match windowscommunicationsapps | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
 	Get-AppxPackage -Name Microsoft.Windows.ContentDeliveryManager | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
 	Get-AppxPackage -AllUsers | Where name -match weather | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose }
+	
 	LockApp XML located at "C:\Windows\SystemApps\Microsoft.LockApp_cw5n1h2txyewy" WindowsDefaultLockScreen
 	#>
 }
@@ -348,9 +350,1217 @@ Function SetMixedReality {
 
 
 
-###							  ###
-###     	Features		  ###
-###							  ###
+###				                        ###
+###	Disable Unecessary Windows Services	###
+###				                        ###
+
+
+
+# Get-Service | select -property name,starttype
+
+<#
+Device Management Wireless Application Protocol (WAP) Push Message Routing Service
+Useful for Windows tablet devices with mobile (3G/4G) connectivity
+#>
+function DisableWAPPush {
+
+	Write-Host "Stopping and disabling WAP Push Service."
+	
+	#Stop-Service "dmwappushservice" -ea SilentlyContinue
+	Set-Service "dmwappushservice" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Manual		LTSC Manual
+
+#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.	
+} 
+
+
+
+function DisableServices {
+
+	Write-Output "Stopping and disabling AdobeARM Service."
+	#Stop-Service "AdobeARMservice" -ea SilentlyContinue
+	Set-Service "AdobeARMservice" -StartupType Disabled -erroraction SilentlyContinue
+
+	<#
+	Write-Host "Disabling AMD Crash Defender Service."
+	#Stop-Service "AMD Crash Defender Service" -ea SilentlyContinue
+	Set-Service "AMD Crash Defender Service" -StartupType Disabled -erroraction SilentlyContinue
+	#>
+	
+
+	Write-Host "Disabling Application Management."
+	#Stop-Service "AppMgmt" -ea SilentlyContinue
+	Set-Service "AppMgmt" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA			LTSC Manual
+
+
+	Write-Host "Disabling Certificate Propagation Service."
+	# Copies user certificates and root certificates from smart cards into the current user's certificate store.
+	#Stop-Service "CertPropSvc" -ea SilentlyContinue
+	Set-Service "CertPropSvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling ActiveX Installer."
+	#Stop-Service "AxInstSV" -ea SilentlyContinue
+	Set-Service "AxInstSV" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling offline files service."
+	#Stop-Service "CscService" -ea SilentlyContinue
+	Set-Service "CscService" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC Manual
+
+	
+	Write-Host "Stopping and disabling HP ETD Telemetry Service."
+	#Stop-Service "ETDservice" -ea SilentlyContinue
+	Set-Service "ETDservice" -StartupType Disabled -erroraction SilentlyContinue
+
+
+	Write-Host "Disabling fax."
+	#Stop-Service "Fax" -ea SilentlyContinue
+	Set-Service "Fax" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home NA			LTSC Manual
+
+
+	Write-Host "Disabling File History Service."
+	#Stop-Service "fhsvc" -ea SilentlyContinue
+	Set-Service "fhsvc" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Stopping and disabling Home Groups services."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HomeGroup")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HomeGroup" -Force | Out-Null
+	}
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HomeGroup" -Name "DisableHomeGroup" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\HomeGroup")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\HomeGroup" -Force | Out-Null
+	}
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\HomeGroup" -Name "DisableHomeGroup" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
+
+	#Stop-Service "HomeGroupListener" -ea SilentlyContinue
+	Set-Service "HomeGroupListener" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA		LTSC NA
+	#Stop-Service "HomeGroupProvider" -ea SilentlyContinue
+	Set-Service "HomeGroupProvider" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA		LTSC NA
+
+
+	<#
+	Write-Output "Stopping and disabling HP App Helper Service."
+	Stop-Service "HPAppHelperCap" -ea SilentlyContinue
+	Set-Service "HPAppHelperCap" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA
+	#>
+
+
+	Write-Output "Stopping and disabling HP Diagnostics Service."
+	#Stop-Service "HPDiagsCap" -ea SilentlyContinue
+	Set-Service "HPDiagsCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA		LTSC Auto
+
+
+	<#
+	Write-Output "Stopping and disabling HP Network Service."
+	Stop-Service "HPNetworkCap" -ea SilentlyContinue
+	Set-Service "HPNetworkCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA
+	#>
+
+
+	<#
+	Write-Output "Stopping and disabling HP Omen Service."
+	Stop-Service "HPOmenCap" -ea SilentlyContinue
+	Set-Service "HPOmenCap" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA
+	#>
+
+
+	Write-Output "Stopping and disabling HP Print Scan Doctor Service."
+	#Stop-Service "HPPrintScanDoctorService" -ea SilentlyContinue
+	Set-Service "HPPrintScanDoctorService" -StartupType Disabled -erroraction SilentlyContinue			# Win11 Home NA		LTSC NA
+
+
+	<#
+	Write-Output "Stopping and disabling HP System Info Service."
+	Stop-Service "HPSysInfoCap" -ea SilentlyContinue
+	Set-Service "HPSysInfoCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA
+	#>
+
+
+	Write-Output "Stopping and disabling HP Telemetry Service."
+	#Stop-Service "HpTouchpointAnalyticsService" -ea SilentlyContinue
+	Set-Service "HpTouchpointAnalyticsService" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home NA		LTSC Auto
+
+
+	Write-Host "Disabling Microsoft iSCSI Initiator Service."
+	#Stop-Service "MSiSCSI" -ea SilentlyContinue
+	Set-Service "MSiSCSI" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual	LTSC Manual
+
+
+	Write-Host "Disabling The Network Access Protection (NAP) agent service."
+	# It collects and manages health information for client computers on a network.
+	#Stop-Service "napagent" -ea SilentlyContinue
+	Set-Service "napagent" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA		LTSC NA
+
+
+	Write-Host "Disabling the Network Data Usage Monitoring Driver."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Ndu" -Name "Start" -Type DWord -Value 4		# Win11 Home 2		LTSC 2
+
+
+	Write-Host "Disabling Peer Networking Identity Manager."
+	#Stop-Service "p2pimsvc" -ea SilentlyContinue
+	Set-Service "p2pimsvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Peer Networking Grouping."	
+	#Stop-Service "p2psvc" -ea SilentlyContinue
+	Set-Service "p2psvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling BranchCache service."
+	#This service caches network content from peers on the local subnet.
+	#Stop-Service "PeerDistSvc" -ea SilentlyContinue
+	Set-Service "PeerDistSvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC Manual
+
+
+	Write-Host "Disabling Performance Logs and Alerts Service."
+	#Stop-Service "pla" -ea SilentlyContinue
+	Set-Service "pla" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Peer Name Resolution Protocol."
+	#Stop-Service "PNRPsvc" -ea SilentlyContinue
+	Set-Service "PNRPsvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Windows Remote Registry service."
+	#Stop-Service "RemoteRegistry" -ea SilentlyContinue
+	Set-Service "RemoteRegistry" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Disabled	LTSC Disabled
+
+
+	<#
+	The smart card removal policy service is applicable when a user has signed in with a smart card and then removes that smart card from the reader. 
+	The action that is performed when the smart card is removed is controlled by Group Policy settings. 
+	For more information, see Smart Card Group Policy and Registry Settings.
+	#>
+	Write-Host "Disabling Smart Card Removal Policy Service."
+	#Stop-Service "ScPolicySvc" -ea SilentlyContinue
+	Set-Service "ScPolicySvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Windows Remote Registry service."
+	#Stop-Service "SQLTELEMETRY$SQLEXPRESS" -ea SilentlyContinue
+	Set-Service "SQLCEIP" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA			LTSC NA
+
+
+	<#
+	An SNMP trap message is an unsolicited message sent from an agent to the the manager.
+	The objective of this message is to allow the remote devices to alert the manager in case an important event happens,
+	commonly used in companies.
+	#>
+	Write-Host "Disabling Simple Network Management Protocol (SNMP) service."
+	#Stop-Service "SNMPTRAP" -ea SilentlyContinue
+	Set-Service "SNMPTRAP" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	<#
+	The Memory Compression process is serviced by the SysMain (formerly SuperFetch) service.
+	SysMain reduces disk writes (paging) by compressing and consolidating memory pages.
+	If this service is stopped, then Windows does not use RAM compression.
+	Write-Host "Disabling Superfetch service."
+	Stop-Service "SysMain" -ea SilentlyContinue
+	Set-Service "SysMain" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto
+	#>
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\SysMain" -Name "DelayedAutoStart" -Type DWord -Value 00000001	# Win11 Home 2		LTSC NA
+
+
+	<#
+	Disabling this will break WSL keyboard functionality.
+	Write-Output "Stopping and disabling Touch Keyboard and Handwriting Panel Service."
+	Stop-Service "TabletInputService" -ea SilentlyContinue
+	Set-Service "TabletInputService" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home NA
+	#>
+
+
+	Write-Host "Disabling WebClient service."
+	#Stop-Service "WebClient" -ea SilentlyContinue
+	Set-Service "WebClient" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Windows Error Reporting."
+	#Stop-Service "WerSvc" -ea SilentlyContinue
+	Set-Service "WerSvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Windows Remote Management."
+	#Stop-Service "WinRM" -ea SilentlyContinue
+	Set-Service "WinRM" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
+
+
+	Write-Host "Disabling Windows Insider Service."
+	# Caution! Windows Insider will not work anymore.
+	#Stop-Service "wisvc" -ea SilentlyContinue
+	Set-Service "wisvc" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
+
+	
+	<#
+	Write-Host "Stopping and disabling Windows Search Indexing service."
+	#Stop-Service "WSearch" -ea SilentlyContinue
+	Set-Service "WSearch" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto		LTSC Auto
+	#>
+
+	
+	Write-Host "Stopping and disabling Diagnostic Policy service."
+	#Stop-Service "DPS" -ea SilentlyContinue
+	Set-Service "DPS" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Auto		LTSC Auto
+
+
+	Write-Host "Stopping and disabling Program Compatibility Assistant service."
+	#Stop-Service "PcaSvc" -ea SilentlyContinue
+	Set-Service "PcaSvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto		LTSC Manual
+}
+
+
+
+###		     		    ###
+###  Optional Features  ###
+###		                ###
+
+
+
+Function AllowMiracast {
+	
+	Write-Host "Checking if Wireless Display App is installed..."
+	
+	if (Test-Path $Env:windir\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\Receiver.exe) {
+		Write-Host "Wireless Display App already installed."
+	}
+	else {
+		#See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
+		
+		Write-Host "Allowing Projection To PC."
+		
+		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
+			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
+		}
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001		# Win11 Home NA
+
+		if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
+			Write-Host "Manually Installing Wireless Display App..."
+
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-US~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-GB~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~es-ES~.cab" /IgnoreCheck
+			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~pt-BR~.cab" /IgnoreCheck
+
+			Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
+
+			Write-Host "Wireless Display App installed."
+		}
+		elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
+			Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
+		}
+		else {
+			
+			#Installing Wireless Display App from Windows Feature Repository
+			
+			Write-Host "Installing Wireless Display App..."
+			
+			If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU")) {
+				New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Force | Out-Null# Win11 Home NA
+			}
+			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000000		# Win11 Home NA
+			Get-Service wuauserv | Restart-Service
+			Start-Sleep 1
+			DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
+			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000001		# Win11 Home NA
+			Get-Service wuauserv | Restart-Service
+			Start-Sleep 1
+			Write-Host "Wireless Display App installed."
+		}
+	}
+}
+
+
+###		                 ###
+### Performance Game / GPU Related ###
+###		                 ###
+
+
+
+function RemoveXboxFeatures {
+	
+	Write-Output "Disabling Xbox features."
+
+	# Xbox Live Auth Manager. If you don't use Xbox app to play games, then you don't need any of the Xbox services.
+	Stop-Service "XblAuthManager" -ea SilentlyContinue
+	Set-Service "XblAuthManager" -StartupType Disabled -ErrorAction SilentlyContinue			# Win11 Home Manual		LTSC Manual
+	
+
+	# Xbox Live Game Save Service.
+	Stop-Service "XblGameSave" -ea SilentlyContinue
+	Set-Service "XblGameSave" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home Manual		LTSC Manual
+	
+
+	# Xbox Live Networking Service.
+	Stop-Service "XboxNetApiSvc" -ea SilentlyContinue
+	Set-Service "XboxNetApiSvc" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home Manual		LTSC Manual
+	
+
+	# Xbox Game Monitoring Service.
+	Stop-Service "xbgm" -ea SilentlyContinue
+	Set-Service "xbgm" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC NA
+
+	
+	# Xbox Accessory Management Service.
+	Stop-Service "XboxGipSvc" -ea SilentlyContinue
+	Set-Service "XboxGipSvc" -StartupType Disabled -erroraction SilentlyContinue
+	
+
+	# Disable GameDVR and Broadcast used for game recordings and live broadcasts.
+	Stop-Service "BcastDVRUserService" -ea SilentlyContinue
+	Set-Service "BcastDVRUserService" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home Manual		LTSC Manual
+
+
+	Write-Output "Disabling scheduled Xbox service components."
+	
+	if(Get-ScheduledTask XblGameSaveTask* -ErrorAction Ignore) { Get-ScheduledTask  XblGameSaveTask* | Stop-ScheduledTask ; Get-ScheduledTask  XblGameSaveTask* | Disable-ScheduledTask } else { 'XblGameSaveTaskLogon does not exist on this device.'}		# Win11 Home Ready
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
+
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "ShowStartupPanel" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000								# Win11 Home 0		LTSC NA
+
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000												# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Type DWord -Value 0x00000002										# Win11 Home 2		LTSC 0
+
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "CursorCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "EchoCancellationEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "HistoricalCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 0		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "MicrophoneCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "Value" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
+
+	# Add workaround for bug that shows "You'll need a new app to open this ms-gamingoverlay" when starting a game
+    If (!(Test-Path "HKCR:")) {
+		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
+	}
+	If (!(Test-Path "HKCR:\ms-gamingoverlay")) {
+		New-Item -Path "HKCR:\ms-gamingoverlay" -Force | Out-Null
+	}
+	# reg add HKEY_CLASSES_ROOT\ms-gamingoverlay /t REG_SZ /d "URL:ms-gamingoverlay" /f
+	Set-ItemProperty -Path "HKCR:\ms-gamingoverlay" '(Default)' -Type String -Value "URL:ms-gamingoverlay" -Force											# Win11 Home "URL:ms-gamingoverlay"
+
+
+	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
+	$acl = $key.GetAccessControl()
+	$rule = New-Object System.Security.AccessControl.RegistryAccessRule (".\USERS","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
+	$acl.SetAccessRule($rule)
+	$key.SetAccessControl($acl)
+
+	$key.Close()
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Type DWord -Value 0x00000000 -Force		# Win11 Home 1	LTSC 1
+
+	Start-Sleep 1
+
+	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
+	if ((Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter').ActivationType -eq 1) {
+		Write-Output 'GameBar Presence Writer feature is still active.' '' 'Disable it manually, go to:' '' 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\' 'Microsoft\WindowsRuntime\ActivatableClassId\' 'Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter' '' 'in Registry Editor and change the parameter' '' 'ActivationType to 0' | msg /w *
+	}
+
+	Write-Host "Finished Removing Xbox features."
+}
+
+
+
+Function EnableGPUScheduling {
+	
+	Write-Host "Turn On Hardware Accelerated GPU Scheduling."
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Type DWord -Value 0x00000002							# Win11 Home NA		LTSC 2
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "PlatformSupportMiracast" -Type DWord -Value 0x00000001			# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "UnsupportedMonitorModesAllowed" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC 1
+}
+
+
+
+Function EnableVRR_AutoHDR {
+	
+	Write-Host "Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games."
+	
+	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
+		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -Type String -Value "VRROptimizeEnable=1;AutoHDREnable=1;SwapEffectUpgradeEnable=1;"		# Win11 Home SwapEffectUpgradeEnable=1;
+	
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings")) {
+		New-Item -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Name "SwapEffectUpgradeCache" -Type DWord -Value 0x00000001		# Win11 Home NA
+		
+	
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Type DWord -Value 0x00000001						# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Type DWord -Value 0x00000001				# Win11 Home NA		LTSC NA Adjust Video Based on Lighting
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableAutoEnhanceDuringPlayback" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
+
+}
+
+
+
+Function EnableEdge_GPU {
+	
+	Write-Host "Turn On Hardware Accelerated GPU on Microsoft Edge."
+
+	<#
+	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
+		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge" -Type String -Value "GpuPreference=2;"		# Win11 Home NA		LTSC NA
+	#>
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HardwareAccelerationModeEnabled " -Type DWord -Value 0x00000001
+
+	<# 
+	# Disable giant Bing search (AI chat) button in Edge Browser.
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HubsSidebarEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
+
+	#>
+}
+
+
+
+###				  	###
+###		Privacy		###
+###				  	###
+
+
+
+Function RemoveAutoLogger {
+	
+	Write-Host "Removing AutoLogger file and restricting directory."
+	
+	$autoLoggerDir = "$env:ProgramData\Microsoft\Diagnosis\ETLLogs\Autologger"
+	If (Test-Path "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl") {
+		Remove-Item "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl" -Force -ErrorAction SilentlyContinue
+	}
+	icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
+
+#This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+}
+
+Function DisableDataCollection {
+	
+	Write-Output "Turning off Data Collection via the AllowTelemtry key by changing it to 0"
+	
+	$DataCollection1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+	$DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
+	$DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+	If (Test-Path $DataCollection1) {
+		Set-ItemProperty $DataCollection1  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
+		Set-ItemProperty $DataCollection1  MaxTelemetryAllowed -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
+	}
+	If (Test-Path $DataCollection2) {
+		Set-ItemProperty $DataCollection2  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
+	}
+	If (Test-Path $DataCollection3) {
+		Set-ItemProperty $DataCollection3  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
+		Set-ItemProperty $DataCollection3  MaxTelemetryAllowed -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
+	}
+
+#This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+}
+
+
+function DisableDiagTrack {
+	
+	Write-Output "Stopping and disabling Connected User Experiences and Telemetry Service."
+	
+	#Stop-Service "DiagTrack" -ea SilentlyContinue
+	Set-Service "DiagTrack" -StartupType Disabled -erroraction SilentlyContinue										# Win11 Home Auto		LTSC Auto
+
+	#Stop-Service "DcpSvc" -ea SilentlyContinue
+	Set-Service "DcpSvc" -StartupType Disabled -erroraction SilentlyContinue
+
+	#Stop-Service "diagnosticshub.standardcollector.service" -ea SilentlyContinue
+	Set-Service "diagnosticshub.standardcollector.service" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home Manual		LTSC Manual
+
+	#Stop-Service "WdiServiceHost" -ea SilentlyContinue
+	Set-Service "WdiServiceHost" -StartupType Disabled -erroraction SilentlyContinue
+
+#This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+}
+
+
+Function DisableStartupEventTraceSession  {
+	
+	Write-Host "Disable All Startup Event Trace Session."
+	
+	<#
+	Event tracing sessions record events from one or more providers that a controller enables. The session is also responsible for managing and flushing the buffers. 
+	The controller defines the session, which typically includes specifying the session and log file name, type of log file to use, and the resolution of the time stamp used to record the events.
+	#>
+
+		Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger" | ForEach-Object {
+			$Var = $_.PsPath
+				If ((Test-Path $Var)) {
+					Set-ItemProperty -Path $Var -Name "Start" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
+				}
+			}
+	
+			<#
+	The operating system should not allow changes to the events below as it would cause chronic anomalies, however, we will ensure everything works as it should.
+	As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
+	#>	
+
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue	# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-System" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue			# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Security" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\UBPM" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue					# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\NetCore" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue					# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\RadioMgr" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue				# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderApiLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
+		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderAuditLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
+
+		# Delete all entries from Windows event logs on a computer or a server.
+		Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }
+
+		# https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
+
+		$events = @('SleepStudy','Kernel-Processor-Power','UserModePowerService')
+		foreach ($event in $events) {
+
+			wevtutil sl Microsoft-Windows-"$event"/Diagnostic /e:false
+		}
+
+#This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+}
+
+
+
+Function DisableRemoteAssistance {
+	
+	Write-Host "Disabling Remote Assistance."
+	
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 0
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
+}
+
+
+
+Function DisableRDP {
+	
+	<#
+	RDP consumes system resources, including CPU processing power, memory, and network bandwidth. 
+	When RDP is enabled, the system must maintain the ability to accept remote connections and process data transmitted over that connection.
+	#>
+
+	Write-Host "Disabling Remote Desktop."
+	
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001	# Win11 Home 1		LTSC 1
+	Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue														# Win11 Home NA
+
+	Write-Host "Disabling Remote Desktop Services."
+	#Stop-Service "TermService" -ea SilentlyContinue
+	Set-Service "TermService" -StartupType Disabled -erroraction SilentlyContinue																# Win11 Home Manual		LTSC Manual
+
+}
+
+
+
+Function AcceptedPrivacyPolicy {
+	
+	Write-Output "Turning off AcceptedPrivacyPolicy."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
+}
+
+
+
+Function DisableActivityHistory {
+	
+	Write-Host "Disabling activity history."
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000								# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
+	
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
+
+	Write-Host "Disable Shared Experiences."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000										# Win11 Home NA		LTSC NA
+}
+
+
+
+Function DisableAdvertisingID {
+	
+	Write-Host "Disabling Advertising ID."
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
+}
+
+
+
+Function DisableAdvertisingInfo {
+	
+	Write-Output "Disabling Windows Feedback Experience program."
+	
+	# Microsoft assigns a unique identificator to track your activity in the Microsoft Store and on UWP apps to target you with relevant ads.
+	
+	$Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
+	If (Test-Path $Advertising) {
+		Set-ItemProperty $Advertising Enabled -Type DWord -Value 0x00000000																							# Win11 Home 0		LTSC 0
+	}
+}
+
+
+
+Function DisableAppDiagnostics {
+	
+	Write-Output "Turning off AppDiagnostics."
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"	# Win11 Home Allow		LTSC Allow
+
+}
+
+
+
+Function DisableCEIP {
+	
+	Write-Host "Microsoft Customer Experience Improvement Program (CEIP)."
+	
+	<#
+	The program collects information about computer hardware and how you use Microsoft Application Virtualization without interrupting you.
+	This helps Microsoft identify which Microsoft Application Virtualization features to improve.
+	No information collected is used to identify or contact you.
+	#>
+
+	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.AppV::CEIP_Enable
+
+	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+	If (Test-Path $SQMClient1) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnable" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC NA
+	}
+
+	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
+	If (!(Test-Path $SQMClient2)) {
+		New-Item -Path $SQMClient2 -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000												# Win11 Home NA		LTSC NA
+
+	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
+	If (Test-Path $SQMClient3) {
+		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000													# Win11 Home 0		LTSC 0
+	}
+
+	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+	If (Test-Path $SQMClient4) {
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
+	}
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000														# Win11 Home NA		LTSC NA
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Name "CEIP" -Type DWord -Value 0x00000002														# Win11 Home NA		LTSC NA
+
+}
+
+
+
+Function DisableTelemetryTasks {
+	Write-Host "Disable Telemetry Tasks."
+
+	# This process is periodically collecting a variety of technical data about your computer and its performance and sending it to Microsoft for its Windows Customer Experience Improvement Program.
+
+	# https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/exploit-protection-reference?view=o365-worldwide
+
+	If (!(Test-Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe")) {
+		New-Item -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+
+}
+
+
+
+Function DisableErrorReporting {
+	
+	Write-Output "Disable Windows Error Reporting function to get better system response speed."
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001								# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001						# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001				# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001			# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
+
+#This is a complementary function to the SetDoReport \ DisableErrorReporting.
+}
+
+
+
+Function SetDoReport {
+	
+	Write-Output "Disable Windows Error Reporting function to get better system response speed."
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport")) { 
+		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Force | Out-Null															# Win11 Home NA	LTSC NA
+	}
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Name "Start" -Type DWord -Value 0x00000004						# Win11 Home NA	LTSC NA
+
+#This is a complementary function to the SetDoReport \ DisableErrorReporting.
+}
+
+
+
+
+Function DisableFeedbackExperience {
+	
+	Write-Output "Stops the Windows Feedback Experience from sending anonymous data."
+	
+	$Period1 = "HKCU:\Software\Microsoft\Siuf\Rules"
+	$Period2 = "HKCU:\Software\Microsoft\Siuf"
+	If (!(Test-Path $Period1)) { 
+		If (!(Test-Path $Period2)) { 
+			New-Item $Period2 -Force | Out-Null
+		}
+		New-Item $Period1 -Force | Out-Null
+	}
+	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0x00000000						# Win11 Home NA		LTSC NA
+	Set-ItemProperty $Period1 PeriodInNanoSeconds -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
+}
+
+
+
+Function DisableLocationTracking {
+	
+	# Disabling this will break Microsoft Find My Device functionality.
+	
+	Write-Output "Disabling Location Tracking."
+
+	#Stop-Service "lfsvc" -ea SilentlyContinue
+	Set-Service "lfsvc" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Manual
+	
+
+	$SensorState = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}"
+	$LocationConfig = "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration"
+
+	Set-ItemProperty $SensorState SensorPermissionState -Type DWord -Value 0x00000000		# Win11 Home 1
+	Set-ItemProperty $LocationConfig Status -Type DWord -Value 0x00000000					# Win11 Home 1
+
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"		# Win11 Home Allow
+}
+
+
+
+Function DisableTailoredExperiences {
+	
+	Write-Host "Disabling Tailored Experiences AKA Spying and Diagnostic Data."
+	
+	# Diagnostic data for personalized tips, ads, and recommendations.
+
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
+
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Name "TailoredExperiencesWithDiagnosticDataEnabled" -Type DWord -Value 0x00000000	# Win11 Home 0		LTSC 0
+}
+																							
+
+
+###								   ###
+###  Remove Third Party Telemetry  ###
+###								   ###
+
+
+
+function DisableMozillaFirefoxTelemetry {	
+
+	Write-Host "Disable Mozilla Firefox Telemetry."
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox")) { 
+		New-Item "HKLM:\SOFTWARE\Policies\Mozilla\Firefox"  -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableTelemetry" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableDefaultBrowserAgent" -Type DWord -Value 0x00000001
+}
+
+
+
+function DisableGoogleChromeTelemetry {
+
+	Write-Host "Disable Google Chrome Telemetry."
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome")) { 
+		New-Item "HKLM:\SOFTWARE\Policies\Google\Chrome"  -Force | Out-Null
+	}
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome")) { 
+		New-Item "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome"  -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupReportingEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "MetricsReportingEnabled" -Type DWord -Value 0x00000000
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "UserFeedbackAllowed" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "DeviceMetricsReportingEnabled" -Type DWord -Value 0x00000000
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome" -Name "UserFeedbackAllowed" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome" -Name "DeviceMetricsReportingEnabled" -Type DWord -Value 0x00000000
+
+	###- Block Google Chrome Software Reporter Tool
+	# The Software Reporter Tool (also known as Chrome Cleanup Tool and Software Removal Tool, the executable file is software_reporter_tool.exe), is a tool that Google distributes with the Google Chrome web browser. 
+	# It is a part of Google Chrome's Clean up Computer feature which scans your computer for harmful software. If this tool finds any harmful app or extension which can cause problems, it removes them from your computer. 
+	# Anything that interferes with a user's browsing experience may be removed by the tool.
+	# Its disadvantages, high CPU load or privacy implications, may be reason enough to block it from running. This script will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
+	# Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update.
+
+	# This will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
+	# Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update. 
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Force | Out-Null
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+
+}
+
+
+
+function DisableCCleanerMonitoring {
+
+	Write-Host "Disable CCleaner Monitoring."
+
+	<#	Since Avast acquired Piriform, the popular system cleaning software CCleaner has become bloated with malware, bundled PUPs(potentially unwanted programs), and an alarming amount of pop-up ads.
+		If you're highly dependent on CCleaner you can disable with this script the CCleaner Active Monitoring ("Active Monitoring" feature has been renamed to "Smart Cleaning"), 
+		automatic Update check and download function, trial offer notifications, the new integrated Software Updater and the privacy option to "Help Improve CCleaner by sending anonymous usage data".
+	#>
+
+	If (!(Test-Path "HKCU:\Software\Piriform\CCleaner")) { 
+		New-Item "HKCU:\Software\Piriform\CCleaner" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "Monitoring" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "HelpImproveCCleaner" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "SystemMonitoring" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "UpdateAuto" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "UpdateCheck" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "CheckTrialOffer" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)GetIpmForTrial" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdater" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdaterIpm" -Type DWord -Value 0x00000000
+
+	if(Get-ScheduledTask 'CCleaner Update' -ErrorAction Ignore) { Get-ScheduledTask  'CCleaner Update' | Stop-ScheduledTask ; Get-ScheduledTask  'CCleaner Update' | Disable-ScheduledTask } else { 'CCleaner Update task does not exist on this device.'}
+	$tempCCleaner = 'CCleanerSkipUAC - ' + $env:USERNAME
+	if(Get-ScheduledTask $tempCCleaner -ErrorAction Ignore) { Get-ScheduledTask  $tempCCleaner | Stop-ScheduledTask ; Get-ScheduledTask  $tempCCleaner | Disable-ScheduledTask } else { 'CCleanerSkipUAC task does not exist on this device.'}
+
+}
+
+
+
+function DisableMediaPlayerTelemetry {
+
+	Write-Host "Disable Media Player Telemetry."
+
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\MediaPlayer\Preferences" -Name "UsageTracking" -Type DWord -Value 0x00000000		# Win11 Home NA
+
+	If (!(Test-Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer")) { 
+		New-Item "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventCDDVDMetadataRetrieval" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventMusicFileMetadataRetrieval" -Type DWord -Value 0x00000000	# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventRadioPresetsRetrieval" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM")) { 
+		New-Item "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Name "DisableOnline" -Type DWord -Value 0x00000001		# Win11 Home NA	LTSC NA
+
+
+	#Stop-Service "WMPNetworkSvc" -ea SilentlyContinue
+	Set-Service "WMPNetworkSvc" -StartupType Disabled -erroraction SilentlyContinue												# Win11 Home Manual	LTSC Manual
+
+}
+
+
+
+function DisableMicrosoftOfficeTelemetry {
+	
+	Write-Host "Disable Microsoft Office Telemetry."
+
+	# This will disable Microsoft Office telemetry (supports Microsoft Office 2013 and 2016)
+
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common" -Force | Out-Null
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" -Force | Out-Null
+
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common" -Force | Out-Null
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common\Feedback" -Force | Out-Null
+
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common" -Force | Out-Null
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" -Force | Out-Null
+		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Feedback" -Force | Out-Null
+
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common" -Name "QMEnable" -Type DWord -Value 0x00000000											# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common\Feedback" -Name "Enabled" -Type DWord -Value 0x00000000									# Win11 Home NA	LTSC NA
+	
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common" -Name "QMEnable" -Type DWord -Value 0x00000000											# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" -Name "DisableTelemetry" -Type DWord -Value 0x00000001					# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Feedback" -Name "Enabled" -Type DWord -Value 0x00000000									# Win11 Home NA	LTSC NA
+
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" -Name "DisableTelemetry" -Type DWord -Value 0x00000001						# Win11 Home NA	LTSC NA
+
+	if(Get-ScheduledTask OfficeTelemetry* -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetry* | Stop-ScheduledTask ; Get-ScheduledTask  OfficeTelemetry* | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack task does not exist on this device.'} # initiates the background task for the Office Telemetry Agent that scans and uploads usage and error information for Office solutions
+
+}
+
+
+
+Function DisableVisualStudioTelemetry {
+	
+	Write-Host "Disable Visual Studio Telemetry."
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Name "CustomerFeedback" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM")) {
+		New-Item -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\VSCommon\15.0\SQM")) {
+		New-Item -Path "HKCU:\Software\Microsoft\VSCommon\15.0\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\VSCommon\15.0\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\VSCommon\16.0\SQM")) {
+		New-Item -Path "HKCU:\Software\Microsoft\VSCommon\16.0\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\VSCommon\16.0\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM")) {
+		New-Item -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableFeedbackDialog" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableEmailInput" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableScreenshotCapture" -Type DWord -Value 0x00000001
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Setup")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Setup" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\VisualStudio\Setup" -Name "ConcurrentDownloads" -Type DWord -Value 0x00000002
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Feedback")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Feedback" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableFeedbackDialog" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableEmailInput" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Feedback" -Name "DisableScreenshotCapture" -Type DWord -Value 0x00000001
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Setup")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Setup" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\VisualStudio\Setup" -Name "ConcurrentDownloads" -Type DWord -Value 0x00000002
+
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\VisualStudio\Telemetry")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\VisualStudio\Telemetry" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\VisualStudio\Telemetry" -Name "TurnOffSwitch" -Type DWord -Value 0x00000001
+
+}
+
+
+
+function DisableNvidiaDriverTelemetry {
+
+	Write-Host "Disable Nvidia Driver Telemetry."
+
+	If (!(Test-Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client")) { 
+		New-Item "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Force | Out-Null															# Win11 Home NA	LTSC NA
+	}
+
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup")) { 
+		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Force | Out-Null													# Win11 Home NA	LTSC NA
+	}
+	
+	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer")) { 
+		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" -Force | Out-Null														# Win11 Home NA	LTSC NA
+	}
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Name "OptInOrOutPreference" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Name "SendTelemetryData" -Type DWord -Value 0x00000000	# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" -Name "Start" -Type DWord -Value 0x00000004					# Win11 Home NA	LTSC NA
+
+}
+
+
+
+###		   ###
+###	System ###
+###        ###
+
+
+
+Function RemoveScheduledTasks {
+	
+	Write-Output "`n"
+	Write-Output "`nDisabling scheduled tasks that are considered unnecessary."
+	Write-Output "...If nothing happens within 30 seconds, please close this window and run the script again.`n"
+	Write-Output "`n"
+
+
+	# See more at http://wiki.webperfect.ch/index.php?title=Windows_Telemetry
+
+
+
+	Write-Output "Disabling scheduled group telemetry."
+
+	if(Get-ScheduledTask Consolidator -ErrorAction Ignore) { Get-ScheduledTask  Consolidator | Stop-ScheduledTask ; Get-ScheduledTask  Consolidator | Disable-ScheduledTask } else { 'Consolidator task does not exist on this device.'}		# Win11 Home Ready		collects and sends usage data to Microsoft (if the user has consented to participate in the CEIP)
+	if(Get-ScheduledTask KernelCeipTask -ErrorAction Ignore) { Get-ScheduledTask  KernelCeipTask | Stop-ScheduledTask ; Get-ScheduledTask  KernelCeipTask | Disable-ScheduledTask } else { 'KernelCeipTask does not exist on this device.'}		# Win11 Home NA		collects additional information related to customer experience and sends it to Microsoft (if the user consented to participate in the Windows CEIP)
+	if(Get-ScheduledTask UsbCeip -ErrorAction Ignore) { Get-ScheduledTask  UsbCeip | Stop-ScheduledTask ; Get-ScheduledTask  UsbCeip | Disable-ScheduledTask } else { 'UsbCeip task does not exist on this device.'}							# Win11 Home Ready
+	if(Get-ScheduledTask BthSQM -ErrorAction Ignore) { Get-ScheduledTask  BthSQM | Stop-ScheduledTask ; Get-ScheduledTask  BthSQM | Disable-ScheduledTask } else { 'BthSQM task does not exist on this device.'}								# Win11 Home NA		collects Bluetooth-related statistics and information about your machine and sends it to Microsoft (if you have consented to participate in the Windows CEIP). The information received is used to help.
+
+
+	Write-Output "Disabling collects data for Microsoft SmartScreen."
+	if(Get-ScheduledTask SmartScreenSpecific -ErrorAction Ignore) { Get-ScheduledTask  SmartScreenSpecific | Stop-ScheduledTask ; Get-ScheduledTask  SmartScreenSpecific | Disable-ScheduledTask } else { 'SmartScreenSpecific task does not exist on this device.'}	# Win11 Home NA
+
+
+	Write-Output "Disabling scheduled customer experience improvement program."
+	if(Get-ScheduledTask Proxy -ErrorAction Ignore) { Get-ScheduledTask  Proxy | Stop-ScheduledTask ; Get-ScheduledTask  Proxy | Disable-ScheduledTask } else { 'Proxy task does not exist on this device.'}														# Win11 Home Ready		collects and uploads Software Quality Management (SQM) data if opted-in to the CEIP
+	if(Get-ScheduledTask StartupAppTask -ErrorAction Ignore) { Get-ScheduledTask  StartupAppTask | Stop-ScheduledTask ; Get-ScheduledTask  StartupAppTask | Disable-ScheduledTask } else { 'StartupAppTask does not exist on this device.'}							# Win11 Home Ready
+	if(Get-ScheduledTask ProgramDataUpdater -ErrorAction Ignore) { Get-ScheduledTask  ProgramDataUpdater | Stop-ScheduledTask ; Get-ScheduledTask  ProgramDataUpdater | Disable-ScheduledTask } else { 'ProgramDataUpdater task does not exist on this device.'}	# Win11 Home NA		collects program telemetry information if opted-in to the Microsoft Customer Experience Improvement Program (CEIP)
+	if(Get-ScheduledTask 'Microsoft Compatibility Appraiser' -ErrorAction Ignore) { Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Stop-ScheduledTask ; Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Disable-ScheduledTask } else { 'Microsoft Compatibility Appraiser task does not exist on this device.'}	# Win11 Home Ready		collects program telemetry information if opted-in to the CEIP
+	if(Get-ScheduledTask Uploader -ErrorAction Ignore) { Get-ScheduledTask  Uploader | Stop-ScheduledTask ; Get-ScheduledTask  Uploader | Disable-ScheduledTask } else { 'Uploader task does not exist on this device.'}											# Win11 Home NA
+
+
+	Write-Output "Disabling scheduled feedback."
+	if(Get-ScheduledTask DmClient -ErrorAction Ignore) { Get-ScheduledTask  DmClient | Stop-ScheduledTask ; Get-ScheduledTask  DmClient | Disable-ScheduledTask } else { 'DmClient task does not exist on this device.'}						# Win11 Home Ready
+	if(Get-ScheduledTask DmClientOnScenarioDownload -ErrorAction Ignore) { Get-ScheduledTask  DmClientOnScenarioDownload | Stop-ScheduledTask ; Get-ScheduledTask  DmClientOnScenarioDownload | Disable-ScheduledTask } else { 'DmClientOnScenarioDownload task does not exist on this device.'}	# Win11 Home Ready
+
+
+	Write-Output "Disabling scheduled windows system assessment tool."
+	if(Get-ScheduledTask WinSAT -ErrorAction Ignore) { Get-ScheduledTask  WinSAT | Stop-ScheduledTask ; Get-ScheduledTask  WinSAT | Disable-ScheduledTask } else { 'WinSAT task does not exist on this device.'}								# Win11 Home Ready		measures system performance and capabilities
+
+
+	Write-Output "Disabling scheduled family safety settings."
+	if(Get-ScheduledTask FamilySafetyMonitor -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyMonitor | Stop-ScheduledTask ; Get-ScheduledTask  FamilySafetyMonitor | Disable-ScheduledTask } else { 'FamilySafetyMonitor task does not exist on this device.'}	# Win11 Home Ready		initializes family safety monitoring and enforcement
+	if(Get-ScheduledTask FamilySafetyRefresh* -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyRefresh* | Stop-ScheduledTask ; Get-ScheduledTask  FamilySafetyRefresh* | Disable-ScheduledTask } else { 'FamilySafetyRefresh task does not exist on this device.'}	# Win11 Home Ready		synchronizes the latest settings with the family safety website
+
+
+	Write-Output "Disabling scheduled collects network information."
+	if(Get-ScheduledTask GatherNetworkInfo -ErrorAction Ignore) { Get-ScheduledTask  GatherNetworkInfo | Stop-ScheduledTask ; Get-ScheduledTask  GatherNetworkInfo | Disable-ScheduledTask } else { 'GatherNetworkInfo task does not exist on this device.'}			# Win11 Home Ready		collects network information
+
+
+	Write-Output "Disabling scheduled legacy tasks."
+	if(Get-ScheduledTask AitAgent -ErrorAction Ignore) { Get-ScheduledTask  AitAgent | Stop-ScheduledTask ; Get-ScheduledTask  AitAgent | Disable-ScheduledTask } else { 'AitAgent task does not exist on this device.'}															# Win11 Home NA	aggregates and uploads application telemetry information if opted-in to the CEIP
+	if(Get-ScheduledTask ScheduledDefrag -ErrorAction Ignore) { Get-ScheduledTask  ScheduledDefrag | Stop-ScheduledTask ; Get-ScheduledTask  ScheduledDefrag | Disable-ScheduledTask } else { 'ScheduledDefrag task does not exist on this device.'}								# Win11 Home Ready
+	if(Get-ScheduledTask 'SQM data sender' -ErrorAction Ignore) { Get-ScheduledTask  'SQM data sender' | Stop-ScheduledTask ; Get-ScheduledTask  'SQM data sender' | Disable-ScheduledTask } else { 'SQM Data Sender task does not exist on this device.'}							# Win11 Home NA	sends SQM data to Microsoft
+	if(Get-ScheduledTask *DiskDiagnostic* -ErrorAction Ignore) { Get-ScheduledTask  *DiskDiagnostic* | Stop-ScheduledTask ; Get-ScheduledTask  *DiskDiagnostic* | Disable-ScheduledTask } else { 'DiskDiagnosticResolver task does not exist on this device.'}	# Win11 Home Ready	collects general disk and system information and sends it to Microsoft (if the user users participates in the CEIP)
+
+
+	Write-Output "Disabling scheduled error reporting."
+	if(Get-ScheduledTask QueueReporting -ErrorAction Ignore) { Get-ScheduledTask  QueueReporting | Stop-ScheduledTask ; Get-ScheduledTask  QueueReporting | Disable-ScheduledTask } else { 'QueueReporting task does not exist on this device.'}									# Win11 Home Ready
+
+	Write-Output "Disabling scheduled Power Efficiency Diagnostics."
+	if(Get-ScheduledTask AnalyzeSystem -ErrorAction Ignore) { Get-ScheduledTask  AnalyzeSystem | Stop-ScheduledTask ; Get-ScheduledTask  AnalyzeSystem | Disable-ScheduledTask } else { 'AnalyzeSystem task does not exist on this device.'}										# Win11 Home Ready
+
+
+	Write-Output "Disabling scheduled tasks From Third-Party Apps."
+	if(Get-ScheduledTask 'Adobe Acrobat Update Task' -ErrorAction Ignore) { Get-ScheduledTask  'Adobe Acrobat Update Task' | Stop-ScheduledTask ; Get-ScheduledTask  'Adobe Acrobat Update Task' | Disable-ScheduledTask } else { 'Adobe Acrobat Update Task does not exist on this device.'}
+
+	if(Get-ScheduledTask AMDInstallLauncher -ErrorAction Ignore) { Get-ScheduledTask  AMDInstallLauncher| Stop-ScheduledTask ; Get-ScheduledTask  AMDInstallLauncher | Disable-ScheduledTask } else { 'AMDInstallLauncher does not exist on this device.'}
+	if(Get-ScheduledTask AMDRyzenMasterSDKTask -ErrorAction Ignore) { Get-ScheduledTask  AMDRyzenMasterSDKTask | Stop-ScheduledTask ; Get-ScheduledTask  AMDRyzenMasterSDKTask | Disable-ScheduledTask } else { 'AMDRyzenMasterSDKTask does not exist on this device.'}
+	if(Get-ScheduledTask AMDScoSupportTypeUpdate -ErrorAction Ignore) { Get-ScheduledTask  AMDScoSupportTypeUpdate | Stop-ScheduledTask ; Get-ScheduledTask  AMDScoSupportTypeUpdate | Disable-ScheduledTask } else { 'AMDScoSupportTypeUpdate does not exist on this device.'}
+	if(Get-ScheduledTask StartCN -ErrorAction Ignore) { Get-ScheduledTask  StartCN | Stop-ScheduledTask ; Get-ScheduledTask  StartCN | Disable-ScheduledTask } else { 'StartCN does not exist on this device.'}
+
+	if(Get-ScheduledTask SystemOptimizer -ErrorAction Ignore) { Get-ScheduledTask  SystemOptimizer | Stop-ScheduledTask ; Get-ScheduledTask  SystemOptimizer | Disable-ScheduledTask } else { 'HP SystemOptimizer task does not exist on this device.'}
+	if(Get-ScheduledTask 'Printer Health Monitor' -ErrorAction Ignore) { Get-ScheduledTask  'Printer Health Monitor' | Stop-ScheduledTask ; Get-ScheduledTask  'Printer Health Monitor' | Disable-ScheduledTask } else { 'HP Printer Health Monitor task does not exist on this device.'} # sends SQM data to Microsoft
+	if(Get-ScheduledTask 'Printer Health Monitor Logon' -ErrorAction Ignore) { Get-ScheduledTask  'Printer Health Monitor Logon' | Stop-ScheduledTask ; Get-ScheduledTask  'Printer Health Monitor Logon' | Disable-ScheduledTask } else { 'HP Printer Health Monitor Logon task does not exist on this device.'} # sends SQM data to Microsoft
+
+	if(Get-ScheduledTask Duet* -ErrorAction Ignore) { Get-ScheduledTask  Duet* | Stop-ScheduledTask ; Get-ScheduledTask  Duet* | Disable-ScheduledTask } else { 'Duet Updater task does not exist on this device.'}
+}
 
 
 
@@ -441,124 +1651,90 @@ Function DisableAppCompat {
 
 
 
-function RemoveThirdPartyTelemetry {	
-
-	# Remove Telemetry From Third-Party Apps.
-
-	Write-Host "Disable Mozilla Firefox Telemetry."
+#The AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
+Function DisableAutoplayHandler {
 	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox")) { 
-		New-Item "HKLM:\SOFTWARE\Policies\Mozilla\Firefox"  -Force | Out-Null
+	Write-Output "Disabling AutoplayHandlers."
+	
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 0x00000001	# Win11 Home 0		LTSC 1
+}
+
+
+
+Function DisableBingSearch {
+	
+	Write-Output "Disabling Bing Search in Start Menu."
+	
+	$WebSearch = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
+	
+	If (!(Test-Path $WebSearch)) {
+		New-Item $WebSearch -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableTelemetry" -Type DWord -Value 0x00000001
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableDefaultBrowserAgent" -Type DWord -Value 0x00000001
+	Set-ItemProperty $WebSearch DisableWebSearch -Type DWord -Value 0x00000001																	# Win11 Home NA		LTSC NA
 
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
 
-	Write-Host "Disable Google Chrome Telemetry."
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome")) { 
-		New-Item "HKLM:\SOFTWARE\Policies\Google\Chrome"  -Force | Out-Null
+	$DisableSearchBox = "HKCU:\Software\Policies\Microsoft\Windows\Explorer"
+	
+	If (!(Test-Path $DisableSearchBox)) {
+		New-Item $DisableSearchBox -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupEnabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupReportingEnabled" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "MetricsReportingEnabled" -Type DWord -Value 0x00000000
+	Set-ItemProperty $DisableSearchBox DisableSearchBoxSuggestions -Type DWord -Value 0x00000001												# Win11 Home NA		LTSC NA
+}
 
-	###- Block Google Chrome Software Reporter Tool
-	# The Software Reporter Tool (also known as Chrome Cleanup Tool and Software Removal Tool, the executable file is software_reporter_tool.exe), is a tool that Google distributes with the Google Chrome web browser. 
-	# It is a part of Google Chrome's Clean up Computer feature which scans your computer for harmful software. If this tool finds any harmful app or extension which can cause problems, it removes them from your computer. 
-	# Anything that interferes with a user's browsing experience may be removed by the tool.
-	# Its disadvantages, high CPU load or privacy implications, may be reason enough to block it from running. This script will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
-	# Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update.
 
-	# This will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
-	# Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update. 
-	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe")) {
-		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Force | Out-Null
-		Write-Output "Google Chrome Software Reporter Tool has been successfully blocked."
+
+Function DisableCortanaSearch {
+	
+	Write-Output "Stopping Cortana from being used as part of your Windows Search Function."
+
+	# Cortana was deprecated in June 2023.
+	
+	$Search = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
+	If (!(Test-Path $Search)) {
+		New-Item $Search -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+	Set-ItemProperty $Search AllowCortana -Type DWord -Value 0x00000000																			# Win11 Home NA		LTSC NA
+
+}
 
 
-	Write-Host "Disable CCleaner Monitoring."
 
-	<#	Since Avast acquired Piriform, the popular system cleaning software CCleaner has become bloated with malware, bundled PUPs(potentially unwanted programs), and an alarming amount of pop-up ads.
-		If you're highly dependent on CCleaner you can disable with this script the CCleaner Active Monitoring ("Active Monitoring" feature has been renamed to "Smart Cleaning"), 
-		automatic Update check and download function, trial offer notifications, the new integrated Software Updater and the privacy option to "Help Improve CCleaner by sending anonymous usage data".
-	#>
+Function PrintScreenToSnippingTool {
+	
+	Write-Output "Use print screen to open snipping tool."
+	
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "PrintScreenKeyForSnippingEnabled" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
+}
 
-	If (!(Test-Path "HKCU:\Software\Piriform\CCleaner")) { 
-		New-Item "HKCU:\Software\Piriform\CCleaner" -Force | Out-Null
+
+
+Function DisableLiveTiles {
+	
+	Write-Output "Disabling live tiles."
+	
+	$Live = "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications"
+	If (!(Test-Path $Live)) {  
+		New-Item $Live -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "Monitoring" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "HelpImproveCCleaner" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "SystemMonitoring" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "UpdateAuto" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "UpdateCheck" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "CheckTrialOffer" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)GetIpmForTrial" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdater" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdaterIpm" -Type DWord -Value 0x00000000
-
-	if(Get-ScheduledTask 'CCleaner Update' -ErrorAction Ignore) { Get-ScheduledTask  'CCleaner Update' | Stop-ScheduledTask ; Get-ScheduledTask  'CCleaner Update' | Disable-ScheduledTask } else { 'CCleaner Update task does not exist on this device.'}
-	$tempCCleaner = 'CCleanerSkipUAC - ' + $env:USERNAME
-	if(Get-ScheduledTask $tempCCleaner -ErrorAction Ignore) { Get-ScheduledTask  $tempCCleaner | Stop-ScheduledTask ; Get-ScheduledTask  $tempCCleaner | Disable-ScheduledTask } else { 'CCleanerSkipUAC task does not exist on this device.'}
+	Set-ItemProperty $Live  NoTileApplicationNotification -Type DWord -Value 0x00000001													# Win11 Home NA		LTSC NA
+}
 
 
-	Write-Host "Disable Media Player Telemetry."
 
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\MediaPlayer\Preferences" -Name "UsageTracking" -Type DWord -Value 0x00000000		# Win11 Home NA
-
-	If (!(Test-Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer")) { 
-		New-Item "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Force | Out-Null
+Function DisableWidgets {
+	
+	Write-Output "Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off."
+	
+	Write-Host "Checking if Widgets is installed..."
+	if (Test-Path $Env:windir\SystemApps\MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy) {
+		winget uninstall "windows web experience pack" --silent		
 	}
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventCDDVDMetadataRetrieval" -Type DWord -Value 0x00000001		# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventMusicFileMetadataRetrieval" -Type DWord -Value 0x00000001	# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventRadioPresetsRetrieval" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
+	else {
+		Write-Host "Widgets do not exist on this device."
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM")) { 
-		New-Item "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Name "DisableOnline" -Type DWord -Value 0x00000001		# Win11 Home NA	LTSC NA
-
-
-	#Stop-Service "WMPNetworkSvc" -ea SilentlyContinue
-	Set-Service "WMPNetworkSvc" -StartupType Disabled -erroraction SilentlyContinue												# Win11 Home Manual	LTSC Manual
-
-
-	Write-Host "Disable Microsoft Office Telemetry."
-	# This will disable Microsoft Office telemetry (supports Microsoft Office 2013 and 2016)
-
-	If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\15.0\osm")) { 
-		New-Item "HKCU:\SOFTWARE\Policies\Microsoft\Office\15.0\osm" -Force | Out-Null											# Win11 Home NA	LTSC NA
-	}
-
-	If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\16.0\osm")) { 
-		New-Item "HKCU:\SOFTWARE\Policies\Microsoft\Office\16.0\osm" -Force | Out-Null											# Win11 Home NA	LTSC NA
-	}
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\15.0\osm" -Name "Enablelogging" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\15.0\osm" -Name "EnableUpload" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\16.0\osm" -Name "Enablelogging" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Office\16.0\osm" -Name "EnableUpload" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
-
-
-	if(Get-ScheduledTask OfficeTelemetry* -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetry* | Stop-ScheduledTask ; Get-ScheduledTask  OfficeTelemetry* | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack task does not exist on this device.'} # initiates the background task for the Office Telemetry Agent that scans and uploads usage and error information for Office solutions
-
-
-	Write-Host "Disable Nvidia Driver Telemetry."
-
-	If (!(Test-Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client")) { 
-		New-Item "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Force | Out-Null															# Win11 Home NA	LTSC NA
-	}
-
-	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup")) { 
-		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Force | Out-Null													# Win11 Home NA	LTSC NA
-	}	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" -Name "OptInOrOutPreference" -Type DWord -Value 0x00000000		# Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" -Name "SendTelemetryData" -Type DWord -Value 0x00000000	# Win11 Home NA	LTSC NA
-
-
-
-
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarDa" -Type DWord -Value 0x00000000	# Win11 Home 0		LTSC NA
 }
 
 
@@ -611,54 +1787,25 @@ Function RemoveCloudStore {
 
 
 
-function DisableDeleteNotify {
+Function SetAeDebug {
 	
-	<#
-	TRIM (also called Trim or Trim Command) allows your SSD drive to handle garbage more evidentially.
-	TRIM allows the operating system to decide which blocks are already in use so they can be wiped internally.
-	Anytime you delete something, TRIM automatically deletes that page or block.
-	The next time the page or block is written to, the operating system does not have to wait for that block to be deleted.
-	SSD TRIM can prolong the life and performance of your SSD drive.
+	Write-Output "Turn off Just-In-Time Debugging function to improve system performance (Dr. Watson)."
 
-	https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
-	#>
-
-	Write-Output "Force TRIM state to On."
+	# https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/disable-enable-dr-watson-program
 	
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Allows TRIM operations to be sent to the storage device."
-		# fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 0			# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
-		fsutil behavior set DisableDeleteNotify ReFS 0		# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
-	}
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Allows TRIM operations to be sent to the storage device."
-		# fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 0			# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
-		fsutil behavior set DisableDeleteNotify ReFS 0		# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
-	} 
-}  
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"		# Win11 Home NA		LTSC NA
+}
 
 
 
-function SetLastAccessTimeStamp {
+Function SetSplitThreshold {
 	
-	<#
-		https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
-
-		# The disablelastaccess parameter can affect programs such as Backup and Remote Storage, which rely on this feature.
-	#>
-
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
-		# fsutil behavior query disablelastaccess
-		# fsutil behavior set disablelastaccess 0
-		fsutil behavior set disablelastaccess 1 # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
-	}
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
-		# fsutil behavior query disablelastaccess
-		# fsutil behavior set disablelastaccess 1
-		fsutil behavior set disablelastaccess 1 # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
-	}
+	$InstalledMemory = Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
+	$MemoryKB = [math]::Round($InstalledMemory / 1KB, 2)
+	
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "SvcHostSplitThresholdInKB" -Type DWord -Value $MemoryKB	# Win11 Home 0x00380000 (3670016)		LTSC 0x00380000 (3670016)
+	Write-Output "Setting SvcHostSplitThresholdInKB to $MemoryKB"
 }
 
 
@@ -739,49 +1886,101 @@ Function DisablePerformanceCounters {
 
 
 
-Function DisableStartupEventTraceSession  {
+Function SetSystemResponsiveness {
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "GPU Priority" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Priority" -Type DWord -Value 0x00000008			# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Scheduling Category" -Type String -Value "High"	# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "SFIO Priority" -Type String -Value "High"			# Win11 Home NA		LTSC NA
+
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 0x00000006					# Win11  00000002
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Type String -Value "High"			# Win11  Medium
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Type String -Value "High"				# Win11  Normal
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Type DWord -Value 0x00000000
+
+	# https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service
 	
-	Write-Host "Disable All Startup Event Trace Session."
+	# SystemResponsiveness determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS).
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0x0000000a			# Win11 Home 0x00000014 (20)	LTSC 0x00000014 (20)
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NoLazyMode" -Type DWord -Value 0x00000001					# Win11 Home NA	LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "AlwaysOn" -Type DWord -Value 0x00000001						# Win11 Home NA	LTSC NA
+
+
+#This is a complementary function to the SetSystemResponsiveness \ SomeKernelTweaks.
+}
+
+
+
+Function SomeKernelTweaks {
+
+	Write-Output "Disable Meltdown/Spectre/Zombieload patches."
+	
+	# https://support.microsoft.com/en-us/topic/kb4072698-windows-server-and-azure-stack-hci-guidance-to-protect-against-silicon-based-microarchitectural-and-speculative-execution-side-channel-vulnerabilities-2f965763-00e2-8f98-b632-0d96f30c8c8e
+	# https://support.microsoft.com/en-us/topic/guidance-for-disabling-intel-transactional-synchronization-extensions-intel-tsx-capability-0e3a560c-ab73-11d2-12a6-ed316377c99c
+
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverride" -Type DWord -Value 0x00000003			# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverrideMask" -Type DWord -Value 0x00000003		# Win11 Home NA		LTSC NA
+
+	# Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel" -Name "DisableTsx" -Type DWord -Value 0x00000000								# Win11 Home NA
+
+	Write-Output "Disable 57-bits 5-level paging."
+	bcdedit /set linearaddress57 OptOut | Out-Null
+	# https://community.amd.com/t5/archives-discussions/5-level-paging-and-57-bit-linear-address-stop-that-stupid/td-p/80014
+	# In short, if you use a cluster of 16 Hard Disks with 16 TBytes each (>256 TBytes) in your work, revert this option!  bcdedit /deletevalue linearaddress57 | Out-Null
+
+
+	
+	Write-Output "Disable automatic TCG/Opal disk locking on supported SSD drives with PSID."
+	
+	#reg add HKLM\Software\Policies\Microsoft\Windows\EnhancedStorageDevices /v TCGSecurityActivationDisabled /t REG_DWORD /d 1 /f
+	
+	Set-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\EnhancedStorageDevices" -Name "TCGSecurityActivationDisabled" -Type DWord -Value 0x00000001			# Win11 Home 0		LTSC 0
+	
+	# Set this value to 1 to enable stronger protection on system base objects such as the KnownDLLs list.
+	
+	# https://learn.microsoft.com/en-US/troubleshoot/windows-client/networking/system-error-85-net-use-command
+	
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "ProtectionMode" -Type DWord -Value 0x00000000									# Win11 Home 1		LTSC 1
+
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Build greater than 22000 detected. Fixed requesting a higher resolution timer from Jurassic Period apps."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" -Name "GlobalTimerResolutionRequests" -Type DWord -Value 0x00000001				# Win11 NA		LTSC NA
+	} 
+
+	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md#fixing-timing-precision-in-windows-after-the-great-rule-change
+
+#This is a complementary function to the SetSystemResponsiveness \ SomeKernelTweaks.
+}
+
+
+
+Function MisconceptionHPET {
+	
+	Write-Output "Reverting misconception about HPET-TSC-PMT to system default values."
 	
 	<#
-	Event tracing sessions record events from one or more providers that a controller enables. The session is also responsible for managing and flushing the buffers. 
-	The controller defines the session, which typically includes specifying the session and log file name, type of log file to use, and the resolution of the time stamp used to record the events.
+	"Unless you need to run a very very certain and specific program that requires HPET, useplatformclock + HPET is not suggested.
+	HPET should only used as a platform source for synchronization purposes or different purposes when actually required.
+	While TSC runs at an average frequency of 3 MHz, depending on your processor characteristics, HPET is a high precision timer, and can run at up to 22 MHz on modern computers!
+	This makes your computer perform poorly due to using HPET when not needed.
+	Such a level of precision is not required on every single application and will slowdown your computer's performance."
+	
+	https://sites.google.com/view/melodystweaks/misconceptions-about-timers-hpet-tsc-pmt
+	https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
 	#>
 
-		Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger" | ForEach-Object {
-			$Var = $_.PsPath
-				If ((Test-Path $Var)) {
-					Set-ItemProperty -Path $Var -Name "Start" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
-				}
-			}
-	
-			<#
-	The operating system should not allow changes to the events below as it would cause chronic anomalies, however, we will ensure everything works as it should.
-	As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
-	#>	
-
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue	# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-System" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue			# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Security" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\UBPM" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue					# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\NetCore" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue					# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\RadioMgr" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue				# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderApiLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderAuditLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		# Win11 Home 1	LTSC 1
-
-		# Delete all entries from Windows event logs on a computer or a server.
-		Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }
-
-		# https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
-
-		$events = @('SleepStudy','Kernel-Processor-Power','UserModePowerService')
-		foreach ($event in $events) {
-
-			wevtutil sl Microsoft-Windows-"$event"/Diagnostic /e:false
-		}
-
-#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
+	# Reverting this misconception about HPET-TSC-PMT to system default values as below.
+	bcdedit /deletevalue useplatformclock | Out-Null
+	bcdedit /deletevalue useplatformtick | Out-Null
+	bcdedit /deletevalue disabledynamictick | Out-Null
+	bcdedit /deletevalue tscsyncpolicy | Out-Null
 }
+
 
 
 function SetPowerManagment {
@@ -1121,257 +2320,9 @@ function revertPowerManagment {
 
 
 
-Function RemoveFeaturesKeys {
-
-	# These are the registry keys that it will delete.
-	
-	$Keys = @(
-		# Remove Background Tasks
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
-		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
-
-
-		# Windows File
-		"HKCR:\Extensions\ContractId\Windows.File\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-
-		
-		# Registry keys to delete if they aren't uninstalled by RemoveAppXPackage/RemoveAppXProvisionedPackage
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
-		
-
-		# Scheduled Tasks to delete
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
-
-		# Windows Protocol Keys
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy" 
-
-
-		# Windows Share Target
-		"HKCR:\Extensions\ContractId\Windows.ShareTarget\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-	)
-
-
-	# This writes the output of each key it is removing and also removes the keys listed above.
-    If (!(Test-Path "HKCR:")) {
-		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
-	}
-	ForEach ($Key in $Keys) {
-		Write-Output "Removing $Key from registry"
-		Remove-Item -Path $Key -Force -Recurse -ErrorAction SilentlyContinue
-	}
-}
-
-
-Function RemoveScheduledTasks {
-	
-	Write-Output "`n"
-	Write-Output "`nDisabling scheduled tasks that are considered unnecessary."
-	Write-Output "...If nothing happens within 30 seconds, please close this window and run the script again.`n"
-	Write-Output "`n"
-
-
-	# See more at http://wiki.webperfect.ch/index.php?title=Windows_Telemetry
-
-
-
-	Write-Output "Disabling scheduled group telemetry."
-
-	if(Get-ScheduledTask Consolidator -ErrorAction Ignore) { Get-ScheduledTask  Consolidator | Stop-ScheduledTask ; Get-ScheduledTask  Consolidator | Disable-ScheduledTask } else { 'Consolidator task does not exist on this device.'}		# Win11 Home Ready		collects and sends usage data to Microsoft (if the user has consented to participate in the CEIP)
-	if(Get-ScheduledTask KernelCeipTask -ErrorAction Ignore) { Get-ScheduledTask  KernelCeipTask | Stop-ScheduledTask ; Get-ScheduledTask  KernelCeipTask | Disable-ScheduledTask } else { 'KernelCeipTask does not exist on this device.'}		# Win11 Home NA		collects additional information related to customer experience and sends it to Microsoft (if the user consented to participate in the Windows CEIP)
-	if(Get-ScheduledTask UsbCeip -ErrorAction Ignore) { Get-ScheduledTask  UsbCeip | Stop-ScheduledTask ; Get-ScheduledTask  UsbCeip | Disable-ScheduledTask } else { 'UsbCeip task does not exist on this device.'}							# Win11 Home Ready
-	if(Get-ScheduledTask BthSQM -ErrorAction Ignore) { Get-ScheduledTask  BthSQM | Stop-ScheduledTask ; Get-ScheduledTask  BthSQM | Disable-ScheduledTask } else { 'BthSQM task does not exist on this device.'}								# Win11 Home NA		collects Bluetooth-related statistics and information about your machine and sends it to Microsoft (if you have consented to participate in the Windows CEIP). The information received is used to help.
-
-
-	Write-Output "Disabling collects data for Microsoft SmartScreen."
-	if(Get-ScheduledTask SmartScreenSpecific -ErrorAction Ignore) { Get-ScheduledTask  SmartScreenSpecific | Stop-ScheduledTask ; Get-ScheduledTask  SmartScreenSpecific | Disable-ScheduledTask } else { 'SmartScreenSpecific task does not exist on this device.'}	# Win11 Home NA
-
-
-	Write-Output "Disabling scheduled customer experience improvement program."
-	if(Get-ScheduledTask Proxy -ErrorAction Ignore) { Get-ScheduledTask  Proxy | Stop-ScheduledTask ; Get-ScheduledTask  Proxy | Disable-ScheduledTask } else { 'Proxy task does not exist on this device.'}														# Win11 Home Ready		collects and uploads Software Quality Management (SQM) data if opted-in to the CEIP
-	if(Get-ScheduledTask StartupAppTask -ErrorAction Ignore) { Get-ScheduledTask  StartupAppTask | Stop-ScheduledTask ; Get-ScheduledTask  StartupAppTask | Disable-ScheduledTask } else { 'StartupAppTask does not exist on this device.'}							# Win11 Home Ready
-	if(Get-ScheduledTask ProgramDataUpdater -ErrorAction Ignore) { Get-ScheduledTask  ProgramDataUpdater | Stop-ScheduledTask ; Get-ScheduledTask  ProgramDataUpdater | Disable-ScheduledTask } else { 'ProgramDataUpdater task does not exist on this device.'}	# Win11 Home NA		collects program telemetry information if opted-in to the Microsoft Customer Experience Improvement Program (CEIP)
-	if(Get-ScheduledTask 'Microsoft Compatibility Appraiser' -ErrorAction Ignore) { Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Stop-ScheduledTask ; Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Disable-ScheduledTask } else { 'Microsoft Compatibility Appraiser task does not exist on this device.'}	# Win11 Home Ready		collects program telemetry information if opted-in to the CEIP
-	if(Get-ScheduledTask Uploader -ErrorAction Ignore) { Get-ScheduledTask  Uploader | Stop-ScheduledTask ; Get-ScheduledTask  Uploader | Disable-ScheduledTask } else { 'Uploader task does not exist on this device.'}											# Win11 Home NA
-
-
-	Write-Output "Disabling scheduled feedback."
-	if(Get-ScheduledTask DmClient -ErrorAction Ignore) { Get-ScheduledTask  DmClient | Stop-ScheduledTask ; Get-ScheduledTask  DmClient | Disable-ScheduledTask } else { 'DmClient task does not exist on this device.'}						# Win11 Home Ready
-	if(Get-ScheduledTask DmClientOnScenarioDownload -ErrorAction Ignore) { Get-ScheduledTask  DmClientOnScenarioDownload | Stop-ScheduledTask ; Get-ScheduledTask  DmClientOnScenarioDownload | Disable-ScheduledTask } else { 'DmClientOnScenarioDownload task does not exist on this device.'}	# Win11 Home Ready
-
-
-	Write-Output "Disabling scheduled windows system assessment tool."
-	if(Get-ScheduledTask WinSAT -ErrorAction Ignore) { Get-ScheduledTask  WinSAT | Stop-ScheduledTask ; Get-ScheduledTask  WinSAT | Disable-ScheduledTask } else { 'WinSAT task does not exist on this device.'}								# Win11 Home Ready		measures system performance and capabilities
-
-
-	Write-Output "Disabling scheduled family safety settings."
-	if(Get-ScheduledTask FamilySafetyMonitor -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyMonitor | Stop-ScheduledTask ; Get-ScheduledTask  FamilySafetyMonitor | Disable-ScheduledTask } else { 'FamilySafetyMonitor task does not exist on this device.'}	# Win11 Home Ready		initializes family safety monitoring and enforcement
-	if(Get-ScheduledTask FamilySafetyRefresh* -ErrorAction Ignore) { Get-ScheduledTask  FamilySafetyRefresh* | Stop-ScheduledTask ; Get-ScheduledTask  FamilySafetyRefresh* | Disable-ScheduledTask } else { 'FamilySafetyRefresh task does not exist on this device.'}	# Win11 Home Ready		synchronizes the latest settings with the family safety website
-
-
-	Write-Output "Disabling scheduled collects network information."
-	if(Get-ScheduledTask GatherNetworkInfo -ErrorAction Ignore) { Get-ScheduledTask  GatherNetworkInfo | Stop-ScheduledTask ; Get-ScheduledTask  GatherNetworkInfo | Disable-ScheduledTask } else { 'GatherNetworkInfo task does not exist on this device.'}			# Win11 Home Ready		collects network information
-
-
-	Write-Output "Disabling scheduled legacy tasks."
-	if(Get-ScheduledTask AitAgent -ErrorAction Ignore) { Get-ScheduledTask  AitAgent | Stop-ScheduledTask ; Get-ScheduledTask  AitAgent | Disable-ScheduledTask } else { 'AitAgent task does not exist on this device.'}															# Win11 Home NA	aggregates and uploads application telemetry information if opted-in to the CEIP
-	if(Get-ScheduledTask ScheduledDefrag -ErrorAction Ignore) { Get-ScheduledTask  ScheduledDefrag | Stop-ScheduledTask ; Get-ScheduledTask  ScheduledDefrag | Disable-ScheduledTask } else { 'ScheduledDefrag task does not exist on this device.'}								# Win11 Home Ready
-	if(Get-ScheduledTask 'SQM data sender' -ErrorAction Ignore) { Get-ScheduledTask  'SQM data sender' | Stop-ScheduledTask ; Get-ScheduledTask  'SQM data sender' | Disable-ScheduledTask } else { 'SQM Data Sender task does not exist on this device.'}							# Win11 Home NA	sends SQM data to Microsoft
-	if(Get-ScheduledTask *DiskDiagnostic* -ErrorAction Ignore) { Get-ScheduledTask  *DiskDiagnostic* | Stop-ScheduledTask ; Get-ScheduledTask  *DiskDiagnostic* | Disable-ScheduledTask } else { 'DiskDiagnosticResolver task does not exist on this device.'}	# Win11 Home Ready	collects general disk and system information and sends it to Microsoft (if the user users participates in the CEIP)
-
-
-	Write-Output "Disabling scheduled error reporting."
-	if(Get-ScheduledTask QueueReporting -ErrorAction Ignore) { Get-ScheduledTask  QueueReporting | Stop-ScheduledTask ; Get-ScheduledTask  QueueReporting | Disable-ScheduledTask } else { 'QueueReporting task does not exist on this device.'}									# Win11 Home Ready
-
-	Write-Output "Disabling scheduled Power Efficiency Diagnostics."
-	if(Get-ScheduledTask AnalyzeSystem -ErrorAction Ignore) { Get-ScheduledTask  AnalyzeSystem | Stop-ScheduledTask ; Get-ScheduledTask  AnalyzeSystem | Disable-ScheduledTask } else { 'AnalyzeSystem task does not exist on this device.'}										# Win11 Home Ready
-
-
-	Write-Output "Disabling scheduled tasks From Third-Party Apps."
-	if(Get-ScheduledTask 'Adobe Acrobat Update Task' -ErrorAction Ignore) { Get-ScheduledTask  'Adobe Acrobat Update Task' | Stop-ScheduledTask ; Get-ScheduledTask  'Adobe Acrobat Update Task' | Disable-ScheduledTask } else { 'Adobe Acrobat Update Task does not exist on this device.'}
-
-	if(Get-ScheduledTask AMDInstallLauncher -ErrorAction Ignore) { Get-ScheduledTask  AMDInstallLauncher| Stop-ScheduledTask ; Get-ScheduledTask  AMDInstallLauncher | Disable-ScheduledTask } else { 'AMDInstallLauncher does not exist on this device.'}
-	if(Get-ScheduledTask AMDRyzenMasterSDKTask -ErrorAction Ignore) { Get-ScheduledTask  AMDRyzenMasterSDKTask | Stop-ScheduledTask ; Get-ScheduledTask  AMDRyzenMasterSDKTask | Disable-ScheduledTask } else { 'AMDRyzenMasterSDKTask does not exist on this device.'}
-	if(Get-ScheduledTask AMDScoSupportTypeUpdate -ErrorAction Ignore) { Get-ScheduledTask  AMDScoSupportTypeUpdate | Stop-ScheduledTask ; Get-ScheduledTask  AMDScoSupportTypeUpdate | Disable-ScheduledTask } else { 'AMDScoSupportTypeUpdate does not exist on this device.'}
-	if(Get-ScheduledTask StartCN -ErrorAction Ignore) { Get-ScheduledTask  StartCN | Stop-ScheduledTask ; Get-ScheduledTask  StartCN | Disable-ScheduledTask } else { 'StartCN does not exist on this device.'}
-
-	if(Get-ScheduledTask SystemOptimizer -ErrorAction Ignore) { Get-ScheduledTask  SystemOptimizer | Stop-ScheduledTask ; Get-ScheduledTask  SystemOptimizer | Disable-ScheduledTask } else { 'HP SystemOptimizer task does not exist on this device.'}
-	if(Get-ScheduledTask 'Printer Health Monitor' -ErrorAction Ignore) { Get-ScheduledTask  'Printer Health Monitor' | Stop-ScheduledTask ; Get-ScheduledTask  'Printer Health Monitor' | Disable-ScheduledTask } else { 'HP Printer Health Monitor task does not exist on this device.'} # sends SQM data to Microsoft
-	if(Get-ScheduledTask 'Printer Health Monitor Logon' -ErrorAction Ignore) { Get-ScheduledTask  'Printer Health Monitor Logon' | Stop-ScheduledTask ; Get-ScheduledTask  'Printer Health Monitor Logon' | Disable-ScheduledTask } else { 'HP Printer Health Monitor Logon task does not exist on this device.'} # sends SQM data to Microsoft
-
-	if(Get-ScheduledTask Duet* -ErrorAction Ignore) { Get-ScheduledTask  Duet* | Stop-ScheduledTask ; Get-ScheduledTask  Duet* | Disable-ScheduledTask } else { 'Duet Updater task does not exist on this device.'}
-}
-
-
-
-Function SetSplitThreshold {
-	
-	$InstalledMemory = Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
-	$MemoryKB = [math]::Round($InstalledMemory / 1KB, 2)
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "SvcHostSplitThresholdInKB" -Type DWord -Value $MemoryKB	# Win11 Home 0x00380000 (3670016)		LTSC 0x00380000 (3670016)
-	Write-Output "Setting SvcHostSplitThresholdInKB to $MemoryKB"
-}
-
-
-
-Function DisableStorageSense {
-	
-	# Not applicable to Servers
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling Storage Sense."
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
-	}
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		# LTSC NA
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		# LTSC NA
-	}
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling Storage Sense."
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
-	}
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		# Win11 Home 1
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		# Win11 Home 1
-	}
-}
-
-
-
-Function AllowMiracast {
-	
-	Write-Host "Checking if Wireless Display App is installed..."
-	
-	if (Test-Path $Env:windir\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\Receiver.exe) {
-		Write-Host "Wireless Display App already installed."
-	}
-	else {
-		#See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
-		
-		Write-Host "Allowing Projection To PC."
-		
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001		# Win11 Home NA
-
-		if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
-			Write-Host "Manually Installing Wireless Display App..."
-
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-US~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-GB~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~es-ES~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~pt-BR~.cab" /IgnoreCheck
-
-			Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
-
-			Write-Host "Wireless Display App installed."
-		}
-		elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
-			Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
-		}
-		else {
-			
-			#Installing Wireless Display App from Windows Feature Repository
-			
-			Write-Host "Installing Wireless Display App..."
-			
-			If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU")) {
-				New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Force | Out-Null# Win11 Home NA
-			}
-			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000000		# Win11 Home NA
-			Get-Service wuauserv | Restart-Service
-			Start-Sleep 1
-			DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
-			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000001		# Win11 Home NA
-			Get-Service wuauserv | Restart-Service
-			Start-Sleep 1
-			Write-Host "Wireless Display App installed."
-		}
-	}
-}
-
-
-
-function TurnWSLlight {
-	
-Write-Output "WSL Performance Tweaks."
-
-$user_home = "$env:USERPROFILE\.wslconfig"
-$wslconfig = @'
-[wsl2]
-kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off  spectre_v2=off kvm.nx_huge_pages=off kvm-intel.vmentry_l1d_flush=never ssbd=force-off tsx=on
-'@
-New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
-}
+###					###
+###		Security	###
+###					###
 
 
 
@@ -1402,6 +2353,22 @@ function DisableVBS_HVCI {
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Type DWord -Value 0x00000000		# Win11 Home NA
 	}
 }
+
+
+
+function TurnWSLlight {
+	
+Write-Output "WSL Performance Tweaks."
+
+$user_home = "$env:USERPROFILE\.wslconfig"
+$wslconfig = @'
+[wsl2]
+kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off  spectre_v2=off kvm.nx_huge_pages=off kvm-intel.vmentry_l1d_flush=never ssbd=force-off tsx=on
+'@
+New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
+}
+
+
 
 function DisableWindowsDefender {
 	
@@ -1511,502 +2478,376 @@ function DisableWindowsDefender {
 		
 		#>	
 
-		Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports
+		# Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports ( breaks WSL functionality on Windows 11 !)
+		
 	
 	} 
 }
 
 
 
-###							###
-###		 Features GPU		###
-###							###
+###                            ###
+### Desktop Menu Optimizations ###
+###                            ###
 
 
 
-function RemoveXboxFeatures {
+Function SetMinAnimate {
 	
-	Write-Output "Disabling Xbox features."
-
-	# Xbox Live Auth Manager. If you don't use Xbox app to play games, then you don't need any of the Xbox services.
-	Stop-Service "XblAuthManager" -ea SilentlyContinue
-	Set-Service "XblAuthManager" -StartupType Disabled -ErrorAction SilentlyContinue			# Win11 Home Manual		LTSC Manual
+	Write-Output "Disable useless visual effects to speed up response and display of desktop."
 	
-
-	# Xbox Live Game Save Service.
-	Stop-Service "XblGameSave" -ea SilentlyContinue
-	Set-Service "XblGameSave" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home Manual		LTSC Manual
-	
-
-	# Xbox Live Networking Service.
-	Stop-Service "XboxNetApiSvc" -ea SilentlyContinue
-	Set-Service "XboxNetApiSvc" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home Manual		LTSC Manual
-	
-
-	# Xbox Game Monitoring Service.
-	Stop-Service "xbgm" -ea SilentlyContinue
-	Set-Service "xbgm" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC NA
-	
-
-	# Disable GameDVR and Broadcast used for game recordings and live broadcasts.
-	Stop-Service "BcastDVRUserService" -ea SilentlyContinue
-	Set-Service "BcastDVRUserService" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home Manual		LTSC Manual
-
-
-	Write-Output "Disabling scheduled Xbox service components."
-	
-	if(Get-ScheduledTask XblGameSaveTask* -ErrorAction Ignore) { Get-ScheduledTask  XblGameSaveTask* | Stop-ScheduledTask ; Get-ScheduledTask  XblGameSaveTask* | Disable-ScheduledTask } else { 'XblGameSaveTaskLogon does not exist on this device.'}		# Win11 Home Ready
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001										# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000								# Win11 Home 0		LTSC NA
-
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000												# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Type DWord -Value 0x00000002										# Win11 Home 2		LTSC 0
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "CursorCaptureEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "EchoCancellationEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "HistoricalCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 0		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "MicrophoneCaptureEnabled" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC NA
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "Value" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
-
-	# Add workaround for bug that shows "You'll need a new app to open this ms-gamingoverlay" when starting a game
-    If (!(Test-Path "HKCR:")) {
-		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
-	}
-	If (!(Test-Path "HKCR:\ms-gamingoverlay")) {
-		New-Item -Path "HKCR:\ms-gamingoverlay" -Force | Out-Null
-	}
-	# reg add HKEY_CLASSES_ROOT\ms-gamingoverlay /t REG_SZ /d "URL:ms-gamingoverlay" /f
-	Set-ItemProperty -Path "HKCR:\ms-gamingoverlay" '(Default)' -Type String -Value "URL:ms-gamingoverlay" -Force											# Win11 Home "URL:ms-gamingoverlay"
-
-
-	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
-	$acl = $key.GetAccessControl()
-	$rule = New-Object System.Security.AccessControl.RegistryAccessRule (".\USERS","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
-	$acl.SetAccessRule($rule)
-	$key.SetAccessControl($acl)
-
-	$key.Close()
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Type DWord -Value 0x00000000 -Force		# Win11 Home 1	LTSC 1
-
-	Start-Sleep 1
-
-	# It is necessary to take ownership of a registry key and change permissions to modify the key below.
-	if ((Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter').ActivationType -eq 1) {
-		Write-Output 'GameBar Presence Writer feature is still active.' '' 'Disable it manually, go to:' '' 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\' 'Microsoft\WindowsRuntime\ActivatableClassId\' 'Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter' '' 'in Registry Editor and change the parameter' '' 'ActivationType to 0' | msg /w *
-	}
-
-	Write-Host "Finished Removing Xbox features."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type String -Value "0"						# Win11 Home 1		LTSC 1
 }
 
 
 
-
-Function EnableGPUScheduling {
+Function SetDesktopProcess {
 	
-	Write-Host "Turn On Hardware Accelerated GPU Scheduling."
-
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Type DWord -Value 0x00000002							# Win11 Home NA		LTSC 2
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "PlatformSupportMiracast" -Type DWord -Value 0x00000001			# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "UnsupportedMonitorModesAllowed" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC 1
+	Write-Output "Optimize the priority of program processes and independent processes to avoid system crash."
+	
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "DesktopProcess" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
 }
 
 
 
-Function EnableVRR_AutoHDR {
+Function SetTaskbarAnimations {
 	
-	Write-Host "Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games."
+	Write-Output "Play animations in the taskbar and start menu."
 	
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -Type String -Value "VRROptimizeEnable=1;AutoHDREnable=1;SwapEffectUpgradeEnable=1;"		# Win11 Home SwapEffectUpgradeEnable=1;
-	
-
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Name "SwapEffectUpgradeCache" -Type DWord -Value 0x00000001		# Win11 Home NA
-		
-	
-	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings")) {
-		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Type DWord -Value 0x00000001						# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Type DWord -Value 0x00000001				# Win11 Home NA		LTSC NA Adjust Video Based on Lighting
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableAutoEnhanceDuringPlayback" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
-
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
 }
 
 
 
-Function EnableEdge_GPU {
+Function SetWaitToKillServiceTimeout {
 	
-	Write-Host "Turn On Hardware Accelerated GPU on Microsoft Edge Canary."
-
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge" -Type String -Value "GpuPreference=2;"		# Win11 Home NA		LTSC NA
-
-
-	<# 
-	# Disable giant Bing search (AI chat) button in Edge Browser.
+	Write-Output "Optimize the speed of ending processes."
 	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HubsSidebarEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
-
-	#>
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "WaitToKillServiceTimeout" -Type String -Value "2000"								# Win11 Home 5000		LTSC 5000
 }
 
 
 
-###				  	###
-###		Privacy		###
-###				  	###
-
-
-
-Function AcceptedPrivacyPolicy {
+Function SetNoSimpleNetIDList {
 	
-	Write-Output "Turning off AcceptedPrivacyPolicy."
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
+	Write-Output "Optimize the refresh strategy of the system file list."
+	
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoSimpleNetIDList" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
 }
 
 
 
-Function DisableActivityHistory {
+Function SetMouseHoverTime {
 	
-	Write-Host "Disabling activity history."
+	Write-Output "Reduce the display time of taskbar preview."
 	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000								# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
-
-	Write-Host "Disable Shared Experiences."
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000										# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Type String -Value "100"						# Win11 Home 400		LTSC 400
 }
 
 
 
-Function DisableAdvertisingID {
+Function SetMenuShowDelay {
 	
-	Write-Host "Disabling Advertising ID."
+	Write-Output "Speed up the response and display of system commands."
 	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"					# Win11 Home 400		LTSC 400
 }
 
 
 
-Function DisableAdvertisingInfo {
+Function SetForegroundLockTimeout {
 	
-	Write-Output "Disabling Windows Feedback Experience program."
+	Write-Output "Improve the response speed of foreground program."
 	
-	# Microsoft assigns a unique identificator to track your activity in the Microsoft Store and on UWP apps to target you with relevant ads.
-	
-	$Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
-	If (Test-Path $Advertising) {
-		Set-ItemProperty $Advertising Enabled -Type DWord -Value 0x00000000																							# Win11 Home 0		LTSC 0
-	}
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type DWord -Value 0x000249f0		# Win11 Home 0x00030d40 (200000)		LTSC 0x00030d40 (200000)
 }
 
 
 
-Function DisableAppDiagnostics {
+Function SetAlwaysUnloadDLL {
 	
-	Write-Output "Turning off AppDiagnostics."
+	Write-Output "Release unused dlls in memory."
 	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"	# Win11 Home Allow		LTSC Allow
-
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "AlwaysUnloadDLL" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
 }
 
 
 
-Function DisableCEIP {
+Function SetFontStyleShortcut{
 	
-	Write-Host "Microsoft Customer Experience Improvement Program (CEIP)."
+	Write-Output "Remove the font style of the desktop shortcut."
 	
-	<#
-	The program collects information about computer hardware and how you use Microsoft Application Virtualization without interrupting you.
-	This helps Microsoft identify which Microsoft Application Virtualization features to improve.
-	No information collected is used to identify or contact you.
-	#>
-
-	# See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.AppV::CEIP_Enable
-
-	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
-	If (Test-Path $SQMClient1) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnable" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC NA
-	}
-
-	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
-	If (!(Test-Path $SQMClient2)) {
-		New-Item -Path $SQMClient2 -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000												# Win11 Home NA		LTSC NA
-
-	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
-	If (Test-Path $SQMClient3) {
-		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000													# Win11 Home 0		LTSC 0
-	}
-
-	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
-	If (Test-Path $SQMClient4) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
-	}
-
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000														# Win11 Home NA		LTSC NA
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Name "CEIP" -Type DWord -Value 0x00000002														# Win11 Home NA		LTSC NA
-
-
-	#Disable CEIP for SSDT and SSDT-BI for Visual studio 2013.
-	If (!(Test-Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Microsoft SQL Server\120" -Name "CustomerFeedback" -Type DWord -Value 0x00000000
-
-
-	#Disable SSDT for Visual Studio 2015 is the data modeling tool that ships with SQL Server 2016.
-	If (!(Test-Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM")) {
-		New-Item -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\VSCommon\14.0\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
-
-
-	#Disable SSDT for Visual Studio 2017 is the data modeling tool that ships with SQL Server 2017.
-	If (!(Test-Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM")) {
-		New-Item -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\VisualStudio\SQM" -Name "OptIn" -Type DWord -Value 0x00000000
-
-
-	# This process is periodically collecting a variety of technical data about your computer and its performance and sending it to Microsoft for its Windows Customer Experience Improvement Program.
-
-	# https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/exploit-protection-reference?view=o365-worldwide
-
-	If (!(Test-Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe")) {
-		New-Item -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Force | Out-Null
-		Write-Output "Compatibility telemetry has been successfully blocked."
-	}
-	Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "link" -Type String -Value "0"					# Win11 Home NA		LTSC NA
 }
 
 
 
-Function DisableDataCollection {
+Function SetAutoRestartShell {
 	
-	Write-Output "Turning off Data Collection via the AllowTelemtry key by changing it to 0"
+	Write-Output "Optimize user interface components. Auto-refresh when there is an error to avoid system crash."
 	
-	$DataCollection1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
-	$DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
-	$DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
-	If (Test-Path $DataCollection1) {
-		Set-ItemProperty $DataCollection1  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
-		Set-ItemProperty $DataCollection1  MaxTelemetryAllowed -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
-	}
-	If (Test-Path $DataCollection2) {
-		Set-ItemProperty $DataCollection2  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
-	}
-	If (Test-Path $DataCollection3) {
-		Set-ItemProperty $DataCollection3  AllowTelemetry -Type DWord -Value 0x00000000				# Win11 Home 1		LTSC 1
-		Set-ItemProperty $DataCollection3  MaxTelemetryAllowed -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
-	}
-
-#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001					# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
 }
 
 
 
-function DisableDiagTrack {
+Function SetVisualEffects {
 	
-	Write-Output "Stopping and disabling Connected User Experiences and Telemetry Service."
+	Write-Output "Optimize the visual effects of system menus and lists to improve system performance."
 	
-	#Stop-Service "DiagTrack" -ea SilentlyContinue
-	Set-Service "DiagTrack" -StartupType Disabled -erroraction SilentlyContinue										# Win11 Home Auto		LTSC Auto
-
-	#Stop-Service "diagnosticshub.standardcollector.service" -ea SilentlyContinue
-	Set-Service "diagnosticshub.standardcollector.service" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home Manual		LTSC Manual
-
-#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
-} 
-
-
-
-Function DisableErrorReporting {
-	
-	Write-Host "Disabling Error reporting."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001								# Win11 Home NA		LTSC NA
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001						# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001				# Win11 Home NA		LTSC NA
-
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001			# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Type DWord -Value 0x00000000					# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Type DWord -Value 0x00000002					# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name "DefaultApplied" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name "DefaultApplied" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
 }
 
 
 
-
-Function DisableFeedbackExperience {
+Function GetFullContextMenu {
 	
-	Write-Output "Stops the Windows Feedback Experience from sending anonymous data."
+	Write-Output "Setting Full Context Menus."
 	
-	$Period1 = "HKCU:\Software\Microsoft\Siuf\Rules"
-	$Period2 = "HKCU:\Software\Microsoft\Siuf"
-	If (!(Test-Path $Period1)) { 
-		If (!(Test-Path $Period2)) { 
-			New-Item $Period2 -Force | Out-Null
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Setting Full Context Menus in Windows 11."
+		If (!(Test-Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}")) {
+			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" -Force | Out-Null
+			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null
+			Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" '(Default)' -Value ""
 		}
-		New-Item $Period1 -Force | Out-Null
 	}
-	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0x00000000						# Win11 Home NA		LTSC NA
-	Set-ItemProperty $Period1 PeriodInNanoSeconds -Type DWord -Value 0x00000000							# Win11 Home NA		LTSC NA
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
+# reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
 }
 
 
 
-Function DisableLocationTracking {
+Function SetKeyboardDelay {
 	
-	# Disabling this will break Microsoft Find My Device functionality.
+	Write-Output "Adjust the keyboards delayed response time."
 	
-	Write-Output "Disabling Location Tracking."
-
-	#Stop-Service "lfsvc" -ea SilentlyContinue
-	Set-Service "lfsvc" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Manual
-	
-
-	$SensorState = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}"
-	$LocationConfig = "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration"
-
-	Set-ItemProperty $SensorState SensorPermissionState -Type DWord -Value 0x00000000		# Win11 Home 1
-	Set-ItemProperty $LocationConfig Status -Type DWord -Value 0x00000000					# Win11 Home 1
-
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"		# Win11 Home Allow
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "InitialKeyboardIndicators" -Type String -Value "2"		# Win11 Home 0		LTSC 0
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Type String -Value "0"					# Win11 Home 1		LTSC 1
+	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Type String -Value "48"				# Win11 Home 31		LTSC 31
 }
 
 
 
-Function DisableTailoredExperiences {
+Function SetMaxCachedIcons {
 	
-	Write-Host "Disabling Tailored Experiences AKA Spying and Diagnostic Data."
+	Write-Output "Increase the system image buffer to display images faster."
 	
-	# Diagnostic data for personalized tips, ads, and recommendations.
-
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
-
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Name "TailoredExperiencesWithDiagnosticDataEnabled" -Type DWord -Value 0x00000000	# Win11 Home 0		LTSC 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"				# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"	# Win11 Home NA		LTSC NA
 }
-																							
 
 
 
-###					###
-###		Security	###
-###					###
+###                           ###
+### File System Optimizations ###
+###                           ###
 
 
-
-Function RemoveAutoLogger {
+Function SetNoLowDiskSpaceChecks {
 	
-	Write-Host "Removing AutoLogger file and restricting directory."
+	Write-Output "Improve hard disk performance to enhance disk read/write capacity."
 	
-	$autoLoggerDir = "$env:ProgramData\Microsoft\Diagnosis\ETLLogs\Autologger"
-	If (Test-Path "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl") {
-		Remove-Item "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl" -Force -ErrorAction SilentlyContinue
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
 	}
-	icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
-
-#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
 }
 
 
 
-Function DisableRemoteAssistance {
+Function DisableStorageSense {
 	
-	Write-Host "Disabling Remote Assistance."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 0
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
+	# Not applicable to Servers
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling Storage Sense."
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
+	}
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		# LTSC NA
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		# LTSC NA
+	}
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling Storage Sense."
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
+	}
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		# Win11 Home 1
+		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		# Win11 Home 1
+	}
 }
 
 
 
-Function DisableRDP {
+Function SetNtfsDisable8dot3NameCreation {
+	Write-Output "Disable short file names feature."
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value 0x00000001			# Win11 Home 2		LTSC 2
+
+	# fsutil behavior query disable8dot3	# Win11 Home 2 (Per volume setting - the default)
+}
+
+
+
+Function SetNoDriveTypeAutoRun {
+	
+	Write-Output "Disable AutoPlay for external devices to avoid potential risks such as malware."
+	
+	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 0x000000dd	# Win11 Home NA		LTSC NA
+}
+
+
+
+function DisableDeleteNotify {
 	
 	<#
-	RDP consumes system resources, including CPU processing power, memory, and network bandwidth. 
-	When RDP is enabled, the system must maintain the ability to accept remote connections and process data transmitted over that connection.
+	TRIM (also called Trim or Trim Command) allows your SSD drive to handle garbage more evidentially.
+	TRIM allows the operating system to decide which blocks are already in use so they can be wiped internally.
+	Anytime you delete something, TRIM automatically deletes that page or block.
+	The next time the page or block is written to, the operating system does not have to wait for that block to be deleted.
+	SSD TRIM can prolong the life and performance of your SSD drive.
 
-	If you use this feature to work on two computers simultaneously, try the Barrier app or even the Microsoft Mouse Without Borders included with the PowerToys.
-
+	https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
 	#>
-	Write-Host "Disabling Remote Desktop."
+
+	Write-Output "Force TRIM state to On."
 	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001	# Win11 Home 1		LTSC 1
-	Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue														# Win11 Home NA
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Allows TRIM operations to be sent to the storage device."
+		# fsutil behavior query DisableDeleteNotify
+		fsutil behavior set DisableDeleteNotify 0			# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
+		fsutil behavior set DisableDeleteNotify ReFS 0		# LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
+	}
 
-	Write-Host "Disabling Remote Desktop Services."
-	#Stop-Service "TermService" -ea SilentlyContinue
-	Set-Service "TermService" -StartupType Disabled -erroraction SilentlyContinue																# Win11 Home Manual		LTSC Manual
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Allows TRIM operations to be sent to the storage device."
+		# fsutil behavior query DisableDeleteNotify
+		fsutil behavior set DisableDeleteNotify 0			# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
+		fsutil behavior set DisableDeleteNotify ReFS 0		# Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
+	} 
+}  
 
+
+
+function SetLastAccessTimeStamp {
+	
+	<#
+		https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
+
+		# The disablelastaccess parameter can affect programs such as Backup and Remote Storage, which rely on this feature.
+	#>
+
+	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
+		# fsutil behavior query disablelastaccess
+		# fsutil behavior set disablelastaccess 0
+		fsutil behavior set disablelastaccess 1 # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
+	}
+
+	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
+		# fsutil behavior query disablelastaccess
+		# fsutil behavior set disablelastaccess 1
+		fsutil behavior set disablelastaccess 1 # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
+	}
 }
 
 
 
+Function SetWaitToKillAppTimeout {
+	
+	Write-Output "Optimize program response time to improve system response speed."
+	
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000"	# Win11 Home NA		LTSC NA
+}
 
-###					###
-###		Network		###
-###					###
+
+
+Function SetHungAppTimeout {
+	
+	Write-Output "Shorten the wait time for unresponsive mouse and keyboard caused by error program."
+	
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000"			# Win11 Home NA		LTSC NA
+}
 
 
 
-# Improve network performance by improving how many buffers your computer can use simultaneously on your LAN. 
+Function SetPriorityControl {
+	
+	Write-Output "Optimize Win32PrioritySeparation value to make system smoother."
+	
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000026		# Win11 Home 0x00000002		LTSC 0x00000002
+
+	<#
+
+	Specifies the strategy used for optimizing processor time on the system. The value of this
+	entry determines, in part, how much processor time the threads of a process receive each
+	time they are scheduled, and how much the allotted time can vary. It also affects the
+	relative priority of the threads of foreground and background processes.
+
+	Also, You can change the value of this entry, in Control Panel, double-click System, click the
+	Advanced tab, click Performance Options, and then, in the Application response
+	section, select either Applications or Background services.
+
+	2A Hex = Short, Fixed , High foreground boost.
+	29 Hex = Short, Fixed , Medium foreground boost.
+	28 Hex = Short, Fixed , No foreground boost.
+
+	26 Hex = Short, Variable , High foreground boost.
+	25 Hex = Short, Variable , Medium foreground boost.
+	24 Hex = Short, Variable , No foreground boost.
+
+	1A Hex = Long, Fixed, High foreground boost.
+	19 Hex = Long, Fixed, Medium foreground boost.
+	18 Hex = Long, Fixed, No foreground boost.
+
+	16 Hex = Long, Variable, High foreground boost.
+	15 Hex = Long, Variable, Medium foreground boost.
+	14 Hex = Long, Variable, No foreground boost.
+	#>
+
+	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md
+}
+
+
+
+Function SetAutoEndTasks {
+	
+	Write-Output "Automatically end unresponsive programs to avoid system crash."
+	
+	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1"									# Win11 Home NA		LTSC NA
+}
+
+
+
+Function SetBootOptimizeFunction {
+	
+	Write-Output "Disable Windows auto disk defragmetation and automatically optimize boot partition to make the bootup speed faster."
+	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""					# Win11 Home NA		LTSC NA
+	
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
+	}	
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""		# Win11 Home NA		LTSC NA
+}
+
+
+
+###					      ###
+###	Network	Optimizations ###
+###					      ###
+
+
+
+
 Function SetIRPStackSize {
+	# Improve network performance by improving how many buffers your computer can use simultaneously on your LAN. 
 	
 	Write-Output "Setting IRPStackSize."
 	
@@ -2057,6 +2898,7 @@ Function DisableWiFiSense {
 }
 
 
+
 Function DisableWFPlogs {
 	
 	Write-Output "Disabling WFP logs."
@@ -2068,709 +2910,6 @@ Function DisableWFPlogs {
 	netsh wfp set options netevents=off		# Win11 Home On
 }
 
-
-
-###					###
-###		Services	###
-###					###
-
-# Get-Service | select -property name,starttype
-
-<#
-Device Management Wireless Application Protocol (WAP) Push Message Routing Service
-Useful for Windows tablet devices with mobile (3G/4G) connectivity
-#>
-function DisableWAPPush {
-
-	Write-Host "Stopping and disabling WAP Push Service."
-	
-	#Stop-Service "dmwappushservice" -ea SilentlyContinue
-	Set-Service "dmwappushservice" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Manual		LTSC Manual
-
-#This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.	
-} 
-
-
-
-function DisableServices {
-
-	Write-Output "Stopping and disabling AdobeARM Service."
-	#Stop-Service "AdobeARMservice" -ea SilentlyContinue
-	Set-Service "AdobeARMservice" -StartupType Disabled -erroraction SilentlyContinue
-
-	<#
-	Write-Host "Disabling AMD Crash Defender Service."
-	#Stop-Service "AMD Crash Defender Service" -ea SilentlyContinue
-	Set-Service "AMD Crash Defender Service" -StartupType Disabled -erroraction SilentlyContinue
-	#>
-	
-
-	Write-Host "Disabling Application Management."
-	#Stop-Service "AppMgmt" -ea SilentlyContinue
-	Set-Service "AppMgmt" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA			LTSC Manual
-
-
-	Write-Host "Disabling Certificate Propagation Service."
-	# Copies user certificates and root certificates from smart cards into the current user's certificate store.
-	#Stop-Service "CertPropSvc" -ea SilentlyContinue
-	Set-Service "CertPropSvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling ActiveX Installer."
-	#Stop-Service "AxInstSV" -ea SilentlyContinue
-	Set-Service "AxInstSV" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling offline files service."
-	#Stop-Service "CscService" -ea SilentlyContinue
-	Set-Service "CscService" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC Manual
-
-	
-	Write-Host "Stopping and disabling HP ETD Telemetry Service."
-	#Stop-Service "ETDservice" -ea SilentlyContinue
-	Set-Service "ETDservice" -StartupType Disabled -erroraction SilentlyContinue
-
-
-	Write-Host "Disabling fax."
-	#Stop-Service "Fax" -ea SilentlyContinue
-	Set-Service "Fax" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home NA			LTSC Manual
-
-
-	Write-Host "Disabling File History Service."
-	#Stop-Service "fhsvc" -ea SilentlyContinue
-	Set-Service "fhsvc" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Stopping and disabling Home Groups services."
-	#Stop-Service "HomeGroupListener" -ea SilentlyContinue
-	Set-Service "HomeGroupListener" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA		LTSC NA
-	#Stop-Service "HomeGroupProvider" -ea SilentlyContinue
-	Set-Service "HomeGroupProvider" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA		LTSC NA
-
-
-	<#
-	Write-Output "Stopping and disabling HP App Helper Service."
-	Stop-Service "HPAppHelperCap" -ea SilentlyContinue
-	Set-Service "HPAppHelperCap" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Diagnostics Service."
-	#Stop-Service "HPDiagsCap" -ea SilentlyContinue
-	Set-Service "HPDiagsCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA		LTSC Auto
-
-
-	<#
-	Write-Output "Stopping and disabling HP Network Service."
-	Stop-Service "HPNetworkCap" -ea SilentlyContinue
-	Set-Service "HPNetworkCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA
-	#>
-
-
-	<#
-	Write-Output "Stopping and disabling HP Omen Service."
-	Stop-Service "HPOmenCap" -ea SilentlyContinue
-	Set-Service "HPOmenCap" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Print Scan Doctor Service."
-	#Stop-Service "HPPrintScanDoctorService" -ea SilentlyContinue
-	Set-Service "HPPrintScanDoctorService" -StartupType Disabled -erroraction SilentlyContinue			# Win11 Home NA		LTSC NA
-
-
-	<#
-	Write-Output "Stopping and disabling HP System Info Service."
-	Stop-Service "HPSysInfoCap" -ea SilentlyContinue
-	Set-Service "HPSysInfoCap" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Telemetry Service."
-	#Stop-Service "HpTouchpointAnalyticsService" -ea SilentlyContinue
-	Set-Service "HpTouchpointAnalyticsService" -StartupType Disabled -erroraction SilentlyContinue		# Win11 Home NA		LTSC Auto
-
-
-	Write-Host "Disabling Microsoft iSCSI Initiator Service."
-	#Stop-Service "MSiSCSI" -ea SilentlyContinue
-	Set-Service "MSiSCSI" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual	LTSC Manual
-
-
-	Write-Host "Disabling The Network Access Protection (NAP) agent service."
-	# It collects and manages health information for client computers on a network.
-	#Stop-Service "napagent" -ea SilentlyContinue
-	Set-Service "napagent" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA		LTSC NA
-
-
-	Write-Host "Disabling the Network Data Usage Monitoring Driver."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Ndu" -Name "Start" -Type DWord -Value 4		# Win11 Home 2		LTSC 2
-
-
-	Write-Host "Disabling Peer Networking Identity Manager."
-	#Stop-Service "p2pimsvc" -ea SilentlyContinue
-	Set-Service "p2pimsvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Peer Networking Grouping."	
-	#Stop-Service "p2psvc" -ea SilentlyContinue
-	Set-Service "p2psvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling BranchCache service."
-	#This service caches network content from peers on the local subnet.
-	#Stop-Service "PeerDistSvc" -ea SilentlyContinue
-	Set-Service "PeerDistSvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home NA			LTSC Manual
-
-
-	Write-Host "Disabling Performance Logs and Alerts Service."
-	#Stop-Service "pla" -ea SilentlyContinue
-	Set-Service "pla" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Peer Name Resolution Protocol."
-	#Stop-Service "PNRPsvc" -ea SilentlyContinue
-	Set-Service "PNRPsvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Remote Registry service."
-	#Stop-Service "RemoteRegistry" -ea SilentlyContinue
-	Set-Service "RemoteRegistry" -StartupType Disabled -erroraction SilentlyContinue					# Win11 Home Disabled	LTSC Disabled
-
-
-	<#
-	The smart card removal policy service is applicable when a user has signed in with a smart card and then removes that smart card from the reader. 
-	The action that is performed when the smart card is removed is controlled by Group Policy settings. 
-	For more information, see Smart Card Group Policy and Registry Settings.
-	#>
-	Write-Host "Disabling Smart Card Removal Policy Service."
-	#Stop-Service "ScPolicySvc" -ea SilentlyContinue
-	Set-Service "ScPolicySvc" -StartupType Disabled -erroraction SilentlyContinue						# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Remote Registry service."
-	#Stop-Service "SQLTELEMETRY$SQLEXPRESS" -ea SilentlyContinue
-	Set-Service "SQLCEIP" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home NA			LTSC NA
-
-
-	<#
-	An SNMP trap message is an unsolicited message sent from an agent to the the manager.
-	The objective of this message is to allow the remote devices to alert the manager in case an important event happens,
-	commonly used in companies.
-	#>
-	Write-Host "Disabling Simple Network Management Protocol (SNMP) service."
-	#Stop-Service "SNMPTRAP" -ea SilentlyContinue
-	Set-Service "SNMPTRAP" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	<#
-	The Memory Compression process is serviced by the SysMain (formerly SuperFetch) service.
-	SysMain reduces disk writes (paging) by compressing and consolidating memory pages.
-	If this service is stopped, then Windows does not use RAM compression.
-	Write-Host "Disabling Superfetch service."
-	Stop-Service "SysMain" -ea SilentlyContinue
-	Set-Service "SysMain" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto
-	#>
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\SysMain" -Name "DelayedAutoStart" -Type DWord -Value 00000001	# Win11 Home 2		LTSC NA
-
-
-	<#
-	Disabling this will break WSL keyboard functionality.
-	Write-Output "Stopping and disabling Touch Keyboard and Handwriting Panel Service."
-	Stop-Service "TabletInputService" -ea SilentlyContinue
-	Set-Service "TabletInputService" -StartupType Disabled -erroraction SilentlyContinue				# Win11 Home NA
-	#>
-
-
-	Write-Host "Disabling WebClient service."
-	#Stop-Service "WebClient" -ea SilentlyContinue
-	Set-Service "WebClient" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Error Reporting."
-	#Stop-Service "WerSvc" -ea SilentlyContinue
-	Set-Service "WerSvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Remote Management."
-	#Stop-Service "WinRM" -ea SilentlyContinue
-	Set-Service "WinRM" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Insider Service."
-	# Caution! Windows Insider will not work anymore.
-	#Stop-Service "wisvc" -ea SilentlyContinue
-	Set-Service "wisvc" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Stopping and disabling Windows Search Indexing service."
-	#Stop-Service "WSearch" -ea SilentlyContinue
-	Set-Service "WSearch" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto		LTSC Auto
-
-	
-	Write-Host "Stopping and disabling Diagnostic Policy service."
-	#Stop-Service "DPS" -ea SilentlyContinue
-	Set-Service "DPS" -StartupType Disabled -erroraction SilentlyContinue								# Win11 Home Auto		LTSC Auto
-
-
-	Write-Host "Stopping and disabling Program Compatibility Assistant service."
-	#Stop-Service "PcaSvc" -ea SilentlyContinue
-	Set-Service "PcaSvc" -StartupType Disabled -erroraction SilentlyContinue							# Win11 Home Auto		LTSC Manual
-}
-
-
-
-###					###
-###		System		###
-###					###
-
-
-#The AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
-Function DisableAutoplayHandler {
-	
-	Write-Output "Disabling AutoplayHandlers."
-	
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 0x00000001	# Win11 Home 0		LTSC 1
-}
-
-
-
-Function DisableBingSearch {
-	
-	Write-Output "Disabling Bing Search in Start Menu."
-	
-	$WebSearch = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
-	
-	If (!(Test-Path $WebSearch)) {
-		New-Item $WebSearch -Force | Out-Null
-	}
-	Set-ItemProperty $WebSearch DisableWebSearch -Type DWord -Value 0x00000001																	# Win11 Home NA		LTSC NA
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
-
-	$DisableSearchBox = "HKCU:\Software\Policies\Microsoft\Windows\Explorer"
-	
-	If (!(Test-Path $DisableSearchBox)) {
-		New-Item $DisableSearchBox -Force | Out-Null
-	}
-	Set-ItemProperty $DisableSearchBox DisableSearchBoxSuggestions -Type DWord -Value 0x00000001												# Win11 Home NA		LTSC NA
-}
-
-
-
-Function DisableCortanaSearch {
-	
-	Write-Output "Stopping Cortana from being used as part of your Windows Search Function."
-
-	# Cortana was deprecated in June 2023.
-	
-	$Search = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
-	If (!(Test-Path $Search)) {
-		New-Item $Search -Force | Out-Null
-	}
-	Set-ItemProperty $Search AllowCortana -Type DWord -Value 0x00000000																			# Win11 Home NA		LTSC NA
-}
-
-
-
-Function GetFullContextMenu {
-	
-	Write-Output "Setting Full Context Menus."
-	
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Setting Full Context Menus in Windows 11."
-		If (!(Test-Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}")) {
-			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" -Force | Out-Null
-			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null
-			Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" '(Default)' -Value ""
-		}
-	}
-# reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
-}
-
-Function PrintScreenToSnippingTool {
-	
-	Write-Output "Use print screen to open snipping tool."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "PrintScreenKeyForSnippingEnabled" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
-}
-
-
-Function DisableLiveTiles {
-	
-	Write-Output "Disabling live tiles."
-	
-	$Live = "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications"
-	If (!(Test-Path $Live)) {  
-		New-Item $Live -Force | Out-Null
-	}
-	Set-ItemProperty $Live  NoTileApplicationNotification -Type DWord -Value 0x00000001													# Win11 Home NA		LTSC NA
-}
-
-
-
-Function DisableWidgets {
-	
-	Write-Output "Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off."
-	
-	Write-Host "Checking if Widgets is installed..."
-	if (Test-Path $Env:windir\SystemApps\MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy) {
-		winget uninstall "windows web experience pack" --silent		
-	}
-	else {
-		Write-Host "Widgets do not exist on this device."
-
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarDa" -Type DWord -Value 0x00000000	# Win11 Home 0		LTSC NA
-}
-
-
-### Disk Cache Optimization ###
-
-
-Function SetWaitToKillAppTimeout {
-	
-	Write-Output "Optimize program response time to improve system response speed."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000"	# Win11 Home NA		LTSC NA
-}
-
-
-Function SetHungAppTimeout {
-	
-	Write-Output "Shorten the wait time for unresponsive mouse and keyboard caused by error program."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000"			# Win11 Home NA		LTSC NA
-}
-
-
-Function SetPriorityControl {
-	
-	Write-Output "Optimize Win32PrioritySeparation value to make system smoother."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000026		# Win11 Home 0x00000002		LTSC 0x00000002
-
-	<#
-
-	Specifies the strategy used for optimizing processor time on the system. The value of this
-	entry determines, in part, how much processor time the threads of a process receive each
-	time they are scheduled, and how much the allotted time can vary. It also affects the
-	relative priority of the threads of foreground and background processes.
-
-	Also, You can change the value of this entry, in Control Panel, double-click System, click the
-	Advanced tab, click Performance Options, and then, in the Application response
-	section, select either Applications or Background services.
-
-	2A Hex = Short, Fixed , High foreground boost.
-	29 Hex = Short, Fixed , Medium foreground boost.
-	28 Hex = Short, Fixed , No foreground boost.
-
-	26 Hex = Short, Variable , High foreground boost.
-	25 Hex = Short, Variable , Medium foreground boost.
-	24 Hex = Short, Variable , No foreground boost.
-
-	1A Hex = Long, Fixed, High foreground boost.
-	19 Hex = Long, Fixed, Medium foreground boost.
-	18 Hex = Long, Fixed, No foreground boost.
-
-	16 Hex = Long, Variable, High foreground boost.
-	15 Hex = Long, Variable, Medium foreground boost.
-	14 Hex = Long, Variable, No foreground boost.
-	#>
-
-	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md
-}
-
-
-Function SetAutoEndTasks {
-	
-	Write-Output "Automatically end unresponsive programs to avoid system crash."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1"									# Win11 Home NA		LTSC NA
-}
-
-
-Function SetBootOptimizeFunction {
-	
-	Write-Output "Disable Windows auto disk defragmetation and automatically optimize boot partition to make the bootup speed faster."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""					# Win11 Home NA		LTSC NA
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
-	}	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""		# Win11 Home NA		LTSC NA
-}
-
-
-### Desktop Menu Optimization ###
-
-
-Function SetMinAnimate {
-	
-	Write-Output "Disable useless visual effects to speed up response and display of desktop."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type String -Value "0"						# Win11 Home 1		LTSC 1
-}
-
-
-Function SetDesktopProcess {
-	
-	Write-Output "Optimize the priority of program processes and independent processes to avoid system crash."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "DesktopProcess" -Type DWord -Value 0x00000001					# Win11 Home NA		LTSC NA
-}
-
-
-Function SetTaskbarAnimations {
-	
-	Write-Output "Play animations in the taskbar and start menu."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
-}
-
-
-Function SetWaitToKillServiceTimeout {
-	
-	Write-Output "Optimize the speed of ending processes."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "WaitToKillServiceTimeout" -Type String -Value "2000"								# Win11 Home 5000		LTSC 5000
-}
-
-
-Function SetNoSimpleNetIDList {
-	
-	Write-Output "Optimize the refresh strategy of the system file list."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoSimpleNetIDList" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
-}
-
-
-Function SetMouseHoverTime {
-	
-	Write-Output "Reduce the display time of taskbar preview."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Type String -Value "100"						# Win11 Home 400		LTSC 400
-}
-
-
-Function SetMenuShowDelay {
-	
-	Write-Output "Speed up the response and display of system commands."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"					# Win11 Home 400		LTSC 400
-}
-
-
-Function SetForegroundLockTimeout {
-	
-	Write-Output "Improve the response speed of foreground program."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type DWord -Value 0x000249f0		# Win11 Home 0x00030d40 (200000)		LTSC 0x00030d40 (200000)
-}
-
-
-Function SetAlwaysUnloadDLL {
-	
-	Write-Output "Release unused dlls in memory."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "AlwaysUnloadDLL" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
-}
-
-
-Function SetFontStyleShortcut{
-	
-	Write-Output "Remove the font style of the desktop shortcut."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "link" -Type String -Value "0"					# Win11 Home NA		LTSC NA
-}
-
-
-Function SetAutoRestartShell {
-	
-	Write-Output "Optimize user interface components. Auto-refresh when there is an error to avoid system crash."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001					# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
-}
-
-
-Function SetVisualEffects {
-	
-	Write-Output "Optimize the visual effects of system menus and lists to improve system performance."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Type DWord -Value 0x00000000					# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Type DWord -Value 0x00000002					# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000			# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name "DefaultApplied" -Type DWord -Value 0x00000000		# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name "DefaultApplied" -Type DWord -Value 0x00000000	# Win11 Home 1		LTSC 1
-}
-
-
-Function SetSystemResponsiveness {
-	
-	# https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service
-	
-	Write-Output "Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS)."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0x0000000a			# Win11 Home 0x00000014 (20)	LTSC 0x00000014 (20)
-
-	# Disable throttling mechanism to control network performance
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0xffffffff		# Win11 Home 0x0000000a (10)	LTSC 0x0000000a (10)
-		
-	# Disable Nagle’s Algorithm
-
-	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" | ForEach-Object {
-		if(Get-ItemProperty -Path $_.PsPath -Name "DhcpServer" -ErrorAction SilentlyContinue )	 {
-			Set-ItemProperty -Path $_.PsPath -Name "TcpNoDelay" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue												# Win11 Home NA	LTSC NA
-			Set-ItemProperty -Path $_.PsPath -Name "TcpAckFrequency" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue											# Win11 Home NA	LTSC NA
-		}	
-	}
-
-}
-
-
-Function MisconceptionHPET {
-	
-	Write-Output "Reverting misconception about HPET-TSC-PMT to system default values."
-	
-	<#
-	"Unless you need to run a very very certain and specific program that requires HPET, useplatformclock + HPET is not suggested.
-	HPET should only used as a platform source for synchronization purposes or different purposes when actually required.
-	While TSC runs at an average frequency of 3 MHz, depending on your processor characteristics, HPET is a high precision timer, and can run at up to 22 MHz on modern computers!
-	This makes your computer perform poorly due to using HPET when not needed.
-	Such a level of precision is not required on every single application and will slowdown your computer's performance."
-	
-	https://sites.google.com/view/melodystweaks/misconceptions-about-timers-hpet-tsc-pmt
-	https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
-	#>
-
-	# Reverting this misconception about HPET-TSC-PMT to system default values as below.
-	bcdedit /deletevalue useplatformclock | Out-Null
-	bcdedit /deletevalue useplatformtick | Out-Null
-	bcdedit /deletevalue disabledynamictick | Out-Null
-	bcdedit /deletevalue tscsyncpolicy | Out-Null
-}
-
-
-Function SomeKernelTweaks {
-
-	Write-Output "Disable Meltdown/Spectre/Zombieload patches."
-	
-	# https://support.microsoft.com/en-us/topic/kb4072698-windows-server-and-azure-stack-hci-guidance-to-protect-against-silicon-based-microarchitectural-and-speculative-execution-side-channel-vulnerabilities-2f965763-00e2-8f98-b632-0d96f30c8c8e
-	# https://support.microsoft.com/en-us/topic/guidance-for-disabling-intel-transactional-synchronization-extensions-intel-tsx-capability-0e3a560c-ab73-11d2-12a6-ed316377c99c
-
-
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverride" -Type DWord -Value 0x00000003			# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverrideMask" -Type DWord -Value 0x00000003		# Win11 Home NA		LTSC NA
-
-	# Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel" -Name "DisableTsx" -Type DWord -Value 0x00000000								# Win11 Home NA
-
-	Write-Output "Disable 57-bits 5-level paging."
-	bcdedit /set linearaddress57 OptOut | Out-Null
-	# https://community.amd.com/t5/archives-discussions/5-level-paging-and-57-bit-linear-address-stop-that-stupid/td-p/80014
-	# In short, if you use a cluster of 16 Hard Disks with 16 TBytes each (>256 TBytes) in your work, revert this option!  bcdedit /deletevalue linearaddress57 | Out-Null
-
-
-	
-	Write-Output "Disable automatic TCG/Opal disk locking on supported SSD drives with PSID."
-	
-	#reg add HKLM\Software\Policies\Microsoft\Windows\EnhancedStorageDevices /v TCGSecurityActivationDisabled /t REG_DWORD /d 1 /f
-	
-	Set-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\EnhancedStorageDevices" -Name "TCGSecurityActivationDisabled" -Type DWord -Value 0x00000001			# Win11 Home 0		LTSC 0
-	
-	# Set this value to 1 to enable stronger protection on system base objects such as the KnownDLLs list.
-	
-	# https://learn.microsoft.com/en-US/troubleshoot/windows-client/networking/system-error-85-net-use-command
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "ProtectionMode" -Type DWord -Value 0x00000000									# Win11 Home 1		LTSC 1
-
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Build greater than 22000 detected. Fixed requesting a higher resolution timer from Jurassic Period apps."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" -Name "GlobalTimerResolutionRequests" -Type DWord -Value 0x00000001				# Win11 NA		LTSC NA
-	} 
-
-	# https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md#fixing-timing-precision-in-windows-after-the-great-rule-change
-
-}
-
-
-### File System Optimization ###
-
-
-Function SetAeDebug {
-	
-	Write-Output "Turn off Just-In-Time Debugging function to improve system performance (Dr. Watson)."
-
-	# https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/disable-enable-dr-watson-program
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"					# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name "Auto" -Type String -Value "0"		# Win11 Home NA		LTSC NA
-}
-
-
-Function SetNoLowDiskSpaceChecks {
-	
-	Write-Output "Improve hard disk performance to enhance disk read/write capacity."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
-}
-
-
-Function SetNtfsDisable8dot3NameCreation {
-	Write-Output "Disable short file names feature."
-
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value 0x00000001			# Win11 Home 2		LTSC 2
-
-	# fsutil behavior query disable8dot3	# Win11 Home 2 (Per volume setting - the default)
-}
-
-
-Function SetDoReport {
-	
-	Write-Output "Disable Windows error reporting function to get better system response speed."
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000					# Win11 Home NA		LTSC NA
-
-
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
-}
-
-
-Function SetMaxCachedIcons {
-	
-	Write-Output "Increase the system image buffer to display images faster."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"				# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"	# Win11 Home NA		LTSC NA
-}
-
-
-Function SetNoDriveTypeAutoRun {
-	
-	Write-Output "Disable AutoPlay for external devices to avoid potential risks such as malware."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 0x000000dd	# Win11 Home NA		LTSC NA
-}
-
-
-### Network Optimization ###
 
 
 Function SetDefaultTTL {
@@ -2816,15 +2955,6 @@ Function SetMaxConnectionsPerServer {
 }
 
 
-Function SetKeyboardDelay {
-	
-	Write-Output "Adjust the keyboards delayed response time."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "InitialKeyboardIndicators" -Type String -Value "2"		# Win11 Home 0		LTSC 0
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Type String -Value "0"					# Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Type String -Value "48"				# Win11 Home 31		LTSC 31
-}
-
 
 Function SetAutoDetectionMTUsize {
 	
@@ -2835,12 +2965,14 @@ Function SetAutoDetectionMTUsize {
 }
 
 
+
 Function SetNameSrvQueryTimeout {
 	
 	Write-Output "Optimize network WINS name query time to enhance network data transmission capacity."
 	
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" -Name "NameSrvQueryTimeout" -Type DWord -Value 0x00000bb8			# Win11 Home 0x000005dc (1500) 		LTSC 0x000005dc (1500)
 }
+
 
 
 Function SetDnsCache {
@@ -2853,6 +2985,7 @@ Function SetDnsCache {
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NegativeSOACacheTime" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NetFailureCacheTime" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
 }
+
 
 
 Function SetNoUpdateCheckonIE {
@@ -2873,12 +3006,14 @@ Function SetNoUpdateCheckonIE {
 }
 
 
+
 Function SetTcp1323Opts {
 	
 	Write-Output "Enable auto-adjustment of transport unit buffer to shorten network response time."
 	
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "Tcp1323Opts" -Type DWord -Value 0x00000001							# Win11 Home NA		LTSC NA
 }
+
 
 
 Function SetMaxCmds {
@@ -2891,12 +3026,14 @@ Function SetMaxCmds {
 }
 
 
+
 Function SetNoNetCrawling {
 	
 	Write-Output "Optimize LAN connection."
 	
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "NoNetCrawling" -Type DWord -Value 0x00000001		# Win11 Home NA		LTSC NA
 }
+
 
 
 Function SetGlobalMaxTcpWindowSize {
@@ -2908,9 +3045,45 @@ Function SetGlobalMaxTcpWindowSize {
 
 
 
-###							###
-###		Server-related		###
-###							###
+Function SetOptimizeNetwrok {
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000				# Win11 Home NA		LTSC NA
+
+	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched")) {
+		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
+
+
+
+	# Disable throttling mechanism to control network performance
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0xffffffff		# Win11 Home 0x0000000a (10)	LTSC 0x0000000a (10)
+		
+
+	# Disable Nagle’s Algorithm
+	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" | ForEach-Object {
+		if(Get-ItemProperty -Path $_.PsPath -Name "DhcpServer" -ErrorAction SilentlyContinue )	 {
+			Set-ItemProperty -Path $_.PsPath -Name "TcpNoDelay" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue												# Win11 Home NA	LTSC NA
+			Set-ItemProperty -Path $_.PsPath -Name "TcpAckFrequency" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue											# Win11 Home NA	LTSC NA
+			Set-ItemProperty -Path $_.PsPath -Name "TcpDelAckTicks" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue											# Win11 Home NA	LTSC NA
+		}	
+	}
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Name "TCPNoDelay" -Type DWord -Value 0x00000001	# Win11 Home NA		LTSC NA
+
+}
+
+
+
+###				   ###
+###	Server-Related ###
+###				   ###
 
 
 
@@ -2926,9 +3099,12 @@ Function DisableEventTracker {
 
 
 
-### 		  ###
-###   Unpin   ###
-### 		  ###
+
+
+
+### 	  ###
+### Unpin ###
+###       ###
 
 
 
@@ -2942,6 +3118,76 @@ Function RemovingFax {
 	Remove-Printer -Name "OneNote (Desktop)" -ErrorAction SilentlyContinue
 }
 
+
+
+Function RemoveFeaturesKeys {
+
+	# These are the registry keys that it will delete.
+	
+	$Keys = @(
+		# Remove Background Tasks
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
+		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
+
+
+		# Windows File
+		"HKCR:\Extensions\ContractId\Windows.File\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+
+		
+		# Registry keys to delete if they aren't uninstalled by RemoveAppXPackage/RemoveAppXProvisionedPackage
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
+		
+
+		# Scheduled Tasks to delete
+		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
+		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
+		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
+		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
+
+		# Windows Protocol Keys
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
+		#"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
+		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy" 
+
+
+		# Windows Share Target
+		"HKCR:\Extensions\ContractId\Windows.ShareTarget\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+	)
+
+
+	# This writes the output of each key it is removing and also removes the keys listed above.
+    If (!(Test-Path "HKCR:")) {
+		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
+	}
+	ForEach ($Key in $Keys) {
+		Write-Output "Removing $Key from registry"
+		Remove-Item -Path $Key -Force -Recurse -ErrorAction SilentlyContinue
+	}
+}
 
 
 <#

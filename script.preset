@@ -1,30 +1,30 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.6
+# Version : 0.1.7
 # Source: https://github.com/hermannheringer/
 
 
 
-### If the name starts with an exclamation point (!), the function will not be executed. ###
+###  If the name starts with an exclamation point (!), the function will not be executed.  ###
 
 
 
-### Require administrator privileges ###
+###  Require administrator privileges  ###
 RequireAdmin
 
 
 
-### Transcript everything that happens during a session to a LOG file. ###
+###  Transcript everything that happens during a session to a LOG file.  ###
 LogScript
 
 
 
-### Creating a System Restore Point on the local computer before starting. ###
+###  Creating a System Restore Point on the local computer before starting. ###
 RestorePoint
 
 
 
-### Application  ###
+###  Application  ###
 InstallWinget
 
 
@@ -35,88 +35,91 @@ AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware a
 SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
 
 
-### Features ###
-DisableAppCompat                    #Disabling Application Compatibility Program.
-RemoveThirdPartyTelemetry           #Remove Telemetry from Third-Party Apps.
-DisableBackgroundApp                #Disabling All Background Application Access.
-RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists.
-DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially.
-SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
-SetPagedPoolMemoryUsage             #Configures the internal cache levels of NTFS paged-pool memory and NTFS nonpaged-pool memory.
-EnableMemoryCompression             #Enabling Memory Compression.
-DisablePerformanceCounters          #Disable All Performance Counters.
-DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
-SetPowerManagment                   #Platform-customized power management optimization scheme.
-!revertPowerManagment               #Revert power management customizations.
-RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
-RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
-SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold.
-DisableStorageSense                 #Disabling Storage Sense.
+
+###  Disable Unecessary Windows Services  ###
+DisableWAPPush                      #Stopping and disabling Device Management Wireless Application Protocol (WAP) Push message Routing Service.
+DisableServices                     #Stopping and disabling unnecessary services.
+
+
+
+###  Optional Features  ###
 AllowMiracast                       #Allow Projection To PC Miracast feature.
-TurnWSLlight                        #Set some WSL Performance Tweaks.
-DisableVBS_HVCI                     #Turn off Virtualization-based security.
-DisableWindowsDefender              #Disables Windows Defender.
 
 
-### Features GPU ###
+
+###  Performance Game / GPU Related  ###
 RemoveXboxFeatures                  #Disabling Xbox features.
 EnableGPUScheduling                 #Turn On Hardware Accelerated GPU Scheduling.
 EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
 EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
 
 
-### Privacy ###
+
+###  Privacy  ###
+RemoveAutoLogger                    #Removing AutoLogger file and restricting directory.
+DisableDataCollection               #Turning off Data Collection via the AllowTelemtry key.
+DisableDiagTrack                    #Stopping and disabling Connected User Experiences and Telemetry Service.
+DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
+DisableRemoteAssistance             #Disabling Remote Assistance.
+DisableRDP                          #Remote Desktop consumes system resources, including CPU processing power, memory, and network bandwidth.
 AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
 DisableActivityHistory              #Disabling activity history.
 DisableAdvertisingID                #Disabling Advertising ID.
 DisableAdvertisingInfo              #Disabling Windows Feedback Experience program.
 DisableAppDiagnostics               #Turning off AppDiagnostics.
 DisableCEIP                         #Disabling Microsoft Customer Experience Improvement Program.
-DisableDataCollection               #Turning off Data Collection via the AllowTelemtry key.
-DisableDiagTrack                    #Stopping and disabling Connected User Experiences and Telemetry Service.
+DisableTelemetryTasks               #Disable Telemetry Tasks.
 DisableErrorReporting               #Disabling Error reporting.
+SetDoReport                         #Disable Windows error reporting function to get better system response speed.
 DisableFeedbackExperience           #Stops the Windows Feedback Experience from sending anonymous data.
 !DisableLocationTracking            #Disabling this will break Microsoft 'Find My Device' functionality.
 DisableTailoredExperiences          #Disabling Tailored Experiences.
 
 
 
-### Security ###
-RemoveAutoLogger                    #Removing AutoLogger file and restricting directory.
-DisableRemoteAssistance             #Disabling Remote Assistance.
-DisableRDP                          #Remote Desktop consumes system resources, including CPU processing power, memory, and network bandwidth.
-
-
-### Network ###
-SetIRPStackSize                     #Improve network performance.
-SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
-DisableWiFiSense                   #Disabling Wi-Fi Sense.
-DisableWFPlogs                      #Disable WFP logs.
-
-
-### Service ###
-DisableWAPPush                      #Stopping and disabling Device Management Wireless Application Protocol (WAP) Push message Routing Service.
-DisableServices                     #Stopping and disabling unnecessary services.
+###  Remove Third Party Telemetry  ###
+DisableMozillaFirefoxTelemetry      #Disable Mozilla Firefox Telemetry.
+DisableGoogleChromeTelemetry        #Disable Google Chrome Telemetry.
+DisableCCleanerMonitoring           #Disable CCleaner Monitoring.
+DisableMediaPlayerTelemetry         #Disable Media Player Telemetry.
+DisableMicrosoftOfficeTelemetry     #Disable Microsoft Office Telemetry.
+DisableVisualStudioTelemetry        #Disable Visual Studio Telemetry.
+DisableNvidiaDriverTelemetry        #Disable Nvidia Driver Telemetry.
 
 
 
-### System ###
+###  System  ###
+RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
+DisableAppCompat                    #Disabling Application Compatibility Program.
 DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
 DisableBingSearch                   #Disabling Bing Search in Start Menu.
 DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
-GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
 PrintScreenToSnippingTool           #Use print screen to open snipping tool.
 DisableLiveTiles                    #Disabling live tiles.
 DisableWidgets                      #Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off.
+DisableBackgroundApp                #Disabling All Background Application Access.
+RemoveCloudStore                    #Removing deprecated TileDataLayer from registry if it exists.
+SetAeDebug                          #Turn off Just-In-Time Debugging function to improve system performance.
+SetSplitThreshold                   #Reduce servicing costs by changing Split Threshold.
+SetPagedPoolMemoryUsage             #Configures the internal cache levels of NTFS paged-pool memory and NTFS nonpaged-pool memory.
+EnableMemoryCompression             #Enabling Memory Compression.
+DisablePerformanceCounters          #Disable All Performance Counters.
+SetSystemResponsiveness             #Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS).
+SomeKernelTweaks                    #Applying some tweaks chosen by the author and disable Meltdown/Spectre/Zombieload patches.
+MisconceptionHPET                   #Reverting this misconception about HPET-TSC-PMT to system default values.
+SetPowerManagment                   #Platform-customized power management optimization scheme.
+!revertPowerManagment               #Revert power management customizations.
 
-# Disk Cache Optimization
-SetWaitToKillAppTimeout             #Optimize program response time to improve system response speed.
-SetHungAppTimeout                   #Shorten the wait time for unresponsive mouse and keyboard caused by error program.
-SetPriorityControl                  #Optimize processor resource allocation to make multimedia smoother.
-SetAutoEndTasks                     #Automatically end unresponsive programs to avoid system crash.
-SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
 
-# Desktop Menu Optimization
+
+###  Security  ###
+DisableVBS_HVCI                     #Turn off Virtualization-based security.
+TurnWSLlight                        #Set some WSL Performance Tweaks.
+DisableWindowsDefender              #Disables Windows Defender.
+
+
+
+###  Desktop Menu Optimizations  ###
 SetMinAnimate                       #Disable useless visual effects to speed up response and display of desktop.
 SetDesktopProcess                   #Optimize the priority of program processes and independent processes to avoid system crash.
 SetTaskbarAnimations                #Play animations in the taskbar and start menu.
@@ -129,24 +132,38 @@ SetAlwaysUnloadDLL                  #Release unused dlls in memory.
 SetFontStyleShortcut                #Remove the font style of the desktop shortcut.
 SetAutoRestartShell                 #Optimize user interface components. Auto-refresh when there is an error to avoid system crash.
 SetVisualEffects                    #Optimize the visual effects of system menus and lists to improve system performance.
-SetSystemResponsiveness             #Determines the percentage of CPU resources that should be guaranteed to low-priority tasks (MMCSS).
-MisconceptionHPET                   #Reverting this misconception about HPET-TSC-PMT to system default values.
-SomeKernelTweaks                    #Applying some tweaks chosen by the author and disable Meltdown/Spectre/Zombieload patches.
-
-# File System Optimization
-SetAeDebug                          #Turn off Just-In-Time Debugging function to improve system performance.
-SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
-SetNtfsDisable8dot3NameCreation     #Disable short file names feature.
-SetDoReport                         #Disable Windows error reporting function to get better system response speed.
+GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
+SetKeyboardDelay                    #Adjust the keyboards delayed response time.
 SetMaxCachedIcons                   #Increase the system image buffer to display images faster.
-SetNoDriveTypeAutoRun               #Disable AutoPlay for external devices to avoid potential risks such as malware.
 
-# Network Optimization
+
+
+###  File System Optimizations  ###
+SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
+DisableStorageSense                 #Disabling Storage Sense.
+SetNtfsDisable8dot3NameCreation     #Disable short file names feature.
+SetNoDriveTypeAutoRun               #Disable AutoPlay for external devices to avoid potential risks such as malware.
+DisableDeleteNotify                 #Allows your SSD drive to handle garbage more evidentially.
+SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
+SetWaitToKillAppTimeout             #Optimize program response time to improve system response speed.
+SetHungAppTimeout                   #Shorten the wait time for unresponsive mouse and keyboard caused by error program.
+SetPriorityControl                  #Optimize processor resource allocation to make multimedia smoother.
+SetAutoEndTasks                     #Automatically end unresponsive programs to avoid system crash.
+SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
+
+
+
+###  Network Optimizations  ###
+SetIRPStackSize                     #Improve network performance.
+SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
+DisableWiFiSense                   #Disabling Wi-Fi Sense.
+DisableWFPlogs                      #Disable WFP logs.
+
+
 SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
 SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
 SetMaxConnectionsPerServerIE        #Add more IE concurrent connections.
 SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
-SetKeyboardDelay                    #Adjust the keyboards delayed response time.
 SetAutoDetectionMTUsize             #Enable auto-detection of MTU size and black hole router detection to get better internet speed.
 SetNameSrvQueryTimeout              #Optimize network WINS name query time to enhance network data transmission capacity.
 SetDnsCache                         #Optimize DNS to get better parsing speed.
@@ -155,20 +172,22 @@ SetTcp1323Opts                      #Enable auto-adjustment of transport unit bu
 SetMaxCmds                          #Optimize network parameter configuration to improve network performance and throughput.
 SetNoNetCrawling                    #Optimize LAN connection.
 SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
+SetOptimizeNetwrok                  #Disable Nagle’s Algorithm and throttling mechanism to control network performance.
 
 
 
-### Server-related ###
+###  Server-Related  ###
 DisableEventTracker                 #Disabling Shutdown Event Tracker
 
 
 
-### Unpin ###
+###  Unpin  ###
 RemovingFax                         #Who needs this?
+RemoveFeaturesKeys                  #Removing registry keys where features will be deleted.
 
 
 
-### Finally ###
+###  Finally  ###
 DeepSystemClean
 OptimizeVolume
 WaitForKey

@@ -10,14 +10,14 @@
   - [**Known side effects**](#known-side-effects)
   - [**Known issues**](#known-issues)
   - [**Undo changes**](#undo-changes)
-  - [**Final considerations**](#finally)
+  - [**Final considerations**](#final-considerations)
   - [**Thanks To**](#thanks-to)
 
 
 ## **Description**
 
 
-#### Enhanced PowerShell Script for Windows Performance and Latency Optimization
+#### PowerShell script for Windows gaming, performance and latency optimization.
 
 Introduction:
 
@@ -71,6 +71,7 @@ Memory:
 
 ```
 🚫 Never run scripts from strangers without checking the code first!
+    Research indicates that a significant 76% of ransomware attacks originate from PowerShell scripts.
 ```
 
 ```
@@ -178,6 +179,7 @@ The code at the end of each instruction contains the default values for Windows 
 You are welcome to experiment and modify the functions as you wish.
 
 ## **Final considerations**
+
 If you understand what you are doing, consider downloading and running Microsoft Autoruns to check your system.
 
 This utility, which has the most comprehensive knowledge of auto-starting locations of any startup monitor, shows you what programs are configured to run during system bootup or login, and when you start various built-in Windows applications like Internet Explorer, Explorer and media players. These programs and drivers include ones in your startup folder, Run, RunOnce, and other Registry keys. Autoruns reports Explorer shell extensions, toolbars, browser helper objects, Winlogon notifications, auto-start services, and much more. Autoruns goes way beyond other autostart utilities.
@@ -187,28 +189,38 @@ https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns
 ![autoruns_v13.png](README/autoruns_v13.png)
 
 
-##### After executing this script, I recommend the following steps to achieve an optimized experience. It's advisable to conduct thorough research before implementing any changes, and please be aware that any alterations are at your own risk. The author cannot be held accountable for any issues or damages that may arise.
+#### After executing this script, I recommend the following steps to achieve an optimized experience. It's advisable to conduct thorough research before implementing any changes, and please be aware that any alterations are at your own risk. The author cannot be held accountable for any issues or damages that may arise.
 
-##### 1.Adjust Memory Command Rate: Explore the BIOS settings for your memory and locate the "Command Rate" or similar settings such as "Nmode." Change the value from 2T to 1T. This adjustment can lead to a perceptible improved performance.
+#### 1.Adjust Memory Command Rate: Explore the BIOS settings for your memory and locate the "Command Rate" or similar settings such as "Nmode." Change the value from 2T to 1T. This adjustment can lead to a perceptible improved performance.
 
 ![CommandRate.png](README/CommandRate.png)
 
 
-##### 2.Modify "DDR Power Down Mode": Within the BIOS, find settings like "DDR PowerDown and idle counter" related to power management. Switch from "Auto" or "Enabled/BIOS" to "Disabled/PCODE." This change can contribute to better system responsiveness. Reduces, in most cases, ~8% of memory latency.
+#### 2.Modify "DDR Power Down Mode": Within the BIOS, find settings like "DDR PowerDown and idle counter" related to power management. Switch from "Auto" or "Enabled/BIOS" to "Disabled/PCODE." This change can contribute to better system responsiveness. Reduces, in most cases, ~8% of memory latency.
 
-##### 3.Enhance GPU Performance: If using a first-rate video card, investigate whether it supports "Above 4G Decoding" or "Resizable BAR." If compatible, research the process to enable this feature on your motherboard. It enhances graphics performance a lot.
+#### 3.Enhance GPU Performance: If using a first-rate video card, investigate whether it supports "Above 4G Decoding" or "Resizable BAR." If compatible, research the process to enable this feature on your motherboard. It enhances graphics performance a lot.
 
 ![Above4G.png](README/Above4G.png)
 
 
-##### 4.Explore RAID Configuration: For users with an AMD Ryzen platform, it's worth exploring the possibility of utilizing RAID 0 for SATA or NVMe devices. Even notebooks with locked BIOS and two NVMe ports might support this. Research how to implement this configuration for improved storage performance. It's pure luxury, but it is fantastic!
+#### 4.Explore RAID Configuration: For users with an AMD Ryzen platform, it's worth exploring the possibility of utilizing RAID 0 for SATA or NVMe devices. Even notebooks with locked BIOS and two NVMe ports might support this `unofficially`. Search how to implement this configuration for improved storage performance. It's pure luxury, but it is fantastic!
 
-##### 5.Enable Message Signaled Interrupts. Be aware that enabling MSI for a driver without support will break your Windows!
+![Omen-Raid0.png](README/Omen-Raid0.png)
+
+
+
+#### 5.Enable Message Signaled Interrupts. Be aware that enabling MSI for a driver without support will break your Windows!
 
 ![MSI.png](README/MSI.png)
 
 
-##### Following these guidelines can significantly optimize your system's performance after running this script. Remember to conduct in-depth research and understand the potential implications of each modification before proceeding. Your own discretion and caution are advised, as the author takes no responsibility for any adverse outcomes.
+
+#### 6.And lastly, don't forget, if it's a fresh install of the operating system, select "English (World)" as the time zone; it pretty much solves the initial bloatware problem on your new Windows. This does not apply to the LTSC or IoT distros, as it already comes with reduced OS footprint. Credits to mastermind @ThioJoe!
+
+![ThioJoe.png](README/ThioJoe.png)
+
+
+#### Following these guidelines can significantly optimize your system's performance after running this script. Remember to conduct in-depth research and understand the potential implications of each modification before proceeding. Your own discretion and caution are advised, as the author takes no responsibility for any adverse outcomes.
 
 ## **Thanks To**
 
