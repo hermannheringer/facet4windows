@@ -155,7 +155,7 @@ Function DebloatBlacklist {
 		#"*Microsoft.YourPhone*"
 		"*Microsoft.ZuneMusic*"
 		"*Microsoft.ZuneVideo*"
-		"*MicrosoftCorporationII.MicrosoftFamily*"
+		#"*MicrosoftCorporationII.MicrosoftFamily*"
 		#"*MicrosoftCorporationII.QuickAssist*"
 
 		# Redstone Apps
@@ -676,9 +676,9 @@ Function AllowMiracast {
 }
 
 
-###		                 ###
+###		              			   ###
 ### Performance Game / GPU Related ###
-###		                 ###
+###		      			           ###
 
 
 
@@ -1243,6 +1243,51 @@ Function DisableTailoredExperiences {
 																							
 
 
+function BlockTelemetrybyHosts {
+	
+Write-Output "Windows has a lot of telemetry and spying and connects to third-party data collection sites. We will block this."
+
+$user_home = "$Env:windir\System32\drivers\etc\hosts"
+$wslconfig = @'
+# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+127.0.0.1     localhost
+::1           localhost
+127.0.0.1     data.microsoft.com
+127.0.0.1     msftconnecttest.com
+127.0.0.1     azureedge.net
+127.0.0.1     activity.windows.com
+127.0.0.1     bingapis.com
+127.0.0.1     msedge.net
+127.0.0.1     assets.msn.com
+127.0.0.1     scorecardresearch.com
+127.0.0.1     edge.microsoft.com
+127.0.0.1     data.msn.com
+'@
+New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
+}
+
+
+
 ###								   ###
 ###  Remove Third Party Telemetry  ###
 ###								   ###
@@ -1509,9 +1554,14 @@ Function RemoveScheduledTasks {
 
 	Write-Output "Disabling scheduled customer experience improvement program."
 	if(Get-ScheduledTask Proxy -ErrorAction Ignore) { Get-ScheduledTask  Proxy | Stop-ScheduledTask ; Get-ScheduledTask  Proxy | Disable-ScheduledTask } else { 'Proxy task does not exist on this device.'}														# Win11 Home Ready		collects and uploads Software Quality Management (SQM) data if opted-in to the CEIP
-	if(Get-ScheduledTask StartupAppTask -ErrorAction Ignore) { Get-ScheduledTask  StartupAppTask | Stop-ScheduledTask ; Get-ScheduledTask  StartupAppTask | Disable-ScheduledTask } else { 'StartupAppTask does not exist on this device.'}							# Win11 Home Ready
 	if(Get-ScheduledTask ProgramDataUpdater -ErrorAction Ignore) { Get-ScheduledTask  ProgramDataUpdater | Stop-ScheduledTask ; Get-ScheduledTask  ProgramDataUpdater | Disable-ScheduledTask } else { 'ProgramDataUpdater task does not exist on this device.'}	# Win11 Home NA		collects program telemetry information if opted-in to the Microsoft Customer Experience Improvement Program (CEIP)
+
 	if(Get-ScheduledTask 'Microsoft Compatibility Appraiser' -ErrorAction Ignore) { Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Stop-ScheduledTask ; Get-ScheduledTask  'Microsoft Compatibility Appraiser' | Disable-ScheduledTask } else { 'Microsoft Compatibility Appraiser task does not exist on this device.'}	# Win11 Home Ready		collects program telemetry information if opted-in to the CEIP
+	if(Get-ScheduledTask MareBackup -ErrorAction Ignore) { Get-ScheduledTask  MareBackup | Stop-ScheduledTask ; Get-ScheduledTask  MareBackup | Disable-ScheduledTask } else { 'MareBackup task does not exist on this device.'}
+	if(Get-ScheduledTask PcaPatchDbTask -ErrorAction Ignore) { Get-ScheduledTask  PcaPatchDbTask | Stop-ScheduledTask ; Get-ScheduledTask  PcaPatchDbTask | Disable-ScheduledTask } else { 'PcaPatchDbTask task does not exist on this device.'}
+	if(Get-ScheduledTask SdbinstMergeDbTask -ErrorAction Ignore) { Get-ScheduledTask  SdbinstMergeDbTask | Stop-ScheduledTask ; Get-ScheduledTask  SdbinstMergeDbTask | Disable-ScheduledTask } else { 'SdbinstMergeDbTask task does not exist on this device.'}
+	if(Get-ScheduledTask StartupAppTask -ErrorAction Ignore) { Get-ScheduledTask  StartupAppTask | Stop-ScheduledTask ; Get-ScheduledTask  StartupAppTask | Disable-ScheduledTask } else { 'StartupAppTask does not exist on this device.'}							# Win11 Home Ready
+	
 	if(Get-ScheduledTask Uploader -ErrorAction Ignore) { Get-ScheduledTask  Uploader | Stop-ScheduledTask ; Get-ScheduledTask  Uploader | Disable-ScheduledTask } else { 'Uploader task does not exist on this device.'}											# Win11 Home NA
 
 
@@ -1532,7 +1582,7 @@ Function RemoveScheduledTasks {
 	Write-Output "Disabling scheduled collects network information."
 	if(Get-ScheduledTask GatherNetworkInfo -ErrorAction Ignore) { Get-ScheduledTask  GatherNetworkInfo | Stop-ScheduledTask ; Get-ScheduledTask  GatherNetworkInfo | Disable-ScheduledTask } else { 'GatherNetworkInfo task does not exist on this device.'}			# Win11 Home Ready		collects network information
 
-
+	
 	Write-Output "Disabling scheduled legacy tasks."
 	if(Get-ScheduledTask AitAgent -ErrorAction Ignore) { Get-ScheduledTask  AitAgent | Stop-ScheduledTask ; Get-ScheduledTask  AitAgent | Disable-ScheduledTask } else { 'AitAgent task does not exist on this device.'}															# Win11 Home NA	aggregates and uploads application telemetry information if opted-in to the CEIP
 	if(Get-ScheduledTask ScheduledDefrag -ErrorAction Ignore) { Get-ScheduledTask  ScheduledDefrag | Stop-ScheduledTask ; Get-ScheduledTask  ScheduledDefrag | Disable-ScheduledTask } else { 'ScheduledDefrag task does not exist on this device.'}								# Win11 Home Ready
@@ -1772,7 +1822,7 @@ function DisableBackgroundApp {
 Function RemoveCloudStore {
 	
 	Write-Output "Removing deprecated TileDataLayer from registry if it exists."
-
+	
 	# See more at https://4sysops.com/archives/roaming-profiles-and-start-tiles-tiledatalayer-in-the-windows-10-1703-creators-update
 	
 	$CloudStore = "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore" # Win11 Home (Folder Exist)
@@ -1891,16 +1941,26 @@ Function SetSystemResponsiveness {
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "GPU Priority" -Type DWord -Value 0x00000000		# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Priority" -Type DWord -Value 0x00000008			# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Scheduling Category" -Type String -Value "High"	# Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "SFIO Priority" -Type String -Value "High"			# Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "GPU Priority" -Type DWord -Value 0x00000008
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Priority" -Type DWord -Value 0x00000008
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Scheduling Category" -Type String -Value "High"
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "SFIO Priority" -Type String -Value "High"
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 0x00000006					# Win11  00000002
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Type String -Value "High"			# Win11  Medium
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Type String -Value "High"				# Win11  Normal
+
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Type DWord -Value 0x00000008
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 0x00000008
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Type String -Value "High"
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Type String -Value "High"
 
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Type DWord -Value 0x00000000
+
+
+	# Disable Camera Frame Server. It controls whether multiple applications can access the camera feed simultaneously.
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Media Foundation\Platform" -Name "EnableFrameServerMode" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Media Foundation\Platform" -Name "EnableFrameServerMode" -Type DWord -Value 0x00000000
 
 	# https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service
 	
@@ -2050,13 +2110,13 @@ function SetPowerManagment {
 
 		IF (Get-WmiObject -Class Win32_Processor | where {( $_.Manufacturer -like "*AMD*" )}) {
 			Write-Host "AMD CPU Detected. Changing Performance Boost to Aggressive." # AMD CPUs with BOOST parameter other than "2" (Aggressive) usually disable Performance Boost completely. 
-			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 6	# Win11 Home 2 (Aggressive)
+			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 2	# Win11 Home 2 (Aggressive)
 			Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0	# Win11 Home 2 (Aggressive)
 		}
 
 		IF (Get-WmiObject -Class Win32_Processor | where {($_.Manufacturer -like "*Intel*")}) {
 			Write-Host "Intel CPU Detected. Changing Performance Boost to Efficient Aggressive At Guaranteed." # Intel CPUs generally run very well with BOOST 6
-			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 6	# Win11 Home 2 (Aggressive)
+			Powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 2	# Win11 Home 2 (Aggressive)
 			Powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 0	# Win11 Home 2 (Aggressive)
 		}
 	}
@@ -2279,6 +2339,13 @@ function SetPowerManagment {
 	powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # Default 60
 	powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL 100 # Default 40
 
+
+	# Processor performance time check interval
+	powercfg -attributes 54533251-82be-4824-96c1-47b60b740d00 4d2b0152-7d5c-498b-88e2-34345392a2c5 -ATTRIB_HIDE
+	powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 4d2b0152-7d5c-498b-88e2-34345392a2c5 5000 # 15
+	powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 54533251-82be-4824-96c1-47b60b740d00 4d2b0152-7d5c-498b-88e2-34345392a2c5 5000 # 30
+
+	
 	Powercfg -setactive scheme_current
 
 
@@ -2289,6 +2356,7 @@ function SetPowerManagment {
 	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTPOL
 	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE
 	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR DISTRIBUTEUTIL
+	powercfg /qh SCHEME_CURRENT SUB_SLEEP STANDBYIDLE
 
 	powercfg /Q
 
@@ -2844,6 +2912,21 @@ Function SetBootOptimizeFunction {
 ###					      ###
 
 
+Function SetInterruptModeration  {
+	# Disabling (0) "Packet Coalescing" or "Interrupt Coalescing" or "Interrupt Moderation Rate" or "SetInterruptModeration".
+	
+	Write-Output "Setting Packet Coalescing / InterruptModeration to LOW."
+	
+	New-NetAdapterAdvancedProperty -Name Wi-Fi -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+	New-NetAdapterAdvancedProperty -Name Ethernet -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+
+	Set-NetAdapterAdvancedProperty -Name Wi-Fi -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+	Set-NetAdapterAdvancedProperty -Name Ethernet -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+
+	# Restart-NetAdapter -Name Wi-Fi
+	# Restart-NetAdapter -Name Ethernet
+}
+
 
 
 Function SetIRPStackSize {
@@ -3056,7 +3139,6 @@ Function SetOptimizeNetwrok {
 		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Force | Out-Null
 	}
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000	# Win11 Home NA		LTSC NA
-
 
 
 	# Disable throttling mechanism to control network performance

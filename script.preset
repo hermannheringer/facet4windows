@@ -74,6 +74,7 @@ SetDoReport                         #Disable Windows error reporting function to
 DisableFeedbackExperience           #Stops the Windows Feedback Experience from sending anonymous data.
 !DisableLocationTracking            #Disabling this will break Microsoft 'Find My Device' functionality.
 DisableTailoredExperiences          #Disabling Tailored Experiences.
+BlockTelemetrybyHosts               #Windows has a lot of telemetry and spying and connects to third-party data collection sites. We will block this.
 
 
 
@@ -154,12 +155,11 @@ SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
 
 
 ###  Network Optimizations  ###
+SetInterruptModeration              #Disabling Packet Coalescing - InterruptModeration.
 SetIRPStackSize                     #Improve network performance.
 SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
-DisableWiFiSense                   #Disabling Wi-Fi Sense.
+DisableWiFiSense                    #Disabling Wi-Fi Sense.
 DisableWFPlogs                      #Disable WFP logs.
-
-
 SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
 SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
 SetMaxConnectionsPerServerIE        #Add more IE concurrent connections.

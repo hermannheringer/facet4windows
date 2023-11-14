@@ -95,6 +95,10 @@ Get-ChildItem $Env:windir\System32\SleepStudy | Remove-Item -rec -for -ErrorActi
 
 Write-Host "Clean Up the WinSxS Folder. This process can take a few minutes..."
 dism /online /cleanup-Image /StartComponentCleanup /ResetBase
+
+Write-Host "Clearing All Event Viewer logs."
+Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | ForEach-Object { Clear-EventLog $_.LogName -ErrorAction SilentlyContinue }
+
 }
 
 
