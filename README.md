@@ -17,7 +17,7 @@
 ## **Description**
 
 
-#### PowerShell script for Windows gaming, performance and latency optimization.
+#### PowerShell script for performance and latency optimization in Data Science on Windows.
 
 Introduction:
 

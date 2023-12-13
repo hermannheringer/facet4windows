@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.5
+Version : 0.3.7
 Source: https://github.com/hermannheringer/
 #>
 
@@ -2068,6 +2068,7 @@ function SetPowerManagment {
 
 
 	# Balanced Performance
+	# ActivePowerScheme is the GUID (Globally Unique Identifier) of the current active power plan for your account.
 	powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e	# Win11 Home Enabled
 
 
