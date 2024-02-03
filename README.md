@@ -17,7 +17,7 @@
 ## **Description**
 
 
-#### PowerShell script for performance and latency optimization in Data Science on Windows.
+#### PowerShell script for performance optimization and Windows latency reduction for a better data analysis experience.
 
 Introduction:
 
