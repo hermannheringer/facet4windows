@@ -21,13 +21,13 @@
                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}"/>
             </TextBlock.Foreground>
         </TextBlock>
-        <TextBlock x:Name="facet4Title" HorizontalAlignment="Left" Height="27" Margin="102,33,0,0" TextWrapping="Wrap" Text="Facet4 Windows 10/11 distribution" VerticalAlignment="Top" Width="287" FontSize="16" FontWeight="Bold">
+        <TextBlock x:Name="facet4Title" HorizontalAlignment="Left" Height="27" Margin="102,33,0,0" TextWrapping="Wrap" Text="Facet4 Windows 10/11 distribution (24H2 compatible)" VerticalAlignment="Top" Width="287" FontSize="16" FontWeight="Bold">
             <TextBlock.Foreground>
                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}"/>
             </TextBlock.Foreground>
         </TextBlock>
-        <TextBlock x:Name="Facet4Text1" HorizontalAlignment="Left" Height="83" Margin="102,113,0,0" TextWrapping="Wrap" Text="- This is a PowerShell script for automating routine tasks made for Windows 10 and 11 distributions to make it lighter and perform better while retaining as much of the desired functionality as possible on computers and notebooks with weak CPU and low RAM." VerticalAlignment="Top" Width="612" FontSize="14" TextAlignment="Justify"/>
-        <TextBlock x:Name="facet4Text2" HorizontalAlignment="Left" Height="83" Margin="102,204,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="612" FontSize="14" TextAlignment="Justify"><Run Text="-  Although the author has made an effort to provide broad compatibility, this script was conceived aiming at a clean install of Windows, and if you use it outside that context, some programs may stop working."/><LineBreak/><Run Text="Be aware of the risk!"/></TextBlock>
+        <TextBlock x:Name="facet4Text1" HorizontalAlignment="Left" Height="103" Margin="102,113,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="612" FontSize="14" TextAlignment="Justify"><Run Text="The PowerShell script presented here automates routine tasks on Windows 10/11 distributions (24H2 compatible), specifically focusing on improving performance and reducing overall latency for devices with limited CPU and RAM resources."/><LineBreak/><Run Text="While the script does not target IT administrators or serve as an anti-tracking solution, it aims to balance maintaining desired functionality and optimising system performance."/></TextBlock>
+        <TextBlock x:Name="facet4Text2" HorizontalAlignment="Left" Height="83" Margin="102,223,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="612" FontSize="14" TextAlignment="Justify"><Run Text="Although the author has made an effort to provide broad compatibility, this script was conceived aiming at a clean install of Windows, and if you use it outside that context, some programs may stop working."/><LineBreak/><Run Text="Be aware of the risk!"/></TextBlock>
 
     </Grid>
 </Window>

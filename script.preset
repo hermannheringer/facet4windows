@@ -1,6 +1,6 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.8
+# Version : 0.1.9
 # Source: https://github.com/hermannheringer/
 
 
@@ -30,9 +30,9 @@ InstallWinget
 
 
 ###  Debloat  ###
-DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
-AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings.
-SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
+!DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
+!AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings.
+!SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
 
 
 
@@ -43,15 +43,15 @@ DisableServices                     #Stopping and disabling unnecessary services
 
 
 ###  Optional Features  ###
-AllowMiracast                       #Allow Projection To PC Miracast feature.
+!AllowMiracast                       #Allow Projection To PC Miracast feature.
 
 
 
 ###  Performance Game / GPU Related  ###
-RemoveXboxFeatures                  #Disabling Xbox features.
+!RemoveXboxFeatures                  #Disabling Xbox features.
 EnableGPUScheduling                 #Turn On Hardware Accelerated GPU Scheduling.
-EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
-EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
+!EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
+!EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
 
 
 
@@ -62,7 +62,7 @@ DisableDiagTrack                    #Stopping and disabling Connected User Exper
 DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
 DisableRemoteAssistance             #Disabling Remote Assistance.
 DisableRDP                          #Remote Desktop consumes system resources, including CPU processing power, memory, and network bandwidth.
-AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
+!AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
 DisableActivityHistory              #Disabling activity history.
 DisableAdvertisingID                #Disabling Advertising ID.
 DisableAdvertisingInfo              #Disabling Windows Feedback Experience program.
@@ -79,10 +79,10 @@ BlockTelemetrybyHosts               #Windows has a lot of telemetry and spying a
 
 
 ###  Remove Third Party Telemetry  ###
-DisableMozillaFirefoxTelemetry      #Disable Mozilla Firefox Telemetry.
+!DisableMozillaFirefoxTelemetry      #Disable Mozilla Firefox Telemetry.
 DisableGoogleChromeTelemetry        #Disable Google Chrome Telemetry.
-DisableCCleanerMonitoring           #Disable CCleaner Monitoring.
-DisableMediaPlayerTelemetry         #Disable Media Player Telemetry.
+!DisableCCleanerMonitoring           #Disable CCleaner Monitoring.
+!DisableMediaPlayerTelemetry         #Disable Media Player Telemetry.
 DisableMicrosoftOfficeTelemetry     #Disable Microsoft Office Telemetry.
 DisableVisualStudioTelemetry        #Disable Visual Studio Telemetry.
 DisableNvidiaDriverTelemetry        #Disable Nvidia Driver Telemetry.
@@ -93,8 +93,8 @@ DisableNvidiaDriverTelemetry        #Disable Nvidia Driver Telemetry.
 RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
 DisableAppCompat                    #Disabling Application Compatibility Program.
 DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
-DisableBingSearch                   #Disabling Bing Search in Start Menu.
-DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
+!DisableBingSearch                   #Disabling Bing Search in Start Menu.
+!DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
 PrintScreenToSnippingTool           #Use print screen to open snipping tool.
 DisableLiveTiles                    #Disabling live tiles.
 DisableWidgets                      #Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off.
@@ -114,9 +114,9 @@ SetPowerManagment                   #Platform-customized power management optimi
 
 
 ###  Security  ###
-DisableVBS_HVCI                     #Turn off Virtualization-based security.
+!DisableVBS_HVCI                     #Turn off Virtualization-based security.
 TurnWSLlight                        #Set some WSL Performance Tweaks.
-DisableWindowsDefender              #Disables Windows Defender.
+!DisableWindowsDefender              #Disables Windows Defender.
 
 
 
@@ -125,12 +125,12 @@ SetMinAnimate                       #Disable useless visual effects to speed up 
 SetDesktopProcess                   #Optimize the priority of program processes and independent processes to avoid system crash.
 SetTaskbarAnimations                #Play animations in the taskbar and start menu.
 SetWaitToKillServiceTimeout         #Optimize the speed of ending processes.
-SetNoSimpleNetIDList                #Optimize the refresh strategy of the system file list.
-SetMouseHoverTime                   #Reduce the display time of taskbar preview.
+!SetNoSimpleNetIDList                #Optimize the refresh strategy of the system file list.
+!SetMouseHoverTime                   #Reduce the display time of taskbar preview.
 SetMenuShowDelay                    #Speed up the response and display of system commands.
 SetForegroundLockTimeout            #Improve the response speed of foreground program.
-SetAlwaysUnloadDLL                  #Release unused dlls in memory.
-SetFontStyleShortcut                #Remove the font style of the desktop shortcut.
+!SetAlwaysUnloadDLL                  #Release unused dlls in memory.
+!SetFontStyleShortcut                #Remove the font style of the desktop shortcut.
 SetAutoRestartShell                 #Optimize user interface components. Auto-refresh when there is an error to avoid system crash.
 SetVisualEffects                    #Optimize the visual effects of system menus and lists to improve system performance.
 GetFullContextMenu                  #Setting Full Context Menus in Windows 11, if installed.
@@ -148,6 +148,8 @@ DisableDeleteNotify                 #Allows your SSD drive to handle garbage mor
 SetLastAccessTimeStamp              #Disable NTFS Last Access Time Stamp Updates.
 SetWaitToKillAppTimeout             #Optimize program response time to improve system response speed.
 SetHungAppTimeout                   #Shorten the wait time for unresponsive mouse and keyboard caused by error program.
+SetDataQueueSize                    #Set KeyboardDataQueueSize and MouseDataQueueSize to 0x00000032.
+!DisableThreadedDPCs                 #Disable Threaded DPCs.
 SetPriorityControl                  #Optimize processor resource allocation to make multimedia smoother.
 SetAutoEndTasks                     #Automatically end unresponsive programs to avoid system crash.
 SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
@@ -156,23 +158,24 @@ SetBootOptimizeFunction             #Disable Windows auto disk defragmetation.
 
 ###  Network Optimizations  ###
 SetInterruptModeration              #Disabling Packet Coalescing - InterruptModeration.
-SetIRPStackSize                     #Improve network performance.
-SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
-DisableWiFiSense                    #Disabling Wi-Fi Sense.
+DisableIPv6                         #Disabling IPv6.
+!SetIRPStackSize                     #Improve network performance.
+!SettingTimeService                  #Setting BIOS time to UTC and fixing any inconsistency.
+!DisableWiFiSense                    #Disabling Wi-Fi Sense.
 DisableWFPlogs                      #Disable WFP logs.
-SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
-SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
-SetMaxConnectionsPerServerIE        #Add more IE concurrent connections.
-SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
+!SetDefaultTTL                       #Optimize default TTL to decrease bandwidth loss and increase available bandwidth.
+!SetFastForwarding                   #Optimize network fast forwarding mechanism to get better internet speed.
+!SetMaxConnectionsPerServerIE        #Add more IE concurrent connections.
+!SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
 SetAutoDetectionMTUsize             #Enable auto-detection of MTU size and black hole router detection to get better internet speed.
 SetNameSrvQueryTimeout              #Optimize network WINS name query time to enhance network data transmission capacity.
-SetDnsCache                         #Optimize DNS to get better parsing speed.
-SetNoUpdateCheckonIE                #Disable automatic updates on IE.
-SetTcp1323Opts                      #Enable auto-adjustment of transport unit buffer to shorten network response time.
-SetMaxCmds                          #Optimize network parameter configuration to improve network performance and throughput.
-SetNoNetCrawling                    #Optimize LAN connection.
-SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
-SetOptimizeNetwrok                  #Disable Nagle’s Algorithm and throttling mechanism to control network performance.
+!SetDnsCache                         #Optimize DNS to get better parsing speed.
+!SetNoUpdateCheckonIE                #Disable automatic updates on IE.
+!SetTcp1323Opts                      #Enable auto-adjustment of transport unit buffer to shorten network response time.
+!SetMaxCmds                          #Optimize network parameter configuration to improve network performance and throughput.
+!SetNoNetCrawling                    #Optimize LAN connection.
+!SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
+!SetOptimizeNetwrok                  #Disable Nagle’s Algorithm and throttling mechanism to control network performance.
 
 
 

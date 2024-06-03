@@ -1,13 +1,13 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.0
+Version : 0.1.1
 Source: https://github.com/hermannheringer/
 #>
 
 
 
-# Defining WPF environment
+ # Defining WPF environment
 Add-Type -AssemblyName presentationframework, presentationcore
 $wpf = @{ }
 $inputXML = Get-Content -Path ".\WPFGUI\MainWindow.xaml"
@@ -21,18 +21,18 @@ $wpf.Facet4Image.source = ".\README\logo.png"
 
 
 
-# Parse and resolve paths in past previous arguments
+ # Parse and resolve paths in past previous arguments
 $PSCommandArgs = @()
 $i = 0
 While ($i -lt $args.Length) {
 	If ($args[$i].ToLower() -eq "-include") {
-		# Resolve full path to the included file
+		 # Resolve full path to the included file
 		$include = Resolve-Path $args[++$i] -ErrorAction Stop
 		$PSCommandArgs += "-include `"$include`""
-		# Import the included file as a module
+		 # Import the included file as a module
 		Import-Module -Name $include -ErrorAction Stop
 	} ElseIf ($args[$i].ToLower() -eq "-preset") {
-		# Resolve full path to the preset file
+		 # Resolve full path to the preset file
 		$preset = Resolve-Path $args[++$i] -ErrorAction Stop
 		$PSCommandArgs += "-preset `"$preset`""
 	}
@@ -41,7 +41,7 @@ While ($i -lt $args.Length) {
 
 
 
-#This code runs when the button is clicked
+ # This code runs when the button is clicked
 $wpf.runButton.add_Click({
 
     RequireAdmin | Invoke-Expression

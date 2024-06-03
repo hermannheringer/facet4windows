@@ -17,11 +17,11 @@
 ## **Description**
 
 
-#### PowerShell script for performance and latency optimization in Data Science on Windows.
+#### PowerShell script for performance optimization and Windows latency reduction for a better data analysis experience.
 
 Introduction:
 
-The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions, specifically focusing on improving performance and reducing overall latency for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.
+The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions (24H2 compatible), specifically focusing on improving performance and reducing overall latency for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.
 
 Approach and Scope:
 
