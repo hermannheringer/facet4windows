@@ -80,7 +80,6 @@ Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Vo
 Start-Process cleanmgr -ArgumentList “/VERYLOWDISK, /AUTOCLEAN” -NoNewWindow -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
 Start-Sleep 60
-Stop-Process -Name "cleanmgr" -Force -ErrorAction SilentlyContinue
 
 Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" | ForEach-Object {
 	If ((Test-Path $_.PsPath)) {
@@ -159,34 +158,6 @@ foreach ($dll in $sharedDlls.PSObject.Properties.Name) {
         Write-Output "Removed orphaned DLL: $dll"
     }
 }
-
-<#
-Write-Host "Cleaning up orphaned uninstall keys..."
-$uninstallKeys = Get-ChildItem -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
-foreach ($key in $uninstallKeys) {
-    Write-Output $($key.PSPath)
-    $displayName = (Get-ItemProperty -Path $key.PSPath).DisplayName
-    if (!$displayName) {
-        Remove-Item -Path $key.PSPath -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Output "Removed orphaned uninstall key: $($key.PSPath)"
-    }
-}
-#>
-
-<#
-Write-Host "Cleaning up orphaned file extensions..."
-$fileExtensions = Get-ChildItem -Path "HKCU:\Software\Classes" -ErrorAction SilentlyContinue
-foreach ($ext in $fileExtensions) {
-    if ($ext.PSIsContainer -and !(Test-Path "HKCU:\Software\Classes\$($ext.Name)_auto_file")) {
-        try {
-            Remove-Item -Path $ext.PSPath -Recurse -Force -ErrorAction SilentlyContinue
-            Write-Output "Removed orphaned file extension: $($ext.Name)"
-        } catch {
-            Write-Output "Failed to remove: $($ext.Name). Error: $_"
-        }
-    }
-}
-#>
 
 
 Write-Host "Cleaning up orphaned COM/ActiveX entries..."
@@ -311,6 +282,9 @@ dism /online /cleanup-Image /StartComponentCleanup /ResetBase
 Write-Host "Clearing All Event Viewer logs."
 Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | ForEach-Object { Clear-EventLog $_.LogName -ErrorAction SilentlyContinue }	   # For windows 11
 Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }   # For windows 10
+
+Stop-Process -Name "cleanmgr" -Force -ErrorAction SilentlyContinue
+
 }
 
 

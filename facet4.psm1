@@ -436,7 +436,7 @@ Function AvoidDebloatReturn {
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0x00000001	  # Win11 Home 1		LTSC NA Spotlight fun tips and facts
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Show Suggestions Occasionally in Start
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Show Suggestions Occasionally in Start (Tips)
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC NA Tips and Suggestions Notifications
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
@@ -1244,6 +1244,9 @@ Function DisableTelemetryTasks {
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
 
+    # Disable CompatTelRunner scheduled tasks
+	if(Get-ScheduledTask "CompatTelRunner" -ErrorAction Ignore) { Get-ScheduledTask  "CompatTelRunner" | Stop-ScheduledTask ; Get-ScheduledTask  "CompatTelRunner" | Disable-ScheduledTask } else { 'CompatTelRunner task does not exist on this device.'}
+
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
@@ -1266,7 +1269,9 @@ Function DisableErrorReporting {
 	
 	Write-Output "Disable Windows Error Reporting function to get better system response speed."
 	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001								  # Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\Consent" -Name "DefaultConsent" -Type DWord -Value 0x00000000
+
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
@@ -1376,7 +1381,7 @@ Write-Output "Windows has a lot of telemetry and spying and connects to third-pa
 # https://www.youtube.com/watch?v=IJr2DcffquI
 
 $user_home = "$Env:windir\System32\drivers\etc\hosts"
-$wslconfig = @'
+$TelemetrybyHosts = @'
 # Copyright (c) 1993-2009 Microsoft Corp.
 #
 # This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
@@ -1401,7 +1406,10 @@ $wslconfig = @'
 127.0.0.1     localhost
 ::1           localhost
 127.0.0.1     data.microsoft.com
+127.0.0.1     us-mobile.events.data.microsoft.com
+127.0.0.1     uk-mobile.events.data.microsoft.com
 127.0.0.1     eu-mobile.events.data.microsoft.com
+127.0.0.1     jp-mobile.events.data.microsoft.com
 127.0.0.1     settings-win.data.microsoft.com
 127.0.0.1     msftconnecttest.com
 127.0.0.1     azureedge.net
@@ -1415,7 +1423,7 @@ $wslconfig = @'
 127.0.0.1     data.msn.com
 127.0.0.1     browser.events.data.msn.com
 '@
-New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
+New-Item -Path $user_home -Value $TelemetrybyHosts -Force | Out-Null
 }
 
 
@@ -1678,8 +1686,10 @@ Function RemoveScheduledTasks {
 	if(Get-ScheduledTask Consolidator -ErrorAction Ignore) { Get-ScheduledTask  Consolidator | Stop-ScheduledTask ; Get-ScheduledTask  Consolidator | Disable-ScheduledTask } else { 'Consolidator task does not exist on this device.'}		  # Win11 Home Ready		collects and sends usage data to Microsoft (if the user has consented to participate in the CEIP)
 	if(Get-ScheduledTask KernelCeipTask -ErrorAction Ignore) { Get-ScheduledTask  KernelCeipTask | Stop-ScheduledTask ; Get-ScheduledTask  KernelCeipTask | Disable-ScheduledTask } else { 'KernelCeipTask does not exist on this device.'}		  # Win11 Home NA		collects additional information related to customer experience and sends it to Microsoft (if the user consented to participate in the Windows CEIP)
 	if(Get-ScheduledTask UsbCeip -ErrorAction Ignore) { Get-ScheduledTask  UsbCeip | Stop-ScheduledTask ; Get-ScheduledTask  UsbCeip | Disable-ScheduledTask } else { 'UsbCeip task does not exist on this device.'}							  # Win11 Home Ready
+	if(Get-ScheduledTask Sqm-Tasks -ErrorAction Ignore) { Get-ScheduledTask  Sqm-Tasks | Stop-ScheduledTask ; Get-ScheduledTask  Sqm-Tasks | Disable-ScheduledTask } else { 'Sqm-Tasks task does not exist on this device.'}
 	if(Get-ScheduledTask BthSQM -ErrorAction Ignore) { Get-ScheduledTask  BthSQM | Stop-ScheduledTask ; Get-ScheduledTask  BthSQM | Disable-ScheduledTask } else { 'BthSQM task does not exist on this device.'}								  # Win11 Home NA		collects Bluetooth-related statistics and information about your machine and sends it to Microsoft (if you have consented to participate in the Windows CEIP). The information received is used to help.
-
+	if(Get-ScheduledTask "Microsoft-Windows-DiskDiagnosticDataCollector" -ErrorAction Ignore) { Get-ScheduledTask  "Microsoft-Windows-DiskDiagnosticDataCollector" | Stop-ScheduledTask ; Get-ScheduledTask  "Microsoft-Windows-DiskDiagnosticDataCollector" | Disable-ScheduledTask } else { 'Microsoft-Windows-DiskDiagnosticDataCollector task does not exist on this device.'}
+		
 
 	Write-Output "Disabling collects data for Microsoft SmartScreen."
 	if(Get-ScheduledTask SmartScreenSpecific -ErrorAction Ignore) { Get-ScheduledTask  SmartScreenSpecific | Stop-ScheduledTask ; Get-ScheduledTask  SmartScreenSpecific | Disable-ScheduledTask } else { 'SmartScreenSpecific task does not exist on this device.'}	  # Win11 Home NA
@@ -1715,7 +1725,6 @@ Function RemoveScheduledTasks {
 	Write-Output "Disabling scheduled collects network information."
 	if(Get-ScheduledTask GatherNetworkInfo -ErrorAction Ignore) { Get-ScheduledTask  GatherNetworkInfo | Stop-ScheduledTask ; Get-ScheduledTask  GatherNetworkInfo | Disable-ScheduledTask } else { 'GatherNetworkInfo task does not exist on this device.'}						  # Win11 Home Ready		collects network information
 
-	
 	Write-Output "Disabling scheduled legacy tasks."
 	if(Get-ScheduledTask AitAgent -ErrorAction Ignore) { Get-ScheduledTask  AitAgent | Stop-ScheduledTask ; Get-ScheduledTask  AitAgent | Disable-ScheduledTask } else { 'AitAgent task does not exist on this device.'}															  # Win11 Home NA	aggregates and uploads application telemetry information if opted-in to the CEIP
 	if(Get-ScheduledTask ScheduledDefrag -ErrorAction Ignore) { Get-ScheduledTask  ScheduledDefrag | Stop-ScheduledTask ; Get-ScheduledTask  ScheduledDefrag | Disable-ScheduledTask } else { 'ScheduledDefrag task does not exist on this device.'}								  # Win11 Home Ready
@@ -2164,6 +2173,9 @@ Function SomeKernelTweaks {
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverride" -Type DWord -Value 0x00000003			  # Win11 Home NA		LTSC NA
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "FeatureSettingsOverrideMask" -Type DWord -Value 0x00000003		  # Win11 Home NA		LTSC NA
 
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v DisableExceptionChainValidation /t REG_DWORD /d 1 /f
+	reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization" /v MinVmVersionForCpuBasedMitigations /t REG_SZ /d "1.0" /f
+
 	 # Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel" -Name "DisableTsx" -Type DWord -Value 0x00000000								  # Win11 Home NA
 
 	Write-Output "Disable 57-bits 5-level paging."
@@ -2599,6 +2611,10 @@ function SetPowerManagment {
 
 	Powercfg -setactive scheme_current
 
+	# Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes" -Name "ActiveOverlayDcPowerScheme" -Type String -Value "961cc777-2547-4f9d-8174-7d86181b8a7a"
+	# Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes" -Name "ActiveOverlayAcPowerScheme" -Type String -Value "ded574b5-45a0-4f42-8737-46345c09c238"
+
+
 	<#
 	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR CPMINCORES
 	powercfg /qh SCHEME_CURRENT SUB_PROCESSOR CPMAXCORES
@@ -2710,7 +2726,9 @@ Write-Output "WSL Performance Tweaks."
 $user_home = "$env:USERPROFILE\.wslconfig"
 $wslconfig = @'
 [wsl2]
-kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off  spectre_v2=off kvm.nx_huge_pages=off kvm-intel.vmentry_l1d_flush=never ssbd=force-off tsx=on
+backgroundResources=false
+io.priority=high
+kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off spectre_v2=off ssbd=force-off tsx=on kpti=off pti=off nopcid nosmap slub_debug=- page_alloc.shuffle=0 systemd.unified_cgroup_hierarchy=0
 '@
 New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
 }
