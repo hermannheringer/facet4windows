@@ -794,6 +794,16 @@ Function AllowMiracast {
 	}
 }
 
+function HideNewOutlookToggle {
+	
+	Write-Output "Hiding Try New Outlook Toggle."
+
+	If (!(Test-Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General")) {
+		New-Item -Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General" -Name "HideNewOutlookToggle" -Type DWord -Value 0x00000001							  # Win11 Home NA		LTSC NA
+
+}
 
  ###		              			    ###
  ### Performance Game / GPU Related	    ###

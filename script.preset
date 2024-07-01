@@ -44,7 +44,7 @@ DisableServices                     #Stopping and disabling unnecessary services
 
 ###  Optional Features  ###
 !AllowMiracast                       #Allow Projection To PC Miracast feature.
-
+HideNewOutlookToggle                #Hides the New Outlook Toggle.
 
 
 ###  Performance Game / GPU Related  ###
