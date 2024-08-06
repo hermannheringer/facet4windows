@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.12
+Version : 0.3.13
 Source: https://github.com/hermannheringer/
 #>
 
@@ -1055,6 +1055,20 @@ Function DisableStartupEventTraceSession  {
 			As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
 			#>	
 
+		# Listar todos os logs de eventos
+		$logs = wevtutil el
+
+		# Iterar sobre cada log e desabilitá-lo
+		foreach ($log in $logs) {
+			try {
+				wevtutil sl "$log" /e:false
+				Write-Output "Desabilitado log: $log"
+			} catch {
+				Write-Output "Falha ao desabilitar log: $log"
+			}
+		}
+
+
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue	  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-System" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue			  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Security" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		  # Win11 Home 1	LTSC 1
@@ -1070,7 +1084,7 @@ Function DisableStartupEventTraceSession  {
 		$events = @('SleepStudy','Kernel-Processor-Power','UserModePowerService')
 		foreach ($event in $events) {
 
-			wevtutil sl Microsoft-Windows-"$event"/Diagnostic /e:false
+			wevtutil sl Microsoft-Windows-"$event" /e:false
 		}
 
 		Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels" | ForEach-Object {
@@ -1079,12 +1093,27 @@ Function DisableStartupEventTraceSession  {
 					Set-ItemProperty -Path $Var -Name "Enabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
 				}
 			}
-
-
-
-
  # This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+
+ logman query -ets
 }
+
+
+Function DisableKernelDebugTracing {
+    Write-Host "Disabling and Cleaning Kernel Debug Traces."
+
+    wevtutil sl Microsoft-Windows-Kernel-Debug /e:false
+    Remove-Item -Path "C:\Windows\System32\LogFiles\WMI\RtBackup\*.*" -Force -ErrorAction SilentlyContinue
+}
+
+
+
+Function DisableDriverLogging {
+    Write-Host "Disabling Driver Logging."
+
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "TrackLockedPages" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+}
+
 
 
 
@@ -1880,7 +1909,6 @@ Function DisableBingSearch {
 		New-Item $WebSearch -Force | Out-Null
 	}
 	Set-ItemProperty $WebSearch DisableWebSearch -Type DWord -Value 0x00000001																	  # Win11 Home NA		LTSC NA
-
 	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
 
 	$DisableSearchBox = "HKCU:\Software\Policies\Microsoft\Windows\Explorer"
@@ -1903,8 +1931,8 @@ Function DisableCortanaSearch {
 	If (!(Test-Path $Search)) {
 		New-Item $Search -Force | Out-Null
 	}
-	Set-ItemProperty $Search AllowCortana -Type DWord -Value 0x00000000																			  # Win11 Home NA		LTSC NA
-
+	Set-ItemProperty $Search AllowCortana -Type DWord -Value 0x00000000 																	  # Win11 Home NA		LTSC NA
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "AllowCortana" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
 }
 
 
@@ -2146,7 +2174,8 @@ Function SetSystemResponsiveness {
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Type String -Value "High"
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Type String -Value "High"
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Type DWord -Value 0x00000000
+	Write-Host "Disabling System Crash Dump."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
 
 
 	 # Disable Camera Frame Server. It controls whether multiple applications can access the camera feed simultaneously.
@@ -2694,6 +2723,7 @@ function DisableVBS_HVCI {
 
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
@@ -2713,6 +2743,7 @@ function DisableVBS_HVCI {
 	
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
@@ -2736,8 +2767,7 @@ Write-Output "WSL Performance Tweaks."
 $user_home = "$env:USERPROFILE\.wslconfig"
 $wslconfig = @'
 [wsl2]
-backgroundResources=false
-io.priority=high
+background=false
 kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off spectre_v2=off ssbd=force-off tsx=on kpti=off pti=off nopcid nosmap slub_debug=- page_alloc.shuffle=0 systemd.unified_cgroup_hierarchy=0
 '@
 New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
@@ -3024,6 +3054,15 @@ Function SetMaxCachedIcons {
  ###                           ###
  ### File System Optimizations ###
  ###                           ###
+
+
+
+ Function DisableUnusedDiskControllerDriver {
+    Write-Host "Disabling Legacy IDE Unused Disk Controller Driver."
+
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\pciide" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+}
+
 
 
 Function SetNoLowDiskSpaceChecks {

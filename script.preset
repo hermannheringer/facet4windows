@@ -1,6 +1,6 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.9
+# Version : 0.1.10
 # Source: https://github.com/hermannheringer/
 
 
@@ -60,6 +60,8 @@ RemoveAutoLogger                    #Removing AutoLogger file and restricting di
 DisableDataCollection               #Turning off Data Collection via the AllowTelemtry key.
 DisableDiagTrack                    #Stopping and disabling Connected User Experiences and Telemetry Service.
 DisableStartupEventTraceSession     #Disable All Startup Events Trace Session.
+DisableKernelDebugTracing           #Disable Kernel Debug Tracing.
+DisableDriverLogging                #Disable Driver Logging.
 DisableRemoteAssistance             #Disabling Remote Assistance.
 DisableRDP                          #Remote Desktop consumes system resources, including CPU processing power, memory, and network bandwidth.
 !AcceptedPrivacyPolicy               #Turning off AcceptedPrivacyPolicy.
@@ -93,8 +95,8 @@ DisableNvidiaDriverTelemetry        #Disable Nvidia Driver Telemetry.
 RemoveScheduledTasks                #Disables scheduled tasks that are considered unnecessary.
 DisableAppCompat                    #Disabling Application Compatibility Program.
 DisableAutoplayHandler              #he AutoplayHandler element specifies a UWP device app that should appear as the recommended AutoPlay action when a user plugs in a device.
-!DisableBingSearch                   #Disabling Bing Search in Start Menu.
-!DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
+DisableBingSearch                   #Disabling Bing Search in Start Menu.
+DisableCortanaSearch                #Stopping Cortana from being used as part of your Windows Search Function.
 PrintScreenToSnippingTool           #Use print screen to open snipping tool.
 DisableLiveTiles                    #Disabling live tiles.
 DisableWidgets                      #Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off.
@@ -114,7 +116,7 @@ SetPowerManagment                   #Platform-customized power management optimi
 
 
 ###  Security  ###
-!DisableVBS_HVCI                     #Turn off Virtualization-based security.
+DisableVBS_HVCI                     #Turn off Virtualization-based security.
 TurnWSLlight                        #Set some WSL Performance Tweaks.
 !DisableWindowsDefender              #Disables Windows Defender.
 
@@ -140,6 +142,7 @@ SetMaxCachedIcons                   #Increase the system image buffer to display
 
 
 ###  File System Optimizations  ###
+!DisableUnusedDiskControllerDrivers  #Disable legacy IDE unused disk controller drivers.
 SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
 DisableStorageSense                 #Disabling Storage Sense.
 SetNtfsDisable8dot3NameCreation     #Disable short file names feature.

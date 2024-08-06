@@ -1,7 +1,7 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.12
+Version : 0.1.13
 Source: https://github.com/hermannheringer/
 #>
 
@@ -77,9 +77,11 @@ Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Vo
 
 # Start-Process cleanmgr -ArgumentList “/sagerun:11” -Wait -NoNewWindow -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
-Start-Process cleanmgr -ArgumentList “/VERYLOWDISK, /AUTOCLEAN” -NoNewWindow -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Start-Process cleanmgr -ArgumentList "/VERYLOWDISK", "/AUTOCLEAN" -NoNewWindow -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
-Start-Sleep 60
+Start-Sleep -Seconds 60
+
+Stop-Process -Name "cleanmgr" -Force -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 
 Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" | ForEach-Object {
 	If ((Test-Path $_.PsPath)) {
@@ -283,8 +285,6 @@ Write-Host "Clearing All Event Viewer logs."
 Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | ForEach-Object { Clear-EventLog $_.LogName -ErrorAction SilentlyContinue }	   # For windows 11
 Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }   # For windows 10
 
-Stop-Process -Name "cleanmgr" -Force -ErrorAction SilentlyContinue
-
 }
 
 
@@ -301,10 +301,16 @@ If no parameter is specified, then the default operation will be performed per t
 #>
 Function OptimizeVolume {
 	Write-Host "Performs volume optimization according to storage technology..."
-	$LocalDrives = Get-CimInstance -Class 'Win32_LogicalDisk' | Where-Object { $_.DriveType -eq 3 } | Select-Object -ExpandProperty DeviceID
-	Optimize-Volume -DriveLetter $LocalDrives[0][0]
-}
+    # Obtém todos os volumes (unidades) no sistema
+    $volumes = Get-Volume
 
+    # Itera por cada volume e executa a otimização TRIM
+    foreach ($volume in $volumes) {
+        if ($volume.FileSystemType -eq "NTFS") {  # Verifica se o volume é do tipo NTFS
+            Optimize-Volume -DriveLetter $volume.DriveLetter -ReTrim -Verbose
+     }
+    }
+}
 
 
  # Wait for key press
