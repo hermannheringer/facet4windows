@@ -2250,6 +2250,11 @@ Function SomeKernelTweaks {
 
 	 # https://github.com/amitxv/PC-Tuning/blob/main/docs/research.md#fixing-timing-precision-in-windows-after-the-great-rule-change
 
+
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" -Name "DistributeTimers" -Type DWord -Value 0x00000001				  			  # Win11 NA		LTSC NA
+
+
+
  # This is a complementary function to the SetSystemResponsiveness \ SomeKernelTweaks.
 }
 
@@ -2767,7 +2772,6 @@ Write-Output "WSL Performance Tweaks."
 $user_home = "$env:USERPROFILE\.wslconfig"
 $wslconfig = @'
 [wsl2]
-background=false
 kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off spectre_v2=off ssbd=force-off tsx=on kpti=off pti=off nopcid nosmap slub_debug=- page_alloc.shuffle=0 systemd.unified_cgroup_hierarchy=0
 '@
 New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
