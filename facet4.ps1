@@ -198,10 +198,15 @@ Function DeepSystemClean {
     If (!(Test-Path "HKCR:")) {
         New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
     }
+
+    # Obter todos os objetos COM registrados
     $comObjects = Get-ChildItem -Path "HKCR:\CLSID"
+
     foreach ($obj in $comObjects) {
         $inProcServer32 = Get-ItemProperty -Path "$($obj.PSPath)\InprocServer32" -ErrorAction SilentlyContinue
-        if ($inProcServer32 -and $inProcServer32.'(default)' -ne $null -and !(Test-Path $inProcServer32.'(default)')) {
+
+        # Verifica se a propriedade existe e se não é nula ou vazia antes de chamar Test-Path
+        if ($inProcServer32 -and $inProcServer32.'(default)' -ne $null -and $inProcServer32.'(default)' -ne "" -and !(Test-Path $inProcServer32.'(default)')) {
             try {
                 Remove-Item -Path $obj.PSPath -Recurse -Force -ErrorAction SilentlyContinue
                 Write-Output "Removed orphaned COM/ActiveX entry: $($obj.PSPath)"

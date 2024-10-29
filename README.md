@@ -151,7 +151,7 @@ You can easily change this option by accessing the steps below:
 
 When trying to change a specific key when using an Azure Active Directory account.
 
-The problem is easily worked around by performing this modification manually using Regedit.
+The problem is easily worked around by performing this modification manually using `Regedit`.
 
 
 ## **Undo changes**
