@@ -1,21 +1,44 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.3.13
+Version : 0.4.0
+Date: 2024-10-16
+License: MIT
 Source: https://github.com/hermannheringer/
 #>
 
  #.............................................................................................................................................................................................
- #....................................................  Default values at the end of each instruction extracted from Windows 11 Home 22H2  ....................................................
- #.......                                                                                                                                                                               .......
- #.......  "Default NA" means that the instruction is not there on a fresh install, but it does not mean it is not valid if placed there. If in doubt, look for official documentation  .......
  # .......................................................  https://learn.microsoft.com/en-us/windows/whats-new/deprecated-features  ..........................................................
  #.............................................................................................................................................................................................
 
+
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 function Unzip {
-    param([string]$zipfile, [string]$outpath)
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+    param(
+        [string]$zipfile,   # Caminho do arquivo ZIP
+        [string]$outpath    # Caminho do diretório de saída
+    )
+
+    # Verifica se o arquivo ZIP existe
+    if (-Not (Test-Path $zipfile)) {
+        Write-Output "O arquivo ZIP '$zipfile' não foi encontrado."
+        return
+    }
+
+    # Verifica se o diretório de saída existe; se não, cria
+    if (-Not (Test-Path $outpath)) {
+        Write-Output "O diretório de saída '$outpath' não existe. Criando..."
+        New-Item -Path $outpath -ItemType Directory -Force | Out-Null
+    }
+
+    try {
+        # Extrai o conteúdo do arquivo ZIP para o diretório de saída
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+        Write-Output "Extraído '$zipfile' para '$outpath' com sucesso."
+    } catch {
+        Write-Output "Ocorreu um erro ao extrair o arquivo ZIP: $_"
+    }
 }
 
 
@@ -26,80 +49,65 @@ function Unzip {
 
 
 
- # Check if winget is installed
-Function InstallWinget {
-	
-	 # Check if winget is installed
-		Write-Host "Checking if Winget is Installed..."
-		
-		if (Test-Path ~\AppData\Local\Microsoft\WindowsApps\winget.exe) {
-			 #Checks if winget executable exists and if the Windows Version is 1809 or higher
-			Write-Host "Winget Already Installed."
-		}
-		else {
-			
-			if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
-				 # Checks if Windows edition is LTSC/Server 2019+
-				 # Manually Installing Winget
-				Write-Host "Running Alternative Installer for LTSC/Server Editions"
-	
-				 <#
-				 Write-Host "Downloading Needed Files to install Winget. Please wait..."
-				 
-				Start-BitsTransfer -Source "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx" -Destination "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx"
-				Start-BitsTransfer -Source "https://globalcdn.nuget.org/packages/microsoft.ui.xaml.2.7.3.nupkg" -Destination "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg"
+function InstallWinget {
+    # Define URLs para downloads
+    $wingetInstallerUrl = "https://aka.ms/getwinget"
+    $vclibsUrl = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
+    $xamlUrl = "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx"
+    
+    Write-Host "Checking if Winget is Installed..."
 
-				Unzip "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" "$facet4Folder\microsoft.ui.xaml"
-			
-				 # & ${env:ProgramFiles}\7-Zip\7z.exe x "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" "-o$("$facet4Folder\microsoft.ui.xaml")" -y > $null
-				
-				Start-BitsTransfer -Source "https://github.com/microsoft/winget-cli/releases/download/v1.2.10271/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -Destination "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-				Start-BitsTransfer -Source "https://github.com/microsoft/winget-cli/releases/download/v1.2.10271/b0a0692da1034339b76dce1c298a1e42_License1.xml" -Destination "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml"
-	
-				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx" -SkipLicense
-				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\microsoft.ui.xaml\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx" -SkipLicense
-				Add-AppxProvisionedPackage -Online -PackagePath "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -LicensePath "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml"
-	
-				Remove-Item -Path "$facet4Folder\Microsoft.VCLibs.x64.14.00.Desktop.appx" -Force -ErrorAction SilentlyContinue
-				Remove-Item -Path "$facet4Folder\microsoft.ui.xaml.2.7.3.nupkg" -Force -ErrorAction SilentlyContinue
-				Remove-Item -Path "$facet4Folder\microsoft.ui.xaml" -Force -ErrorAction SilentlyContinue
-				Remove-Item -Path "$facet4Folder\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -Force -ErrorAction SilentlyContinue
-				Remove-Item -Path "$facet4Folder\b0a0692da1034339b76dce1c298a1e42_License1.xml" -Force -ErrorAction SilentlyContinue
+    # Verifica se o winget já está instalado
+    if (Test-Path ~\AppData\Local\Microsoft\WindowsApps\winget.exe) {
+        Write-Host "Winget Already Installed."
+    }
+    else {
+        $osInfo = Get-ComputerInfo
 
-				winget install "App Installer" -s msstore --silent --accept-package-agreements --accept-source-agreements --force
-				 #>
-				
-				$progressPreference = 'silentlyContinue'
-				Write-Information "Downloading WinGet and its dependencies..."
-				Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-				Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx
-				Invoke-WebRequest -Uri https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx -OutFile Microsoft.UI.Xaml.2.8.x64.appx
-				Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx
-				Add-AppxPackage Microsoft.UI.Xaml.2.8.x64.appx
-				Add-AppxPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-			
-			}
-			elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
-				Write-Host "Winget is not supported on this version of Windows (Pre-1809)"
-			}
-			else {
-				 # Installing Winget from the Microsoft Store
+        # Verifica se o Windows é LTSC/Server 2019 ou superior
+        if ((($osInfo.OSName.IndexOf("LTSC") -ne -1) -or ($osInfo.OSName.IndexOf("Server") -ne -1)) -and ($osInfo.WindowsVersion -ge "1809")) {
+            Write-Host "Running Alternative Installer for LTSC/Server Editions"
 
-				Write-Host "Winget not found, installing it now."
-				
-				Start-Process "ms-appinstaller:?source=https://aka.ms/getwinget"
-				$nid = (Get-Process AppInstaller).Id
-				Wait-Process -Id $nid
-				Write-Host "Winget Installed"
-			}
-		}
-	}
+            # Desativa a exibição de progresso para downloads
+            $progressPreference = 'silentlyContinue'
+            
+            try {
+                Write-Information "Downloading WinGet and its dependencies..."
+                Invoke-WebRequest -Uri $wingetInstallerUrl -OutFile Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+                Invoke-WebRequest -Uri $vclibsUrl -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx
+                Invoke-WebRequest -Uri $xamlUrl -OutFile Microsoft.UI.Xaml.2.8.x64.appx
+
+                # Instala as dependências
+                Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx
+                Add-AppxPackage Microsoft.UI.Xaml.2.8.x64.appx
+                Add-AppxPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+                
+                Write-Host "Winget Installed Successfully."
+            } catch {
+                Write-Host "Error during installation: $_"
+            }
+        }
+        elseif ($osInfo.WindowsVersion -lt "1809") {
+            Write-Host "Winget is not supported on this version of Windows (Pre-1809)"
+        }
+        else {
+            # Tenta instalar o Winget a partir da Microsoft Store
+            Write-Host "Winget not found, installing it now."
+            Start-Process "ms-appinstaller:?source=$wingetInstallerUrl"
+            $nid = (Get-Process AppInstaller).Id
+            Wait-Process -Id $nid
+            Write-Host "Winget Installed."
+        }
+    }
+}
 
 
 
  ###		      ###
  ###  Debloat     ###
  ###		      ###
+
+
 
 Function DebloatBlacklist {
 
@@ -126,7 +134,7 @@ Function DebloatBlacklist {
 		 #"*Microsoft.MicrosoftPowerBIForWindows*"
 		"*Microsoft.MicrosoftSolitaireCollection*"
 		 #"*MicrosoftTeams*"
-		"*MSTeams*"
+		 #"*MSTeams*"
 		"*Microsoft.MinecraftUWP*"
 		"*Microsoft.MixedReality.Portal*"
 		 #"*Microsoft.NetworkSpeedTest*"
@@ -180,7 +188,6 @@ Function DebloatBlacklist {
 		"*Microsoft.BingTranslator*"
 		"*Microsoft.BingTravel*"
 		"*Microsoft.BingWeather*"
-
 
 		 # Sponsored non-Microsoft Apps
 		"*22364Disney.ESPNBetaPWA*"
@@ -270,7 +277,6 @@ Function DebloatBlacklist {
 		"*Wunderlist*"
 		"*XINGAG.XING*"
 
-
 		 # Apps which cannot be removed using Remove-AppxPackage
 		 #"*Microsoft.BioEnrollment*"
 		 #"*Microsoft-Windows-InternetExplorer*"
@@ -283,7 +289,6 @@ Function DebloatBlacklist {
 		"*Microsoft.XboxIdentityProvider*"
 		"*Windows.ContactSupport*"
 
-
 		 # Optional: Typically not removed but you can if you need to for some reason
 		 #"*Microsoft.Advertising.Xaml*"
 		"*Microsoft.MicrosoftStickyNotes*"
@@ -294,177 +299,125 @@ Function DebloatBlacklist {
 		 #"*Microsoft.WindowsStore*"	
 	)
 	
-	foreach ($Bloat in $Bloatware) {
-		Get-AppxPackage $Bloat | Remove-AppxPackage -ErrorAction SilentlyContinue
-		Get-AppxPackage -AllUsers | Where-Object DisplayName -like $Bloat | Remove-AppxPackage -ErrorAction SilentlyContinue
-		Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like $Bloat | Remove-AppxProvisionedPackage -ErrorAction SilentlyContinue
-		Start-Sleep 1
-		Write-Output "Trying to remove $Bloat"
-	}
+    # Remover aplicativos para o usuário atual e para todos os usuários
+    foreach ($Bloat in $Bloatware) {
+        Get-AppxPackage $Bloat | Remove-AppxPackage -ErrorAction SilentlyContinue
+        Get-AppxPackage -AllUsers | Where-Object DisplayName -like $Bloat | Remove-AppxPackage -ErrorAction SilentlyContinue
+        Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like $Bloat | Remove-AppxProvisionedPackage -ErrorAction SilentlyContinue
+        Start-Sleep 1
+        Write-Output "Tentando remover $Bloat"
+    }
 
-	 # Removing TTS - Handwriting - OCR - TextToSpeech
-	$capabilityName = "Microsoft-Windows-TextToSpeech"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
+    # Lista de capacidades a serem removidas
+    $Capabilities = @(
+        "Microsoft-Windows-TextToSpeech",
+        "Microsoft-Windows-Handwriting",
+        "Microsoft-Windows-OCR",
+        "Microsoft-Windows-SpeechRecognition",
+        "Microsoft-Windows-LanguageFeatures-Handwriting",
+        "Microsoft-Windows-LanguageFeatures-OCR",
+        "Microsoft-Windows-LanguageFeatures-Speech",
+        "Microsoft-Windows-LanguageFeatures-TextToSpeech",
+        "Microsoft-Windows-TabletPCMath",
+        "Microsoft-Windows-InternetExplorer-Optional"
+    )
 
-	$capabilityName = "Microsoft-Windows-Handwriting"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
+    # Remover cada capacidade listada
+    foreach ($capabilityName in $Capabilities) {
+        try {
+            Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
+            Write-Host "Capacidade ${capabilityName} removida com sucesso."
+        } catch {
+            Write-Host "Ocorreu um erro ao tentar remover a capacidade ${capabilityName}: $_"
+        }
+    }
 
-	$capabilityName = "Microsoft-Windows-OCR"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
+    # Remover componentes adicionais (Get Help, Tips, Xbox Game Bar)
+    $AdditionalComponents = @(
+        "*GetHelp*",
+        "*HelpAndTips*",
+        "*XboxGameOverlay*"
+    )
 
-	$capabilityName = "Microsoft-Windows-SpeechRecognition"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
+    foreach ($component in $AdditionalComponents) {
+        Get-AppxPackage -AllUsers | Where-Object {$_.Name -like $component} | Remove-AppxPackage -ErrorAction SilentlyContinue
+        Write-Output "Tentando remover $component"
+    }
 
-	$capabilityName = "Microsoft-Windows-LanguageFeatures-Handwriting"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-	$capabilityName = "Microsoft-Windows-LanguageFeatures-OCR"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-	$capabilityName = "Microsoft-Windows-LanguageFeatures-Speech"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-	$capabilityName = "Microsoft-Windows-LanguageFeatures-TextToSpeech"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-	
-	 # Removing TabletPCMath
-	$capabilityName = "Microsoft-Windows-TabletPCMath"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-
-	 # Removing Internet Explorer
-	$capabilityName = "Microsoft-Windows-InternetExplorer-Optional"
-	try {
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
-		Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -Online -ErrorAction Stop
-		Write-Host "Capacidade $capabilityName removida com sucesso."
-	} catch {
-		Write-Host "Ocorreu um erro ao tentar remover a capacidade: $_"
-	}
-
-# Remover o componente "Get Help"
-Get-AppxPackage -AllUsers | Where-Object {$_.Name -like "*GetHelp*"} | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-# Remover o componente "Tips"
-Get-AppxPackage -AllUsers | Where-Object {$_.Name -like "*HelpAndTips*"} | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-# Remover o componente "Xbox Game Bar"
-Get-AppxPackage -AllUsers | Where-Object {$_.Name -like "*XboxGameOverlay*"} | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-
-
-
-	
-}
-
-
-Function AvoidDebloatReturn {
-	
-	Write-Output "Adding Registry key to prevent Sponsored Apps from returning and removes some suggestions settings."
-	
-	$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
-	If (!(Test-Path $registryPath)) { 
-		New-Item $registryPath  -Force | Out-Null
-	}
-	Set-ItemProperty $registryPath DisableWindowsConsumerFeatures -Type DWord -Value 0x00000001		 # Win11 Home NA
-
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "ContentDeliveryAllowed"  -Type DWord -Value 0x00000001			  # Win11 Home 1		LTSC 0
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "OemPreInstalledAppsEnabled"  -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "PreInstalledAppsEnabled"  -Type DWord -Value 0x00000000			  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "PreInstalledAppsEverEnabled"  -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SilentInstalledAppsEnabled"  -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1 Automatic Installation of apps
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SystemPaneSuggestionsEnabled"  -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-
-	 # Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContentEnabled" -Type DWord -Value 0x00000000
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-310093Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-314559Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -Type DWord -Value 0x00000001	  # Win11 Home 1		LTSC NA Spotlight fun tips and facts
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Show Suggestions Occasionally in Start (Tips)
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC NA Tips and Suggestions Notifications
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338393Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353694Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353696Enabled" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA Suggest new content and apps you may find interesting
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC NA Timeline Suggestions
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-88000326Enabled" -Type DWord -Value 0x00000001	  # Win11 Home 0		LTSC NA Use Spotlight image as Desktop wallpaper
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 0x00000002						  # Win11 Home NA	LTSC NA Use Spotlight image as Desktop wallpaper
-
-	<#
-	Get-AppxPackage  | Where name -match windowscommunicationsapps | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
-	Get-AppxPackage -Name Microsoft.Windows.ContentDeliveryManager | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose}
-	Get-AppxPackage -AllUsers | Where name -match weather | foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose }
-	
-	LockApp XML located at "C:\Windows\SystemApps\Microsoft.LockApp_cw5n1h2txyewy" WindowsDefaultLockScreen
-	#>
+    Write-Host "Remoção de bloatware e capacidades concluída."
 }
 
 
 
-Function SetMixedReality {
-	
-	Write-Output "Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings."
-	
-	$Holo = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic"
-	If (Test-Path $Holo) {
-		Set-ItemProperty $Holo  FirstRunSucceeded -Type DWord -Value 0x00000000		 # Win11 Home 0		LTSC NA
-	}
+function AvoidDebloatReturn {
+
+    Write-Output "Adicionando chaves de registro para impedir que apps patrocinados retornem e removendo algumas configurações de sugestões."
+
+    # Caminho para bloquear funcionalidades de consumidor
+    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+    If (!(Test-Path $registryPath)) { 
+        New-Item $registryPath -Force | Out-Null
+    }
+    Set-ItemProperty $registryPath DisableWindowsConsumerFeatures -Type DWord -Value 0x00000001
+    Write-Output "Desativada a instalação de recursos para consumidores do Windows."
+
+    # Caminho para o ContentDeliveryManager
+    $contentDeliveryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+
+    # Verifica se o caminho do ContentDeliveryManager existe e cria, se necessário
+    If (!(Test-Path $contentDeliveryPath)) {
+        New-Item $contentDeliveryPath -Force | Out-Null
+    }
+
+    # Lista de ajustes a serem aplicados no ContentDeliveryManager
+    $settings = @{
+        "ContentDeliveryAllowed"            = 0x00000001;
+        "OemPreInstalledAppsEnabled"        = 0x00000000;
+        "PreInstalledAppsEnabled"           = 0x00000000;
+        "PreInstalledAppsEverEnabled"       = 0x00000000;
+        "SilentInstalledAppsEnabled"        = 0x00000000;
+        "SystemPaneSuggestionsEnabled"      = 0x00000000;
+        "SubscribedContent-310093Enabled"   = 0x00000000;
+        "SubscribedContent-314559Enabled"   = 0x00000000;
+        "SubscribedContent-338387Enabled"   = 0x00000001; # Spotlight fun tips and facts
+        "SubscribedContent-338388Enabled"   = 0x00000000; # Show Suggestions Occasionally in Start
+        "SubscribedContent-338389Enabled"   = 0x00000000; # Tips and Suggestions Notifications
+        "SubscribedContent-338393Enabled"   = 0x00000000; # Suggest new content and apps
+        "SubscribedContent-353694Enabled"   = 0x00000000; # Suggest new content and apps
+        "SubscribedContent-353696Enabled"   = 0x00000000; # Suggest new content and apps
+        "SubscribedContent-353698Enabled"   = 0x00000000; # Timeline Suggestions
+        "SubscribedContent-88000326Enabled" = 0x00000001  # Use Spotlight image as Desktop wallpaper
+    }
+
+    # Aplica as configurações no ContentDeliveryManager
+    foreach ($setting in $settings.Keys) {
+        Set-ItemProperty -Path $contentDeliveryPath -Name $setting -Type DWord -Value $settings[$setting]
+        Write-Output "Configurada $setting com sucesso."
+    }
+
+    # Ajuste adicional para a imagem do Spotlight como papel de parede
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "BackgroundType" -Type DWord -Value 0x00000002
+    Write-Output "Configuração de imagem Spotlight aplicada como papel de parede."
+}
+
+
+
+function SetMixedReality {
+
+    Write-Output "Configurando o valor do Mixed Reality Portal para 0 para permitir sua desinstalação nas Configurações."
+
+    # Caminho do registro para Mixed Reality
+    $Holo = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic"
+
+    # Verifica se o caminho existe
+    If (Test-Path $Holo) {
+        # Define o valor de FirstRunSucceeded para 0
+        Set-ItemProperty -Path $Holo -Name FirstRunSucceeded -Type DWord -Value 0x00000000
+        Write-Output "Valor FirstRunSucceeded configurado como 0."
+    }
+    else {
+        Write-Output "Caminho de registro para Holographic não encontrado. Nenhuma alteração foi feita."
+    }
 }
 
 
@@ -481,68 +434,68 @@ Function SetMixedReality {
 Device Management Wireless Application Protocol (WAP) Push Message Routing Service
 Useful for Windows tablet devices with mobile (3G/4G) connectivity
 #>
+
 function DisableWAPPush {
 
-	Write-Host "Setting Device Metadata Retrieval Client Service (WMIS) to Manual."
-	
-	 # Stop-Service "dmwappushservice" -ea SilentlyContinue
-	Set-Service "dmwappushservice" -StartupType Manual -erroraction SilentlyContinue					  # Win11 Home Manual		LTSC Manual
+    Write-Host "Configurando o serviço Device Metadata Retrieval Client (WMIS) para Manual."
 
- # This is a complementary function to the DisableStartupEventTraceSession function \ DisableDataCollection \ RemoveAutoLogger \ DisableDiagTrack.	
-} 
+    # Verifica se o serviço dmwappushservice existe
+    $service = Get-Service -Name "dmwappushservice" -ErrorAction SilentlyContinue
+
+    if ($service) {
+        try {
+            # Define o serviço para inicialização manual
+            Set-Service "dmwappushservice" -StartupType Manual -ErrorAction Stop
+            Write-Host "Serviço 'dmwappushservice' configurado para inicialização manual."
+        } catch {
+            Write-Host "Ocorreu um erro ao configurar o serviço: $_"
+        }
+    }
+    else {
+        Write-Host "O serviço 'dmwappushservice' não foi encontrado neste sistema."
+    }
+}
 
 
 
 function DisableServices {
 
-	Write-Output "Stopping and disabling AdobeARM Service."
-	 # Stop-Service "AdobeARMservice" -ea SilentlyContinue
-	Set-Service "AdobeARMservice" -StartupType Disabled -erroraction SilentlyContinue
+    Write-Output "Desativando serviços selecionados."
 
-	<#
-	Write-Host "Disabling AMD Crash Defender Service."
-	 # Stop-Service "AMD Crash Defender Service" -ea SilentlyContinue
-	Set-Service "AMD Crash Defender Service" -StartupType Disabled -erroraction SilentlyContinue
-	#>
-	
+    # Função auxiliar para verificar e desabilitar serviços
+    function Disable-Service {
+        param (
+            [string]$serviceName,
+            [string]$displayName
+        )
 
-	Write-Host "Disabling Application Management."
-	 # Stop-Service "AppMgmt" -ea SilentlyContinue
-	Set-Service "AppMgmt" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home NA			LTSC Manual
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
 
+        if ($service) {
+            try {
+                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+                Write-Output "$displayName desativado com sucesso."
+            } catch {
+                Write-Output "Erro ao desativar ${displayName}: $_"
+            }
+        } else {
+            Write-Output "Serviço $displayName não encontrado."
+        }
+    }
 
-	Write-Host "Disabling Certificate Propagation Service."
-	 # Copies user certificates and root certificates from smart cards into the current user's certificate store.
-	 # Stop-Service "CertPropSvc" -ea SilentlyContinue
-	Set-Service "CertPropSvc" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home Manual		LTSC Manual
+    # Desativando os serviços especificados
+    Disable-Service "AdobeARMservice" "Adobe ARM Service"
+    # Disable-Service "AMD Crash Defender Service" "AMD Crash Defender Service"
+	Disable-Service "AppMgmt" "Application Management"
+    Disable-Service "CertPropSvc" "Certificate Propagation"
+    # Copies user certificates and root certificates from smart cards into the current user's certificate store.
 
-
-	Write-Host "Disabling ActiveX Installer."
-	 # Stop-Service "AxInstSV" -ea SilentlyContinue
-	Set-Service "AxInstSV" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling offline files service."
-	 # Stop-Service "CscService" -ea SilentlyContinue
-	Set-Service "CscService" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA			LTSC Manual
-
-	
-	Write-Host "Stopping and disabling HP ETD Telemetry Service."
-	 # Stop-Service "ETDservice" -ea SilentlyContinue
-	Set-Service "ETDservice" -StartupType Disabled -erroraction SilentlyContinue
-
-
-	Write-Host "Disabling fax."
-	 # Stop-Service "Fax" -ea SilentlyContinue
-	Set-Service "Fax" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home NA			LTSC Manual
-
-
-	Write-Host "Disabling File History Service."
-	 # Stop-Service "fhsvc" -ea SilentlyContinue
-	Set-Service "fhsvc" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Stopping and disabling Home Groups services."
+	Disable-Service "AxInstSV" "ActiveX Installer"
+    Disable-Service "CscService" "Offline Files Service"
+    Disable-Service "ETDservice" "HP ETD Telemetry Service"
+    Disable-Service "Fax" "Fax Service"
+    Disable-Service "fhsvc" "File History Service"
+    
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HomeGroup")) {
 		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HomeGroup" -Force | Out-Null
 	}
@@ -555,125 +508,54 @@ function DisableServices {
 	
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\HomeGroup" -Name "DisableHomeGroup" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
 
-	 # Stop-Service "HomeGroupListener" -ea SilentlyContinue
-	Set-Service "HomeGroupListener" -StartupType Disabled -erroraction SilentlyContinue					   # Win11 Home NA		LTSC NA
-	 # Stop-Service "HomeGroupProvider" -ea SilentlyContinue
-	Set-Service "HomeGroupProvider" -StartupType Disabled -erroraction SilentlyContinue					   # Win11 Home NA		LTSC NA
+	Disable-Service "HomeGroupListener" "Home Group Listener"
+    Disable-Service "HomeGroupProvider" "Home Group Provider"
+    
+	# Disable-Service "HPAppHelperCap" "HP App Helper Service"
+	Disable-Service "HPDiagsCap" "HP Diagnostics Service"
+    # Disable-Service "HPNetworkCap" "HP Network Service"
+	# Disable-Service "HPOmenCap" "HP Omen Service"
+	# Disable-Service "HPSysInfoCap" "HP System Info Service"
+	Disable-Service "MSiSCSI" "Microsoft iSCSI Initiator Service"
+    Disable-Service "napagent" "Network Access Protection Agent"
+	# It collects and manages health information for client computers on a network.
 
+	Disable-Service "p2pimsvc" "Peer Networking Identity Manager"
+    Disable-Service "p2psvc" "Peer Networking Grouping"
+    Disable-Service "PeerDistSvc" "BranchCache Service"
+    # This service caches network content from peers on the local subnet.
 
-	<#
-	Write-Output "Stopping and disabling HP App Helper Service."
-	Stop-Service "HPAppHelperCap" -ea SilentlyContinue
-	Set-Service "HPAppHelperCap" -StartupType Disabled -erroraction SilentlyContinue					  # Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Diagnostics Service."
-	 # Stop-Service "HPDiagsCap" -ea SilentlyContinue
-	Set-Service "HPDiagsCap" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA		LTSC Auto
-
-
-	<#
-	Write-Output "Stopping and disabling HP Network Service."
-	Stop-Service "HPNetworkCap" -ea SilentlyContinue
-	Set-Service "HPNetworkCap" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA
-	#>
-
-
-	<#
-	Write-Output "Stopping and disabling HP Omen Service."
-	Stop-Service "HPOmenCap" -ea SilentlyContinue
-	Set-Service "HPOmenCap" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Print Scan Doctor Service."
-	 # Stop-Service "HPPrintScanDoctorService" -ea SilentlyContinue
-	Set-Service "HPPrintScanDoctorService" -StartupType Disabled -erroraction SilentlyContinue			  # Win11 Home NA		LTSC NA
-
-
-	<#
-	Write-Output "Stopping and disabling HP System Info Service."
-	Stop-Service "HPSysInfoCap" -ea SilentlyContinue
-	Set-Service "HPSysInfoCap" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA
-	#>
-
-
-	Write-Output "Stopping and disabling HP Telemetry Service."
-	 # Stop-Service "HpTouchpointAnalyticsService" -ea SilentlyContinue
-	Set-Service "HpTouchpointAnalyticsService" -StartupType Disabled -erroraction SilentlyContinue		  # Win11 Home NA		LTSC Auto
-
-
-	Write-Host "Disabling Microsoft iSCSI Initiator Service."
-	 # Stop-Service "MSiSCSI" -ea SilentlyContinue
-	Set-Service "MSiSCSI" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual	LTSC Manual
-
-
-	Write-Host "Disabling The Network Access Protection (NAP) agent service."
-	 # It collects and manages health information for client computers on a network.
-	 # Stop-Service "napagent" -ea SilentlyContinue
-	Set-Service "napagent" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home NA		LTSC NA
-
-
-	Write-Host "Disabling the Network Data Usage Monitoring Driver."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Ndu" -Name "Start" -Type DWord -Value 4		  # Win11 Home 2		LTSC 2
-
-
-	Write-Host "Disabling Peer Networking Identity Manager."
-	 # Stop-Service "p2pimsvc" -ea SilentlyContinue
-	Set-Service "p2pimsvc" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Peer Networking Grouping."	
-	 # Stop-Service "p2psvc" -ea SilentlyContinue
-	Set-Service "p2psvc" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling BranchCache service."
-	 # This service caches network content from peers on the local subnet.
-	 # Stop-Service "PeerDistSvc" -ea SilentlyContinue
-	Set-Service "PeerDistSvc" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA			LTSC Manual
-
-
-	Write-Host "Disabling Performance Logs and Alerts Service."
-	 # Stop-Service "pla" -ea SilentlyContinue
-	Set-Service "pla" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Peer Name Resolution Protocol."
-	 # Stop-Service "PNRPsvc" -ea SilentlyContinue
-	Set-Service "PNRPsvc" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Remote Registry service."
-	 # Stop-Service "RemoteRegistry" -ea SilentlyContinue
-	Set-Service "RemoteRegistry" -StartupType Disabled -erroraction SilentlyContinue					  # Win11 Home Disabled		LTSC Disabled
-
-
-	<#
+	Disable-Service "pla" "Performance Logs and Alerts"
+    Disable-Service "PNRPsvc" "Peer Name Resolution Protocol"
+    Disable-Service "RemoteRegistry" "Remote Registry Service"
+    Disable-Service "ScPolicySvc" "Smart Card Removal Policy"
+    <#
 	The smart card removal policy service is applicable when a user has signed in with a smart card and then removes that smart card from the reader. 
 	The action that is performed when the smart card is removed is controlled by Group Policy settings. 
 	For more information, see Smart Card Group Policy and Registry Settings.
 	#>
-	Write-Host "Disabling Smart Card Removal Policy Service."
-	 # Stop-Service "ScPolicySvc" -ea SilentlyContinue
-	Set-Service "ScPolicySvc" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling SQLCEIP service."
-	 # Stop-Service "SQLTELEMETRY$SQLEXPRESS" -ea SilentlyContinue
-	Set-Service "SQLCEIP" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home NA			LTSC NA
-
-
+	
+	Disable-Service "SQLCEIP" "SQLCEIP Service"
+    Disable-Service "SNMPTRAP" "SNMP Service"
 	<#
 	An SNMP trap message is an unsolicited message sent from an agent to the the manager.
 	The objective of this message is to allow the remote devices to alert the manager in case an important event happens,
 	commonly used in companies.
 	#>
-	Write-Host "Disabling Simple Network Management Protocol (SNMP) service."
-	 # Stop-Service "SNMPTRAP" -ea SilentlyContinue
-	Set-Service "SNMPTRAP" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
+    
+	# Disable-Service "TabletInputService" "Touch Keyboard and Handwriting Panel Service"
+	# Disabling this will break WSL keyboard functionality.
+	
+	Disable-Service "WebClient" "WebClient Service"
+    Disable-Service "WerSvc" "Windows Error Reporting"
+    Disable-Service "WinRM" "Windows Remote Management"
+    Disable-Service "wisvc" "Windows Insider Service"
+	
+	# Caution! Windows Insider will not work anymore!
+    # Disable-Service "WSearch" "Windows Search Indexing"
+	
+	Disable-Service "DPS" "Diagnostic Policy Service"
+    Disable-Service "PcaSvc" "Program Compatibility Assistant"
 
 	<#
 	The Memory Compression process is serviced by the SysMain (formerly SuperFetch) service.
@@ -685,51 +567,7 @@ function DisableServices {
 	#>
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\SysMain" -Name "DelayedAutoStart" -Type DWord -Value 00000001	 # Win11 Home 2		LTSC NA
 
-
-	<#
-	Disabling this will break WSL keyboard functionality.
-	Write-Output "Stopping and disabling Touch Keyboard and Handwriting Panel Service."
-	Stop-Service "TabletInputService" -ea SilentlyContinue
-	Set-Service "TabletInputService" -StartupType Disabled -erroraction SilentlyContinue				  # Win11 Home NA
-	#>
-
-
-	Write-Host "Disabling WebClient service."
-	 # Stop-Service "WebClient" -ea SilentlyContinue
-	Set-Service "WebClient" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Error Reporting."
-	 # Stop-Service "WerSvc" -ea SilentlyContinue
-	Set-Service "WerSvc" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Manual		LTSC Manual
-
-
-	Write-Host "Disabling Windows Remote Management."
-	 # Stop-Service "WinRM" -ea SilentlyContinue
-	Set-Service "WinRM" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home Manual		LTSC Manual
-
-
-	 # Write-Host "Disabling Windows Insider Service."
-	 # Caution! Windows Insider will not work anymore.
-	 # Stop-Service "wisvc" -ea SilentlyContinue
-	Set-Service "wisvc" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home Manual		LTSC Manual
-
-	
-	<#
-	Write-Host "Stopping and disabling Windows Search Indexing service."
-	 # Stop-Service "WSearch" -ea SilentlyContinue
-	Set-Service "WSearch" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Auto			LTSC Auto
-	#>
-
-	
-	Write-Host "Stopping and disabling Diagnostic Policy service."
-	# Stop-Service "DPS" -ea SilentlyContinue
-	Set-Service "DPS" -StartupType Disabled -erroraction SilentlyContinue								  # Win11 Home Auto			LTSC Auto
-
-
-	Write-Host "Stopping and disabling Program Compatibility Assistant service."
-	 # Stop-Service "PcaSvc" -ea SilentlyContinue
-	Set-Service "PcaSvc" -StartupType Disabled -erroraction SilentlyContinue							  # Win11 Home Auto			LTSC Manual
+    Write-Host "Desativação de serviços concluída."
 }
 
 
@@ -740,234 +578,239 @@ function DisableServices {
 
 
 
-Function AllowMiracast {
-	
-	Write-Host "Checking if Wireless Display App is installed..."
-	
-	if (Test-Path $Env:windir\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\Receiver.exe) {
-		Write-Host "Wireless Display App already installed."
-	}
-	else {
-		 # See more at https://bbs.pcbeta.com/forum.php?mod=viewthread&tid=1912839
-		
-		Write-Host "Allowing Projection To PC."
-		
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Connect" -Name "AllowProjectionToPC" -Type DWord -Value 0x00000001		  # Win11 Home NA
-
-		if (((((Get-ComputerInfo).OSName.IndexOf("LTSC")) -ne -1) -or ((Get-ComputerInfo).OSName.IndexOf("Server") -ne -1)) -and (((Get-ComputerInfo).WindowsVersion) -ge "1809")) {
-			Write-Host "Manually Installing Wireless Display App..."
-
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-US~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~en-GB~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~es-ES~.cab" /IgnoreCheck
-			Dism /Online /Add-Package /PackagePath:"$PSScriptRoot\Miracast_LTSC\Microsoft-PPIProjection-Package-amd64-10.0.19041.1~pt-BR~.cab" /IgnoreCheck
-
-			Add-appxpackage -register "C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\AppxManifest.xml" -disabledevelopmentmode
-
-			Write-Host "Wireless Display App installed."
-		}
-		elseif (((Get-ComputerInfo).WindowsVersion) -lt "1809") {
-			Write-Host "Wireless Display App is not supported on this version of Windows (Pre-1809)"
-		}
-		else {
-			
-			 # Installing Wireless Display App from Windows Feature Repository
-			
-			Write-Host "Installing Wireless Display App..."
-			
-			If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU")) {
-				New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Force | Out-Null											  # Win11 Home NA
-			}
-			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000000		  # Win11 Home NA
-			Get-Service wuauserv | Restart-Service
-			Start-Sleep 1
-			DISM /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
-			Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUdate\AU" -Name "UseWUserver" -Type DWord -Value 0x00000001		  # Win11 Home NA
-			Get-Service wuauserv | Restart-Service
-			Start-Sleep 1
-			Write-Host "Wireless Display App installed."
-		}
-	}
-}
-
 function HideNewOutlookToggle {
-	
-	Write-Output "Hiding Try New Outlook Toggle."
 
-	If (!(Test-Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General" -Name "HideNewOutlookToggle" -Type DWord -Value 0x00000001							  # Win11 Home NA		LTSC NA
+    Write-Output "Ocultando o botão 'Try New Outlook'."
 
+    # Caminho do registro para a opção do Outlook
+    $registryPath = "HKCU:\Software\Microsoft\Office\16.0\Outlook\Options\General"
+
+    # Verifica se o caminho existe, se não, cria
+    If (!(Test-Path $registryPath)) {
+        try {
+            New-Item -Path $registryPath -Force | Out-Null
+            Write-Output "Caminho do registro criado com sucesso."
+        } catch {
+            Write-Output "Erro ao criar o caminho do registro: $_"
+            return
+        }
+    }
+
+    # Define o valor HideNewOutlookToggle para ocultar o botão
+    try {
+        Set-ItemProperty -Path $registryPath -Name "HideNewOutlookToggle" -Type DWord -Value 0x00000001
+        Write-Output "'Try New Outlook' ocultado com sucesso."
+    } catch {
+        Write-Output "Erro ao definir o valor HideNewOutlookToggle: $_"
+    }
 }
 
- ###		              			    ###
- ### Performance Game / GPU Related	    ###
- ###		      			            ###
+
+
+ ###		              			   ###
+ ###  Performance Game / GPU Related   ###
+ ###		      			           ###
 
 
 
 function RemoveXboxFeatures {
-	
-	Write-Output "Disabling Xbox features."
 
-	 # Xbox Live Auth Manager. If you don't use Xbox app to play games, then you don't need any of the Xbox services.
-	Stop-Service "XblAuthManager" -ea SilentlyContinue
-	Set-Service "XblAuthManager" -StartupType Disabled -ErrorAction SilentlyContinue			  # Win11 Home Manual		LTSC Manual
-	
+    Write-Output "Desativando recursos do Xbox."
 
-	 # Xbox Live Game Save Service.
-	Stop-Service "XblGameSave" -ea SilentlyContinue
-	Set-Service "XblGameSave" -StartupType Disabled -erroraction SilentlyContinue				  # Win11 Home Manual		LTSC Manual
-	
+    # Função auxiliar para desativar serviços
+    function Disable-Service {
+        param (
+            [string]$serviceName,
+            [string]$displayName
+        )
 
-	 # Xbox Live Networking Service.
-	Stop-Service "XboxNetApiSvc" -ea SilentlyContinue
-	Set-Service "XboxNetApiSvc" -StartupType Disabled -erroraction SilentlyContinue				  # Win11 Home Manual		LTSC Manual
-	
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
 
-	 # Xbox Game Monitoring Service.
-	Stop-Service "xbgm" -ea SilentlyContinue
-	Set-Service "xbgm" -StartupType Disabled -erroraction SilentlyContinue						  # Win11 Home NA			LTSC NA
+        if ($service) {
+            try {
+                Stop-Service -Name $serviceName -ErrorAction SilentlyContinue
+                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+                Write-Output "$displayName desativado com sucesso."
+            } catch {
+                Write-Output "Erro ao desativar {$displayName}: $_"
+            }
+        } else {
+            Write-Output "Serviço $displayName não encontrado."
+        }
+    }
 
-	
-	 # Xbox Accessory Management Service.
-	Stop-Service "XboxGipSvc" -ea SilentlyContinue
-	Set-Service "XboxGipSvc" -StartupType Disabled -erroraction SilentlyContinue
-	
+    # Desativando os serviços relacionados ao Xbox
+    Disable-Service "XblAuthManager" "Xbox Live Auth Manager"
+    Disable-Service "XblGameSave" "Xbox Live Game Save"
+    Disable-Service "XboxNetApiSvc" "Xbox Live Networking"
+    Disable-Service "xbgm" "Xbox Game Monitoring"
+    Disable-Service "XboxGipSvc" "Xbox Accessory Management"
+    Disable-Service "BcastDVRUserService" "GameDVR and Broadcast"
 
-	 # Disable GameDVR and Broadcast used for game recordings and live broadcasts.
-	Stop-Service "BcastDVRUserService" -ea SilentlyContinue
-	Set-Service "BcastDVRUserService" -StartupType Disabled -erroraction SilentlyContinue		  # Win11 Home Manual		LTSC Manual
+    Write-Output "Desativando componentes agendados do Xbox."
+    
+    # Desativar tarefas agendadas
+    if (Get-ScheduledTask -TaskName "XblGameSaveTask*" -ErrorAction Ignore) {
+        Get-ScheduledTask -TaskName "XblGameSaveTask*" | Stop-ScheduledTask
+        Get-ScheduledTask -TaskName "XblGameSaveTask*" | Disable-ScheduledTask
+        Write-Output "Tarefas agendadas do Xbox desativadas."
+    } else {
+        Write-Output "Tarefas agendadas do Xbox não encontradas."
+    }
 
+    # Desabilitar o GameDVR no registro
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Value 0x00000000
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "Value" -Value 0x00000000
 
-	Write-Output "Disabling scheduled Xbox service components."
-	
-	if(Get-ScheduledTask XblGameSaveTask* -ErrorAction Ignore) { Get-ScheduledTask  XblGameSaveTask* | Stop-ScheduledTask ; Get-ScheduledTask  XblGameSaveTask* | Disable-ScheduledTask } else { 'XblGameSaveTaskLogon does not exist on this device.'}		  # Win11 Home Ready
+    # Modificar o ms-gamingoverlay para evitar mensagens indesejadas
+    If (!(Test-Path "HKLM:\SOFTWARE\Classes\ms-gamingoverlay")) {
+        New-Item -Path "HKLM:\SOFTWARE\Classes\ms-gamingoverlay" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Classes\ms-gamingoverlay" -Name '(Default)' -Value "URL:ms-gamingoverlay"
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
+    # Alterar permissões para PresenceWriter
+    try {
+        $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter", [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree, [System.Security.AccessControl.RegistryRights]::ChangePermissions)
+        $acl = $key.GetAccessControl()
+        $rule = New-Object System.Security.AccessControl.RegistryAccessRule (".\USERS", "FullControl", @("ObjectInherit", "ContainerInherit"), "None", "Allow")
+        $acl.SetAccessRule($rule)
+        $key.SetAccessControl($acl)
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Value 0x00000000 -Force
+        Write-Output "PresenceWriter desativado com sucesso."
+    } catch {
+        Write-Output "Erro ao desativar PresenceWriter: $_"
+    }
 
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "ShowStartupPanel" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Type DWord -Value 0x00000001										  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Type DWord -Value 0x00000001										  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "UseNexusForGameBarEnabled" -Type DWord -Value 0x00000000								  # Win11 Home 0		LTSC NA
+    # Verificar se a modificação no PresenceWriter foi aplicada
+    if ((Get-ItemProperty -Path "HKLM:SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter").ActivationType -eq 1) {
+        Write-Output "Feature PresenceWriter ainda ativa. Desative-a manualmente em: 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter'."
+    }
 
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000												  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Type DWord -Value 0x00000002										  # Win11 Home 2		LTSC 0
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AudioCaptureEnabled" -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "CursorCaptureEnabled" -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "EchoCancellationEnabled" -Type DWord -Value 0x00000000			  # Win11 Home 1		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Type DWord -Value 0x00000000					  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "HistoricalCaptureEnabled" -Type DWord -Value 0x00000000			  # Win11 Home 0		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "MicrophoneCaptureEnabled" -Type DWord -Value 0x00000000			  # Win11 Home 1		LTSC NA
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" -Name "Value" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC 1
-
-	 # Add workaround for bug that shows "You'll need a new app to open this ms-gamingoverlay" when starting a game
-    If (!(Test-Path "HKCR:")) {
-		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
-	}
-	If (!(Test-Path "HKCR:\ms-gamingoverlay")) {
-		New-Item -Path "HKCR:\ms-gamingoverlay" -Force | Out-Null
-	}
-	 # reg add HKEY_CLASSES_ROOT\ms-gamingoverlay /t REG_SZ /d "URL:ms-gamingoverlay" /f
-	Set-ItemProperty -Path "HKCR:\ms-gamingoverlay" '(Default)' -Type String -Value "URL:ms-gamingoverlay" -Force											  # Win11 Home "URL:ms-gamingoverlay"
-
-	 # ren C:\Windows\System32\GameBarPresenceWriter.exe to C:\Windows\System32\GameBarPresenceWriter.bak
-	$key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
-	$acl = $key.GetAccessControl()
-	$rule = New-Object System.Security.AccessControl.RegistryAccessRule (".\USERS","FullControl",@("ObjectInherit","ContainerInherit"),"None","Allow")
-	$acl.SetAccessRule($rule)
-	$key.SetAccessControl($acl)
-
-	$key.Close()
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" -Name "ActivationType" -Type DWord -Value 0x00000000 -Force		  # Win11 Home 1	LTSC 1
-
-	Start-Sleep 1
-
-	 # It is necessary to take ownership of a registry key and change permissions to modify the key below.
-	if ((Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter').ActivationType -eq 1) {
-		Write-Output 'GameBar Presence Writer feature is still active.' '' 'Disable it manually, go to:' '' 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\' 'Microsoft\WindowsRuntime\ActivatableClassId\' 'Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter' '' 'in Registry Editor and change the parameter' '' 'ActivationType to 0' | msg /w *
-	}
-
-	Write-Host "Finished Removing Xbox features."
+    Write-Output "Recursos do Xbox desativados."
 }
 
 
 
-Function EnableGPUScheduling {
-	
-	Write-Host "Turn On Hardware Accelerated GPU Scheduling."
+function EnableGPUScheduling {
+    
+    Write-Host "Ativando o Agendamento de GPU Acelerado por Hardware."
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Type DWord -Value 0x00000002							  # Win11 Home NA		LTSC 2
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "PlatformSupportMiracast" -Type DWord -Value 0x00000001			  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "UnsupportedMonitorModesAllowed" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC 1
+    # Função auxiliar para definir uma chave de registro
+    function Set-RegistryValue {
+        param (
+            [string]$path,
+            [string]$name,
+            [int]$value,
+            [string]$displayName
+        )
+
+        try {
+            Set-ItemProperty -Path $path -Name $name -Type DWord -Value $value
+            Write-Host "$displayName configurado com sucesso."
+        } catch {
+            Write-Host "Erro ao configurar {$displayName}: $_"
+        }
+    }
+
+    # Caminho do registro para drivers gráficos
+    $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
+
+    # Definindo valores de registro
+    Set-RegistryValue -Path $registryPath -Name "HwSchMode" -Value 0x00000002 -displayName "HwSchMode"
+    Set-RegistryValue -Path $registryPath -Name "PlatformSupportMiracast" -Value 0x00000001 -displayName "PlatformSupportMiracast"
+    Set-RegistryValue -Path $registryPath -Name "UnsupportedMonitorModesAllowed" -Value 0x00000001 -displayName "UnsupportedMonitorModesAllowed"
+    
+    Write-Host "Configurações de GPU concluídas."
 }
 
 
 
-Function EnableVRR_AutoHDR {
-	
-	Write-Host "Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -Type String -Value "VRROptimizeEnable=1;AutoHDREnable=1;SwapEffectUpgradeEnable=1;"		  # Win11 Home SwapEffectUpgradeEnable=1;
-	
+function EnableVRR_AutoHDR {
+    
+    Write-Host "Ativando Variable Refresh Rate e Auto HDR para otimizações em jogos em janela."
 
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Name "SwapEffectUpgradeCache" -Type DWord -Value 0x00000001		  # Win11 Home NA
-		
-	
-	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings")) {
-		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Type DWord -Value 0x00000001						  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Type DWord -Value 0x00000001				  # Win11 Home NA		LTSC NA Adjust Video Based on Lighting
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableAutoEnhanceDuringPlayback" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
+    # Função auxiliar para definir uma chave de registro
+    function Set-RegistryValue {
+        param (
+            [string]$path,
+            [string]$name,
+            [object]$value,  # Mudou para object para aceitar strings
+            [string]$displayName
+        )
 
+        try {
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Write-Host "$displayName configurado com sucesso."
+        } catch {
+            Write-Host "Erro ao configurar {$displayName}: $_"
+        }
+    }
+
+    # Chave do registro para UserGpuPreferences
+    If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
+        New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
+    }
+    Set-RegistryValue -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -Value "VRROptimizeEnable=1;AutoHDREnable=1;SwapEffectUpgradeEnable=1;" -displayName "DirectXUserGlobalSettings"
+
+    # Chave do registro para GraphicsSettings
+    If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings")) {
+        New-Item -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Force | Out-Null
+    }
+    Set-RegistryValue -Path "HKCU:\Software\Microsoft\DirectX\GraphicsSettings" -Name "SwapEffectUpgradeCache" -Value 0x00000001 -displayName "SwapEffectUpgradeCache"
+
+    # Chave do registro para VideoSettings
+    If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings")) {
+        New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Force | Out-Null
+    }
+    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "AllowLowResolution" -Value 0x00000001 -displayName "AllowLowResolution"
+    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableOutsideModeFeature" -Value 0x00000001 -displayName "EnableOutsideModeFeature"
+    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableHDRForPlayback" -Value 0x00000001 -displayName "EnableHDRForPlayback"
+    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\VideoSettings" -Name "EnableAutoEnhanceDuringPlayback" -Value 0x00000001 -displayName "EnableAutoEnhanceDuringPlayback"
+
+    Write-Host "Configurações de VRR e Auto HDR concluídas."
 }
 
 
 
-Function EnableEdge_GPU {
-	
-	Write-Host "Turn On Hardware Accelerated GPU on Microsoft Edge."
+function EnableEdge_GPU {
+    
+    Write-Host "Ativando Aceleração de GPU no Microsoft Edge."
 
-	<#
-	If (!(Test-Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences")) {
-		New-Item -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences" -Name "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge" -Type String -Value "GpuPreference=2;"		  # Win11 Home NA		LTSC NA
-	#>
+    # Função auxiliar para definir uma chave de registro
+    function Set-RegistryValue {
+        param (
+            [string]$path,
+            [string]$name,
+            [object]$value,  # Tipo como object para aceitar strings e DWord
+            [string]$displayName
+        )
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HardwareAccelerationModeEnabled " -Type DWord -Value 0x00000001
+        try {
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Write-Host "$displayName configurado com sucesso."
+        } catch {
+            Write-Host "Erro ao configurar {$displayName}: $_"
+        }
+    }
 
-	<# 
-	 # Disable giant Bing search (AI chat) button in Edge Browser.
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HubsSidebarEnabled" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
-	#>
+    # Chave do registro para habilitar a aceleração de hardware
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
+    }
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HardwareAccelerationModeEnabled" -Value 0x00000001 -displayName "HardwareAccelerationModeEnabled"
+
+    # Bloco comentado para desativar o botão de pesquisa do Bing (opcional)
+    <#
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
+    }
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "HubsSidebarEnabled" -Value 0x00000000 -displayName "HubsSidebarEnabled"
+    #>
+
+    Write-Host "Configurações de aceleração de GPU para Microsoft Edge concluídas."
 }
 
 
@@ -978,98 +821,176 @@ Function EnableEdge_GPU {
 
 
 
-Function RemoveAutoLogger {
-	
-	Write-Host "Removing AutoLogger file and restricting directory."
-	
-	$autoLoggerDir = "$env:ProgramData\Microsoft\Diagnosis\ETLLogs\Autologger"
-	If (Test-Path "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl") {
-		Remove-Item "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl" -Force -ErrorAction SilentlyContinue
-	}
-	icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
+function RemoveAutoLogger {
+    
+    Write-Host "Removendo o arquivo AutoLogger e restringindo o diretório."
 
- # This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+    $autoLoggerDir = "$env:ProgramData\Microsoft\Diagnosis\ETLLogs\Autologger"
+    $autoLoggerFile = "$autoLoggerDir\AutoLogger-Diagtrack-Listener.etl"
+
+    # Remover o arquivo de log se existir
+    try {
+        if (Test-Path $autoLoggerFile) {
+            Remove-Item $autoLoggerFile -Force -ErrorAction Stop
+            Write-Host "Arquivo de log removido com sucesso."
+        } else {
+            Write-Host "Arquivo de log não encontrado."
+        }
+    } catch {
+        Write-Host "Erro ao remover o arquivo de log: $_"
+    }
+
+    # Restringir o diretório
+    try {
+        icacls $autoLoggerDir /deny SYSTEM:`(OI`)`(CI`)F | Out-Null
+        Write-Host "Permissões do diretório restringidas com sucesso."
+    } catch {
+        Write-Host "Erro ao restringir permissões do diretório: $_"
+    }
+
+    Write-Host "A remoção do AutoLogger foi concluída."
 }
 
-Function DisableDataCollection {
-	
-	Write-Output "Turning off Data Collection via the AllowTelemtry key by changing it to 0"
-	
-	$DataCollection1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
-	$DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
-	$DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
-	If (Test-Path $DataCollection1) {
-		Set-ItemProperty $DataCollection1  AllowTelemetry -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC 1
-		Set-ItemProperty $DataCollection1  MaxTelemetryAllowed -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	}
-	If (Test-Path $DataCollection2) {
-		Set-ItemProperty $DataCollection2  AllowTelemetry -Type DWord -Value 0x00000000				  # Win11 Home NA		LTSC NA
-	}
-	If (Test-Path $DataCollection3) {
-		Set-ItemProperty $DataCollection3  AllowTelemetry -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC 1
-		Set-ItemProperty $DataCollection3  MaxTelemetryAllowed -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	}
 
- # This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+
+function DisableDataCollection {
+    
+    Write-Output "Desativando a coleta de dados alterando a chave AllowTelemetry para 0."
+
+    $DataCollection1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+    $DataCollection2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
+    $DataCollection3 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+
+    # Função auxiliar para definir uma chave de registro
+    function Set-RegistryValue {
+        param (
+            [string]$path,
+            [string]$name,
+            [int]$value,
+            [string]$displayName
+        )
+
+        try {
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Write-Host "$displayName configurado para $value com sucesso."
+        } catch {
+            Write-Host "Erro ao configurar {$displayName}: $_"
+        }
+    }
+
+    # Modificar a primeira chave de registro
+    if (Test-Path $DataCollection1) {
+        Set-RegistryValue -Path $DataCollection1 -Name "AllowTelemetry" -Value 0x00000000 -displayName "AllowTelemetry"
+        Set-RegistryValue -Path $DataCollection1 -Name "MaxTelemetryAllowed" -Value 0x00000000 -displayName "MaxTelemetryAllowed"
+    }
+
+    # Modificar a segunda chave de registro
+    if (Test-Path $DataCollection2) {
+        Set-RegistryValue -Path $DataCollection2 -Name "AllowTelemetry" -Value 0x00000000 -displayName "AllowTelemetry"
+    }
+
+    # Modificar a terceira chave de registro
+    if (Test-Path $DataCollection3) {
+        Set-RegistryValue -Path $DataCollection3 -Name "AllowTelemetry" -Value 0x00000000 -displayName "AllowTelemetry"
+        Set-RegistryValue -Path $DataCollection3 -Name "MaxTelemetryAllowed" -Value 0x00000000 -displayName "MaxTelemetryAllowed"
+    }
+
+    Write-Output "Configurações de coleta de dados desativadas."
 }
+
 
 
 function DisableDiagTrack {
-	
-	Write-Output "Stopping and disabling Connected User Experiences and Telemetry Service."
-	
-	 # Stop-Service "DiagTrack" -ea SilentlyContinue
-	Set-Service "DiagTrack" -StartupType Disabled -erroraction SilentlyContinue										  # Win11 Home Auto		LTSC Auto
+    
+    Write-Output "Parando e desativando o serviço de Experiências do Usuário Conectadas e Telemetria."
 
-	 # Stop-Service "DcpSvc" -ea SilentlyContinue
-	Set-Service "DcpSvc" -StartupType Disabled -erroraction SilentlyContinue
+    # Função auxiliar para parar e desativar serviços
+    function Stop-AndDisableService {
+        param (
+            [string]$serviceName,
+            [string]$displayName
+        )
 
-	 # Stop-Service "diagnosticshub.standardcollector.service" -ea SilentlyContinue
-	Set-Service "diagnosticshub.standardcollector.service" -StartupType Disabled -erroraction SilentlyContinue		  # Win11 Home Manual	LTSC Manual
+        try {
+            # Tente parar o serviço
+            Stop-Service -Name $serviceName -ErrorAction Stop
+            Write-Host "Serviço $displayName parado com sucesso."
+        } catch {
+            Write-Host "Erro ao parar o serviço {$displayName}: $_"
+        }
 
-	 # Stop-Service "WdiServiceHost" -ea SilentlyContinue
-	Set-Service "WdiServiceHost" -StartupType Disabled -erroraction SilentlyContinue
+        try {
+            # Tente desativar o serviço
+            Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+            Write-Host "Serviço $displayName desativado com sucesso."
+        } catch {
+            Write-Host "Erro ao desativar o serviço {$displayName}: $_"
+        }
+    }
 
- # This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
+    # Parar e desativar os serviços relacionados à telemetria
+    Stop-AndDisableService -serviceName "DiagTrack" -displayName "Connected User Experiences and Telemetry Service"
+    Stop-AndDisableService -serviceName "DcpSvc" -displayName "Data Collection Service"
+    Stop-AndDisableService -serviceName "diagnosticshub.standardcollector.service" -displayName "Diagnostics Hub Standard Collector Service"
+    Stop-AndDisableService -serviceName "WdiServiceHost" -displayName "Windows Diagnostic Infrastructure Service"
+
+    Write-Output "Todos os serviços de telemetria foram desativados."
 }
 
 
-Function DisableStartupEventTraceSession  {
-	
-	Write-Host "Disable All Startup Event Trace Session."
-	
+
+function DisableStartupEventTraceSession {
 	<#
 	Event tracing sessions record events from one or more providers that a controller enables. The session is also responsible for managing and flushing the buffers. 
 	The controller defines the session, which typically includes specifying the session and log file name, type of log file to use, and the resolution of the time stamp used to record the events.
 	#>
 
-		Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger" | ForEach-Object {
-			$Var = $_.PsPath
-				If ((Test-Path $Var)) {
-					Set-ItemProperty -Path $Var -Name "Start" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
-				}
-			}
-	
-			<#
-			The operating system should not allow changes to the events below as it would cause chronic anomalies, however, we will ensure everything works as it should.
-			As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
-			#>	
+    Write-Host "Desativando todas as sessões de rastreamento de eventos de inicialização."
 
-		# Listar todos os logs de eventos
-		$logs = wevtutil el
+    # Função auxiliar para desativar sessões de rastreamento
+    function Disable-EventTraceSession {
+        param (
+            [string]$path,
+            [string]$name,
+            [string]$displayName
+        )
 
-		# Iterar sobre cada log e desabilitá-lo
-		foreach ($log in $logs) {
-			try {
-				wevtutil sl "$log" /e:false
-				Write-Output "Desabilitado log: $log"
-			} catch {
-				Write-Output "Falha ao desabilitar log: $log"
-			}
-		}
+        try {
+            Set-ItemProperty -Path $path -Name $name -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+            Write-Host "Sessão $displayName desativada com sucesso."
+        } catch {
+            Write-Host "Erro ao desativar a sessão {$displayName}: $_"
+        }
+    }
 
+    # Desativar sessões de rastreamento
+    Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger" | ForEach-Object {
+        $Var = $_.PsPath
+        if (Test-Path $Var) {
+            Disable-EventTraceSession -path $Var -name "Start" -displayName $_.PsChildName
+        }
+    }
 
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue	  # Win11 Home 1	LTSC 1
+    # Listar todos os logs de eventos
+    $logs = wevtutil el
+
+    # Iterar sobre cada log e desabilitá-lo
+    foreach ($log in $logs) {
+        try {
+            wevtutil sl "$log" /e:false
+            Write-Output "Log desativado: $log"
+        } catch {
+            Write-Output "Falha ao desativar log: $log"
+        }
+    }
+
+    <#
+	The operating system should not allow changes to the events below as it would cause chronic anomalies, however, we will ensure everything works as it should.
+	As time passes, more trace sessions will appear active. This is normal. Do not change the behaviour of this.
+	#>
+
+    # Configurações específicas
+ 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Application" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue	  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-System" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue			  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\EventLog-Security" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\UBPM" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue					  # Win11 Home 1	LTSC 1
@@ -1078,391 +999,622 @@ Function DisableStartupEventTraceSession  {
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderApiLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		  # Win11 Home 1	LTSC 1
 		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\WMI\Autologger\DefenderAuditLogger" -Name "Start" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue		  # Win11 Home 1	LTSC 1
 
-	
-		 # https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
 
-		$events = @('SleepStudy','Kernel-Processor-Power','UserModePowerService')
-		foreach ($event in $events) {
+	# https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
 
-			wevtutil sl Microsoft-Windows-"$event" /e:false
-		}
+    # Desativar eventos específicos
+    $events = @('SleepStudy', 'Kernel-Processor-Power', 'UserModePowerService')
+    foreach ($event in $events) {
+        try {
+            wevtutil sl Microsoft-Windows-"$event" /e:false
+            Write-Output "Evento desativado: Microsoft-Windows-$event"
+        } catch {
+            Write-Output "Falha ao desativar evento: Microsoft-Windows-$event"
+        }
+    }
 
+    # Desativar logs de canais
 		Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels" | ForEach-Object {
 			$Var = $_.PsPath
 				If ((Test-Path $Var)) {
 					Set-ItemProperty -Path $Var -Name "Enabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
 				}
 			}
- # This is a complementary function to the RemoveAutoLogger \ DisableDataCollection \ DisableDiagTrack \ DisableStartupEventTraceSession.
 
- logman query -ets
+    Write-Host "Desativação de todas as sessões de rastreamento de eventos concluída."
 }
 
 
-Function DisableKernelDebugTracing {
+
+function DisableKernelDebugTracing {
     Write-Host "Disabling and Cleaning Kernel Debug Traces."
 
-    wevtutil sl Microsoft-Windows-Kernel-Debug /e:false
-    Remove-Item -Path "C:\Windows\System32\LogFiles\WMI\RtBackup\*.*" -Force -ErrorAction SilentlyContinue
+    try {
+        # Disable Kernel Debug Tracing
+        wevtutil sl Microsoft-Windows-Kernel-Debug /e:false
+    } catch {
+        Write-Host "Failed to disable Kernel Debug Tracing: $_" -ForegroundColor Red
+    }
+
+    try {
+        # Clean up kernel debug traces
+        $backupPath = "C:\Windows\System32\LogFiles\WMI\RtBackup\*.*"
+        Remove-Item -Path $backupPath -Force -ErrorAction Stop
+        Write-Host "Kernel debug traces cleaned up successfully."
+    } catch {
+        Write-Host "Failed to clean kernel debug traces: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableDriverLogging {
+function DisableDriverLogging {
     Write-Host "Disabling Driver Logging."
 
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "TrackLockedPages" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    try {
+        # Disable driver logging by setting TrackLockedPages to 0
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "TrackLockedPages" -Value 0 -Type DWord -Force -ErrorAction Stop
+        Write-Host "Driver logging has been disabled successfully."
+    } catch {
+        Write-Host "Failed to disable driver logging: $_" -ForegroundColor Red
+    }
 }
 
 
 
+function DisableRemoteAssistance {
+    Write-Host "Disabling Remote Assistance."
 
-Function DisableRemoteAssistance {
-	
-	Write-Host "Disabling Remote Assistance."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 0
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC 1
+    try {
+        # Disable Remote Assistance features
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        
+        Write-Host "Remote Assistance has been disabled successfully."
+    } catch {
+        Write-Host "Failed to disable Remote Assistance: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableRDP {
-	
-	<#
-	RDP consumes system resources, including CPU processing power, memory, and network bandwidth. 
-	When RDP is enabled, the system must maintain the ability to accept remote connections and process data transmitted over that connection.
-	#>
+function DisableRDP {
+    <#
+    RDP consumes system resources, including CPU processing power, memory, and network bandwidth. 
+    When RDP is enabled, the system must maintain the ability to accept remote connections and process data transmitted over that connection.
+    #>
 
-	Write-Host "Disabling Remote Desktop."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001	  # Win11 Home 1		LTSC 1
-	Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue														  # Win11 Home NA
+    Write-Host "Disabling Remote Desktop."
 
-	Write-Host "Disabling Remote Desktop Services."
-	 # Stop-Service "TermService" -ea SilentlyContinue
-	Set-Service "TermService" -StartupType Disabled -erroraction SilentlyContinue																  # Win11 Home Manual		LTSC Manual
+    try {
+        # Disable RDP connections by setting fDenyTSConnections to 1
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001 -Force -ErrorAction Stop
+        Write-Host "Remote Desktop connections have been disabled."
+    } catch {
+        Write-Host "Failed to disable Remote Desktop connections: $_" -ForegroundColor Red
+    }
 
+    try {
+        # Disable firewall rules related to Remote Desktop
+        Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction Stop
+        Write-Host "Remote Desktop firewall rules have been disabled."
+    } catch {
+        Write-Host "Failed to disable Remote Desktop firewall rules: $_" -ForegroundColor Red
+    }
+
+    Write-Host "Disabling Remote Desktop Services."
+
+    try {
+        # Stop and disable the Remote Desktop service (TermService)
+        Stop-Service "TermService" -ErrorAction SilentlyContinue
+        Set-Service "TermService" -StartupType Disabled -ErrorAction Stop
+        Write-Host "Remote Desktop Services have been disabled."
+    } catch {
+        Write-Host "Failed to disable Remote Desktop Services: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function AcceptedPrivacyPolicy {
-	# Related to Custom Inking and Typing Dictionary
-	Write-Output "Turning off AcceptedPrivacyPolicy."
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000	 	 # Win11 Home 1		LTSC 1
+function AcceptedPrivacyPolicy {
+    Write-Output "Turning off AcceptedPrivacyPolicy."
+
+    try {
+        # Disable AcceptedPrivacyPolicy by setting it to 0
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Write-Host "AcceptedPrivacyPolicy has been turned off successfully."
+    } catch {
+        Write-Host "Failed to turn off AcceptedPrivacyPolicy: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableActivityHistory {
-	
-	Write-Host "Disabling activity history."
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000								  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+function DisableActivityHistory {
+    Write-Host "Disabling activity history."
 
-	Write-Host "Disable Shared Experiences."
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000										  # Win11 Home NA		LTSC NA
+    try {
+        # Ensure registry path exists and disable activity history-related settings
+        If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Force | Out-Null
+        }
+
+        # Disable activity feed, user activity publishing, and uploading
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Write-Host "Activity history settings disabled successfully."
+    } catch {
+        Write-Host "Failed to disable activity history settings: $_" -ForegroundColor Red
+    }
+
+    try {
+        # Disable local device search history
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Write-Host "Device search history disabled successfully."
+    } catch {
+        Write-Host "Failed to disable device search history: $_" -ForegroundColor Red
+    }
+
+    Write-Host "Disabling Shared Experiences."
+    try {
+        # Disable Shared Experiences
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Write-Host "Shared Experiences disabled successfully."
+    } catch {
+        Write-Host "Failed to disable Shared Experiences: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableAdvertisingID {
-	
-	Write-Host "Disabling Advertising ID."
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
+function DisableAdvertisingID {
+    Write-Host "Disabling Advertising ID."
+
+    try {
+        # Ensure the registry path exists for AdvertisingInfo
+        If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Force | Out-Null
+        }
+
+        # Set the Advertising ID to be disabled by group policy
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001 -Force -ErrorAction Stop
+        Write-Host "Advertising ID has been disabled successfully."
+    } catch {
+        Write-Host "Failed to disable Advertising ID: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableAdvertisingInfo {
-	
-	Write-Output "Disabling Windows Feedback Experience program."
-	
-	 # Microsoft assigns a unique identificator to track your activity in the Microsoft Store and on UWP apps to target you with relevant ads.
-	
-	$Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
-	If (Test-Path $Advertising) {
-		Set-ItemProperty $Advertising Enabled -Type DWord -Value 0x00000000																							  # Win11 Home 0		LTSC 0
-	}
+function DisableAdvertisingInfo {
+    Write-Output "Disabling Windows Feedback Experience program."
+
+    try {
+        # Ensure the registry path exists
+        $Advertising = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
+        If (!(Test-Path $Advertising)) {
+            New-Item -Path $Advertising -Force | Out-Null
+        }
+
+        # Disable the Advertising Info feature
+        Set-ItemProperty -Path $Advertising -Name "Enabled" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Write-Host "Advertising Info has been disabled successfully."
+    } catch {
+        Write-Host "Failed to disable Advertising Info: $_" -ForegroundColor Red
+    }
 }
 
 
 
-Function DisableAppDiagnostics {
-	
-	Write-Output "Turning off AppDiagnostics."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" -Name "Value" -Type String -Value "Deny"	  # Win11 Home Allow		LTSC Allow
+function DisableAppDiagnostics {
+    Write-Output "Turning off AppDiagnostics."
 
+    try {
+        # Ensure the registry path exists
+        $AppDiagnosticsPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics"
+        If (!(Test-Path $AppDiagnosticsPath)) {
+            New-Item -Path $AppDiagnosticsPath -Force | Out-Null
+        }
+
+        # Set the Value to "Deny" to disable app diagnostics
+        Set-ItemProperty -Path $AppDiagnosticsPath -Name "Value" -Type String -Value "Deny" -Force -ErrorAction Stop
+        Write-Host "App Diagnostics has been disabled successfully."
+    } catch {
+        Write-Host "Failed to disable App Diagnostics: $_" -ForegroundColor Red
+    }
 }
-
 
 
 Function DisableCEIP {
-	
-	Write-Host "Microsoft Customer Experience Improvement Program (CEIP)."
-	
-	<#
+    
+    <#
 	The program collects information about computer hardware and how you use Microsoft Application Virtualization without interrupting you.
 	This helps Microsoft identify which Microsoft Application Virtualization features to improve.
 	No information collected is used to identify or contact you.
 	#>
 
-	 # See more at https://admx.help/?Category=Windows_11_2022&Policy=Microsoft.Policies.AppV::CEIP_Enable
+    Write-Host "Disabling Microsoft Customer Experience Improvement Program (CEIP)."
 
-	$SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
-	If (Test-Path $SQMClient1) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnable" -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC NA
-	}
+    # CEIP for Application Virtualization (App-V) - WOW6432Node
+    $SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+    If (Test-Path $SQMClient1) {
+        Set-ItemProperty -Path $SQMClient1 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Write-Host "CEIP disabled for SQMClient (WOW6432Node)."
+    }
 
-	$SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
-	If (!(Test-Path $SQMClient2)) {
-		New-Item -Path $SQMClient2 -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000												  # Win11 Home NA		LTSC NA
+    # CEIP policy in general Windows policies
+    $SQMClient2 = "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows"
+    If (!(Test-Path $SQMClient2)) {
+        New-Item -Path $SQMClient2 -Force | Out-Null
+    }
+    Set-ItemProperty -Path $SQMClient2 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Write-Host "CEIP disabled for Windows policies."
 
-	$SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
-	If (Test-Path $SQMClient3) {
-		Set-ItemProperty -Path "HKLM:\Software\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWord -Value 0x00000000													  # Win11 Home 0		LTSC 0
-	}
+    # CEIP for Microsoft SQMClient
+    $SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
+    If (Test-Path $SQMClient3) {
+        Set-ItemProperty -Path $SQMClient3 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Write-Host "CEIP disabled for SQMClient."
+    }
 
-	$SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
-	If (Test-Path $SQMClient4) {
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient" -Name "CEIPEnabled" -Type DWord -Value 0x00000000				  # Win11 Home 1		LTSC 1
-	}
+    # CEIP for Microsoft SQMClient - Unattend Settings
+    $SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
+    If (Test-Path $SQMClient4) {
+        Set-ItemProperty -Path $SQMClient4 -Name "CEIPEnabled" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Write-Host "CEIP disabled for unattend settings."
+    }
 
+    # CEIP for App-V
+    $AppVCEIP = "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP"
+    If (!(Test-Path $AppVCEIP)) {
+        New-Item -Path $AppVCEIP -Force | Out-Null
+    }
+    Set-ItemProperty -Path $AppVCEIP -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Write-Host "CEIP disabled for App-V."
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\AppV\CEIP" -Name "CEIPEnable" -Type DWord -Value 0x00000000														  # Win11 Home NA		LTSC NA
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM" -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000					  # Win11 Home NA		LTSC NA
+    # CEIP for Internet Explorer
+    $IECEIP = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\SQM"
+    If (!(Test-Path $IECEIP)) {
+        New-Item -Path $IECEIP -Force | Out-Null
+    }
+    Set-ItemProperty -Path $IECEIP -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Write-Host "CEIP disabled for Internet Explorer."
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client" -Name "CEIP" -Type DWord -Value 0x00000002														  # Win11 Home NA		LTSC NA
-
+    # Optional: Remove Microsoft Messenger CEIP, although it's outdated
+    $MessengerCEIP = "HKLM:\SOFTWARE\Policies\Microsoft\Messenger\Client"
+    If (!(Test-Path $MessengerCEIP)) {
+        New-Item -Path $MessengerCEIP -Force | Out-Null
+    }
+    Set-ItemProperty -Path $MessengerCEIP -Name "CEIP" -Type DWord -Value 0x00000002 -ErrorAction Stop
+    Write-Host "CEIP disabled for Microsoft Messenger (deprecated)."
 }
 
 
-
 Function DisableTelemetryTasks {
-	Write-Host "Disable Telemetry Tasks."
+	Write-Host "Disabling Telemetry Tasks."
+	
+    # This process is periodically collecting a variety of technical data about your computer and its performance and sending it to Microsoft for its Windows Customer Experience Improvement Program.
 
-	 # This process is periodically collecting a variety of technical data about your computer and its performance and sending it to Microsoft for its Windows Customer Experience Improvement Program.
+	# https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/exploit-protection-reference?view=o365-worldwide
 
-	 # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/exploit-protection-reference?view=o365-worldwide
-
+	# Block CompatTelRunner.exe
 	If (!(Test-Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe")) {
 		New-Item -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Force | Out-Null
 	}
-
 	Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
-
+	Write-Host "Blocked CompatTelRunner.exe in registry."
 
 	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe")) {
 		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Force | Out-Null
 	}
-
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+	Write-Host "Blocked CompatTelRunner.exe (WOW6432Node) in registry."
 
-    # Disable CompatTelRunner scheduled tasks
-	if(Get-ScheduledTask "CompatTelRunner" -ErrorAction Ignore) { Get-ScheduledTask  "CompatTelRunner" | Stop-ScheduledTask ; Get-ScheduledTask  "CompatTelRunner" | Disable-ScheduledTask } else { 'CompatTelRunner task does not exist on this device.'}
-
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
-		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
+	# Disable CompatTelRunner scheduled tasks
+	if(Get-ScheduledTask "CompatTelRunner" -ErrorAction Ignore) { 
+		Get-ScheduledTask "CompatTelRunner" | Stop-ScheduledTask
+		Get-ScheduledTask "CompatTelRunner" | Disable-ScheduledTask
+		Write-Host "Disabled CompatTelRunner task."
+	} else { 
+		Write-Host 'CompatTelRunner task does not exist on this device.' 
 	}
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
-
+	# Block DeviceCensus.exe
+	If (!(Test-Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
+		New-Item -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+	Write-Host "Blocked DeviceCensus.exe in registry."
 
 	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe")) {
 		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Force | Out-Null
 	}
-
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
+	Write-Host "Blocked DeviceCensus.exe (WOW6432Node) in registry."
 
+	# Additional telemetry-related tasks
+	$additionalTasks = @("Microsoft Compatibility Appraiser", "ProgramDataUpdater")
+	foreach ($task in $additionalTasks) {
+		if(Get-ScheduledTask $task -ErrorAction Ignore) {
+			Get-ScheduledTask $task | Stop-ScheduledTask
+			Get-ScheduledTask $task | Disable-ScheduledTask
+			Write-Host "Disabled scheduled task: $task."
+		} else {
+			Write-Host "$task task does not exist on this device."
+		}
+	}
 }
-
 
 
 Function DisableErrorReporting {
-	
-	Write-Output "Disable Windows Error Reporting function to get better system response speed."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\Consent" -Name "DefaultConsent" -Type DWord -Value 0x00000000
+    Write-Output "Disabling Windows Error Reporting for better system response speed."
 
+    # Desabilita o Windows Error Reporting
+    try {
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\Consent" -Name "DefaultConsent" -Type DWord -Value 0x00000000
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001						  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001				  # Win11 Home NA		LTSC NA
+        # Verifica e cria a chave de registro se não existir
+        If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001
 
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001			  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
+        # Verifica e cria a chave WOW6432Node se não existir
+        If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting")) {
+            New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "Disabled" -Type DWord -Value 0x00000001
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Error Reporting" -Name "LoggingDisabled" -Type DWord -Value 0x00000001
 
- # This is a complementary function to the SetDoReport \ DisableErrorReporting.
+        Write-Output "Windows Error Reporting has been disabled successfully."
+    } catch {
+        Write-Host "An error occurred while disabling Windows Error Reporting: $_" -ForegroundColor Red
+    }
+    
+    # Esta função é complementar à função SetDoReport, que deve ser implementada para ativar novamente o Relatório de Erros, se necessário.
 }
-
 
 
 Function SetDoReport {
-	
-	Write-Output "Disable Windows Error Reporting function to get better system response speed."
+    Write-Output "Disabling Windows Error Reporting for better system response speed."
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000				  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000					  # Win11 Home NA		LTSC NA
+    # Verifica e cria a chave de registro se não existir
+    try {
+        If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000
 
+        # Verifica e cria a chave WOW6432Node se não existir
+        If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting")) {
+            New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000
 
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "DoReport" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\PCHealth\ErrorReporting" -Name "ShowUI" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+        # Verifica e cria a chave de serviço se não existir
+        If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport")) { 
+            New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Name "Start" -Type DWord -Value 0x00000004  # Desativa o serviço
 
-	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport")) { 
-		New-Item "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Force | Out-Null															  # Win11 Home NA	LTSC NA
-	}
+        Write-Output "Windows Error Reporting has been disabled successfully."
+    } catch {
+        Write-Host "An error occurred while disabling Windows Error Reporting: $_" -ForegroundColor Red
+    }
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\wercplsupport" -Name "Start" -Type DWord -Value 0x00000004						  # Win11 Home NA	LTSC NA
-
- # This is a complementary function to the SetDoReport \ DisableErrorReporting.
+    # Esta função é complementar à função DisableErrorReporting, que deve ser usada para ativar novamente o Relatório de Erros, se necessário.
 }
-
-
 
 
 Function DisableFeedbackExperience {
-	
-	Write-Output "Stops the Windows Feedback Experience from sending anonymous data."
-	
-	$Period1 = "HKCU:\Software\Microsoft\Siuf\Rules"
-	$Period2 = "HKCU:\Software\Microsoft\Siuf"
-	If (!(Test-Path $Period1)) { 
-		If (!(Test-Path $Period2)) { 
-			New-Item $Period2 -Force | Out-Null
-		}
-		New-Item $Period1 -Force | Out-Null
-	}
-	Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0x00000000						  # Win11 Home NA		LTSC NA
-	Set-ItemProperty $Period1 PeriodInNanoSeconds -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
-}
 
+    Write-Output "Stopping Windows Feedback Experience and blocking feedback notifications."
+
+    # Check and create registry paths for feedback data collection
+    $Period1 = "HKCU:\Software\Microsoft\Siuf\Rules"
+    $Period2 = "HKCU:\Software\Microsoft\Siuf"
+
+    If (!(Test-Path $Period1)) { 
+        If (!(Test-Path $Period2)) { 
+            New-Item $Period2 -Force | Out-Null
+        }
+        New-Item $Period1 -Force | Out-Null
+    }
+
+    # Disable data collection by setting values to 0
+    Set-ItemProperty $Period1 NumberOfSIUFInPeriod -Type DWord -Value 0x00000000
+    Set-ItemProperty $Period1 PeriodInNanoSeconds -Type DWord -Value 0x00000000
+    Write-Host "Feedback collection has been disabled."
+
+    # Disable feedback notifications via group policy
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Force | Out-Null
+    }
+
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -Type DWord -Value 0x00000001
+    Write-Host "Feedback notifications have been disabled."
+
+}
 
 
 Function DisableLocationTracking {
-	
-	 # Disabling this will break Microsoft Find My Device functionality.
-	
-	Write-Output "Disabling Location Tracking."
 
-	 # Stop-Service "lfsvc" -ea SilentlyContinue
-	Set-Service "lfsvc" -StartupType Disabled -erroraction SilentlyContinue					  # Win11 Home Manual
-	
+    # Disabling this will break Microsoft Find My Device functionality.
+    Write-Output "Disabling Location Tracking."
 
-	$SensorState = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}"
-	$LocationConfig = "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration"
+    # Disable and stop the Location Framework Service (lfsvc)
+    Set-Service "lfsvc" -StartupType Disabled -ErrorAction SilentlyContinue
+    Write-Host "Location Framework Service disabled."
 
-	Set-ItemProperty $SensorState SensorPermissionState -Type DWord -Value 0x00000000		  # Win11 Home 1
-	Set-ItemProperty $LocationConfig Status -Type DWord -Value 0x00000000					  # Win11 Home 1
+    # Modify registry values to disable location tracking
+    $SensorState = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}"
+    $LocationConfig = "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration"
 
+    # Disable sensor permissions for location tracking
+    If (!(Test-Path $SensorState)) {
+        New-Item -Path $SensorState -Force | Out-Null
+    }
+    Set-ItemProperty -Path $SensorState -Name "SensorPermissionState" -Type DWord -Value 0x00000000
+    Write-Host "Sensor permissions for location tracking disabled."
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"		  # Win11 Home Allow
+    # Disable location configuration
+    If (!(Test-Path $LocationConfig)) {
+        New-Item -Path $LocationConfig -Force | Out-Null
+    }
+    Set-ItemProperty -Path $LocationConfig -Name "Status" -Type DWord -Value 0x00000000
+    Write-Host "Location configuration disabled."
+
+    # Deny location access in the ConsentStore
+    If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location")) {
+        New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"
+    Write-Host "Location access denied for applications."
 }
-
 
 
 Function DisableTailoredExperiences {
-	
-	Write-Host "Disabling Tailored Experiences AKA Spying and Diagnostic Data."
-	
-	 # Diagnostic data for personalized tips, ads, and recommendations.
 
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
+    Write-Host "Disabling Tailored Experiences (Personalized Ads, Tips, and Recommendations based on Diagnostic Data)."
 
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Name "TailoredExperiencesWithDiagnosticDataEnabled" -Type DWord -Value 0x00000000	  # Win11 Home 0		LTSC 0
+    # Disable Tailored Experiences using Group Policy
+    If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
+        New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 0x00000001
+    Write-Host "Tailored experiences disabled via Group Policy."
+
+    # Disable Tailored Experiences in Windows privacy settings
+    If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy")) {
+        New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Name "TailoredExperiencesWithDiagnosticDataEnabled" -Type DWord -Value 0x00000000
+    Write-Host "Tailored experiences disabled in privacy settings."
 }
+
 																							
 
 
 function BlockTelemetrybyHosts {
-	
-Write-Output "Windows has a lot of telemetry and spying and connects to third-party data collection sites. We will block this."
+    
+    Write-Output "Bloqueando telemetria e rastreamento ao adicionar entradas ao arquivo hosts."
 
-# https://www.youtube.com/watch?v=IJr2DcffquI
+    # Caminho do arquivo hosts
+    $hostsPath = "$Env:windir\System32\drivers\etc\hosts"
+    
+    # Caminho do backup
+    $backupPath = "$Env:windir\System32\drivers\etc\hosts.bak"
+    
+    # Criar um backup do arquivo hosts, se ainda não existir
+    If (!(Test-Path $backupPath)) {
+        Copy-Item -Path $hostsPath -Destination $backupPath -Force
+        Write-Host "Backup do arquivo hosts criado em $backupPath."
+    }
 
-$user_home = "$Env:windir\System32\drivers\etc\hosts"
-$TelemetrybyHosts = @'
-# Copyright (c) 1993-2009 Microsoft Corp.
-#
-# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
-#
-# This file contains the mappings of IP addresses to host names. Each
-# entry should be kept on an individual line. The IP address should
-# be placed in the first column followed by the corresponding host name.
-# The IP address and the host name should be separated by at least one
-# space.
-#
-# Additionally, comments (such as these) may be inserted on individual
-# lines or following the machine name denoted by a '#' symbol.
-#
-# For example:
-#
-#      102.54.94.97     rhino.acme.com          # source server
-#       38.25.63.10     x.acme.com              # x client host
-
-# localhost name resolution is handled within DNS itself.
-#	127.0.0.1       localhost
-#	::1             localhost
-127.0.0.1     localhost
-::1           localhost
-127.0.0.1     data.microsoft.com
-127.0.0.1     us-mobile.events.data.microsoft.com
-127.0.0.1     uk-mobile.events.data.microsoft.com
-127.0.0.1     eu-mobile.events.data.microsoft.com
-127.0.0.1     jp-mobile.events.data.microsoft.com
-127.0.0.1     settings-win.data.microsoft.com
-127.0.0.1     msftconnecttest.com
-127.0.0.1     azureedge.net
-127.0.0.1     activity.windows.com
-127.0.0.1     bingapis.com
-127.0.0.1     msedge.net
-127.0.0.1     assets.msn.com
-127.0.0.1     scorecardresearch.com
-127.0.0.1     sb.scorecardresearch.com
-127.0.0.1     edge.microsoft.com
-127.0.0.1     data.msn.com
-127.0.0.1     browser.events.data.msn.com
+    # Lista de domínios para bloquear
+    $TelemetrybyHosts = @'
+# Bloqueio de Telemetria
+127.0.0.1    data.microsoft.com
+127.0.0.1    us-mobile.events.data.microsoft.com
+127.0.0.1    uk-mobile.events.data.microsoft.com
+127.0.0.1    eu-mobile.events.data.microsoft.com
+127.0.0.1    jp-mobile.events.data.microsoft.com
+127.0.0.1    settings-win.data.microsoft.com
+127.0.0.1    msftconnecttest.com
+127.0.0.1    msftncsi.com
+127.0.0.1    v10.vortex-win.data.microsoft.com
+127.0.0.1    v20.vortex-win.data.microsoft.com
+127.0.0.1    v10.vortex.data.microsoft.com
+127.0.0.1    v20.vortex.data.microsoft.com
+127.0.0.1    telemetry.microsoft.com
+127.0.0.1    watson.microsoft.com
+127.0.0.1    oca.microsoft.com
+127.0.0.1    vortex.data.microsoft.com
+127.0.0.1    vortex-win.data.microsoft.com
+127.0.0.1    activity.windows.com
+127.0.0.1    feedback.windows.com
+127.0.0.1    i1.services.social.microsoft.com
+127.0.0.1    i1.services.social.microsoft.com.nsatc.net
+127.0.0.1    diagnostics.support.microsoft.com
+127.0.0.1    corp.sts.microsoft.com
+127.0.0.1    statsfe2.update.microsoft.com.akadns.net
+127.0.0.1    corpext.msitadfs.glbdns2.microsoft.com
+127.0.0.1    compatexchange.cloudapp.net
+127.0.0.1    assets.msn.com
+127.0.0.1    c.msn.com
+127.0.0.1    diagnostics.support.microsoft.com
+127.0.0.1    a.ads1.msn.com
+127.0.0.1    a.ads2.msn.com
+127.0.0.1    a.rad.msn.com
+127.0.0.1    ads.msn.com
+127.0.0.1    ads1.msads.net
+127.0.0.1    ads1.msn.com
+127.0.0.1    ads2.msads.net
+127.0.0.1    ads2.msn.com
+127.0.0.1    ad.doubleclick.net
+127.0.0.1    adnexus.net
+127.0.0.1    analytics.live.com
+127.0.0.1    analytics.microsoft.com
+127.0.0.1    bn1.telemetry.microsoft.com
+127.0.0.1    bn1.telemetry.microsoft.com.nsatc.net
+127.0.0.1    bs.serving-sys.com
+127.0.0.1    cdn.content.prod.cms.msn.com
+127.0.0.1    choice.microsoft.com
+127.0.0.1    choice.microsoft.com.nsatc.net
+127.0.0.1    db3aqu.atdmt.com
+127.0.0.1    df.telemetry.microsoft.com
+127.0.0.1    ds.serving-sys.com
+127.0.0.1    feedback.search.microsoft.com
+127.0.0.1    flex.msn.com
+127.0.0.1    msnportal.112.2o7.net
+127.0.0.1    oca.telemetry.microsoft.com
+127.0.0.1    pre.footprintpredict.com
+127.0.0.1    preview.msn.com
+127.0.0.1    rad.msn.com
+127.0.0.1    redir.metaservices.microsoft.com
+127.0.0.1    reports.wes.df.telemetry.microsoft.com
+127.0.0.1    services.wes.df.telemetry.microsoft.com
+127.0.0.1    settings-sandbox.data.microsoft.com
+127.0.0.1    ssw.live.com
+127.0.0.1    survey.watson.microsoft.com
+127.0.0.1    telecommand.telemetry.microsoft.com
+127.0.0.1    telecommand.telemetry.microsoft.com.nsatc.net
+127.0.0.1    telemetry.appex.bing.net
+127.0.0.1    telemetry.microsoft.com
+127.0.0.1    telemetry.urs.microsoft.com
+127.0.0.1    vortex-sandbox.data.microsoft.com
+127.0.0.1    watson.live.com
+127.0.0.1    watson.microsoft.com
+127.0.0.1    wes.df.telemetry.microsoft.com
+127.0.0.1    www.msftncsi.com
+127.0.0.1    browser.events.data.msn.com
+127.0.0.1    edge.microsoft.com
+127.0.0.1    scorecardresearch.com
+127.0.0.1    sb.scorecardresearch.com
 '@
-New-Item -Path $user_home -Value $TelemetrybyHosts -Force | Out-Null
+
+    # Append as new lines no arquivo hosts existente
+    Add-Content -Path $hostsPath -Value $TelemetrybyHosts
+    Write-Host "Os domínios de telemetria foram bloqueados ao serem adicionados ao arquivo hosts."
+
+    <#
+    Principais Domínios de Telemetria da Microsoft:
+    Incluímos uma lista ampliada de domínios, como vortex, telemetry, settings, msftconnecttest, e muito mais, que são conhecidos por coleta de dados ou envio de telemetria.
+
+    Serviços de Publicidade:
+    Bloqueio de serviços de publicidade, como ads.msn.com, adnexus.net, ad.doubleclick.net, para evitar rastreamento de anúncios.
+
+    Serviços de Diagnóstico:
+    Bloqueio de diagnostics.support.microsoft.com, feedback.windows.com, e outros.
+
+    MSN e Bing:
+    Bloqueio de bingapis.com, edge.microsoft.com, msn.com, para evitar conexões indesejadas.
+    #>
 }
 
 
@@ -1475,71 +1627,76 @@ New-Item -Path $user_home -Value $TelemetrybyHosts -Force | Out-Null
 
 function DisableMozillaFirefoxTelemetry {	
 
-	Write-Host "Disable Mozilla Firefox Telemetry."
+	Write-Host "Desabilitando a Telemetria do Mozilla Firefox."
 	
+	# Verifica se o caminho do registro existe, se não, cria o diretório de políticas do Firefox
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox")) { 
-		New-Item "HKLM:\SOFTWARE\Policies\Mozilla\Firefox"  -Force | Out-Null
+		New-Item "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Force | Out-Null
 	}
+
+	# Desativa a telemetria
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableTelemetry" -Type DWord -Value 0x00000001
+
+	# Desativa o agente que verifica se o Firefox é o navegador padrão
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "DisableDefaultBrowserAgent" -Type DWord -Value 0x00000001
 }
 
 
-
 function DisableGoogleChromeTelemetry {
 
-	Write-Host "Disable Google Chrome Telemetry."
+	Write-Host "Desabilitando a Telemetria do Google Chrome."
 
+	# Verifica e cria o caminho do registro para políticas do Google Chrome
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome")) { 
-		New-Item "HKLM:\SOFTWARE\Policies\Google\Chrome"  -Force | Out-Null
+		New-Item "HKLM:\SOFTWARE\Policies\Google\Chrome" -Force | Out-Null
 	}
 
 	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome")) { 
-		New-Item "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome"  -Force | Out-Null
+		New-Item "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome" -Force | Out-Null
 	}
 
+	# Desativa várias opções de telemetria e relatórios
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupEnabled" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ChromeCleanupReportingEnabled" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "MetricsReportingEnabled" -Type DWord -Value 0x00000000
-
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "UserFeedbackAllowed" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "DeviceMetricsReportingEnabled" -Type DWord -Value 0x00000000
 
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome" -Name "UserFeedbackAllowed" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome" -Name "DeviceMetricsReportingEnabled" -Type DWord -Value 0x00000000
 
-	 # Block Google Chrome Software Reporter Tool:
-	 # The Software Reporter Tool (also known as Chrome Cleanup Tool and Software Removal Tool, the executable file is software_reporter_tool.exe), is a tool that Google distributes with the Google Chrome web browser. 
-	 # It is a part of Google Chrome's Clean up Computer feature which scans your computer for harmful software. If this tool finds any harmful app or extension which can cause problems, it removes them from your computer. 
-	 # Anything that interferes with a user's browsing experience may be removed by the tool.
-	 # Its disadvantages, high CPU load or privacy implications, may be reason enough to block it from running. This script will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
-	 # Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update.
+	# The Software Reporter Tool (also known as Chrome Cleanup Tool and Software Removal Tool, the executable file is software_reporter_tool.exe), is a tool that Google distributes with the Google Chrome web browser. 
+	# It is a part of Google Chrome's Clean up Computer feature which scans your computer for harmful software. If this tool finds any harmful app or extension which can cause problems, it removes them from your computer. 
+	# Anything that interferes with a user's browsing experience may be removed by the tool.
+	# Its disadvantages, high CPU load or privacy implications, may be reason enough to block it from running. This script will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
+	# Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update.
 
-	 # This will disable the software_reporter_tool.exe in a more cleaner way using Image File Execution Options Debugger value. 
-	 # Setting this value to an executable designed to kill processes disables it. Chrome won't re-enable it with almost each update. 
+	# Bloqueia o Google Chrome Software Reporter Tool
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Force | Out-Null
 	}
 
+	# Define o Debugger para o Software Reporter Tool para um comando que encerra o processo
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" -Name "Debugger" -Type String -Value "%windir%\System32\taskkill.exe" -Force 
-
 }
-
 
 
 function DisableCCleanerMonitoring {
 
-	Write-Host "Disable CCleaner Monitoring."
+	Write-Host "Disabling CCleaner Monitoring."
 
 	<#	
-	Since Avast acquired Piriform, the popular system cleaning software CCleaner has become bloated with malware, bundled PUPs(potentially unwanted programs), and an alarming amount of pop-up ads.
-	If you're highly dependent on CCleaner you can disable with this script the CCleaner Active Monitoring ("Active Monitoring" feature has been renamed to "Smart Cleaning"), 
-	automatic Update check and download function, trial offer notifications, the new integrated Software Updater and the privacy option to "Help Improve CCleaner by sending anonymous usage data".
+	Since Avast acquired Piriform, the popular system cleaning software CCleaner has become bloated with malware, bundled PUPs (potentially unwanted programs), and an alarming amount of pop-up ads.
+	If you're highly dependent on CCleaner, you can disable with this script the CCleaner Active Monitoring ("Active Monitoring" feature has been renamed to "Smart Cleaning"), 
+	automatic Update check and download function, trial offer notifications, the new integrated Software Updater, and the privacy option to "Help Improve CCleaner by sending anonymous usage data."
 	#>
 
+	# Check and create the CCleaner registry path if it doesn't exist
 	If (!(Test-Path "HKCU:\Software\Piriform\CCleaner")) { 
 		New-Item "HKCU:\Software\Piriform\CCleaner" -Force | Out-Null
 	}
+
+	# Disable various CCleaner monitoring features
 	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "Monitoring" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "HelpImproveCCleaner" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "SystemMonitoring" -Type DWord -Value 0x00000000
@@ -1550,71 +1707,100 @@ function DisableCCleanerMonitoring {
 	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdater" -Type DWord -Value 0x00000000
 	Set-ItemProperty -Path "HKCU:\Software\Piriform\CCleaner" -Name "(Cfg)SoftwareUpdaterIpm" -Type DWord -Value 0x00000000
 
-	if(Get-ScheduledTask 'CCleaner Update' -ErrorAction Ignore) { Get-ScheduledTask  'CCleaner Update' | Stop-ScheduledTask ; Get-ScheduledTask  'CCleaner Update' | Disable-ScheduledTask } else { 'CCleaner Update task does not exist on this device.'}
+	# Disable the scheduled CCleaner Update task if it exists
+	if(Get-ScheduledTask 'CCleaner Update' -ErrorAction Ignore) { 
+		Get-ScheduledTask 'CCleaner Update' | Stop-ScheduledTask 
+		Get-ScheduledTask 'CCleaner Update' | Disable-ScheduledTask 
+	} else { 
+		Write-Host 'CCleaner Update task does not exist on this device.'
+	}
+
+	# Disable the CCleaner UAC skip task if it exists
 	$tempCCleaner = 'CCleanerSkipUAC - ' + $env:USERNAME
-	if(Get-ScheduledTask $tempCCleaner -ErrorAction Ignore) { Get-ScheduledTask  $tempCCleaner | Stop-ScheduledTask ; Get-ScheduledTask  $tempCCleaner | Disable-ScheduledTask } else { 'CCleanerSkipUAC task does not exist on this device.'}
-
+	if(Get-ScheduledTask $tempCCleaner -ErrorAction Ignore) { 
+		Get-ScheduledTask $tempCCleaner | Stop-ScheduledTask 
+		Get-ScheduledTask $tempCCleaner | Disable-ScheduledTask 
+	} else { 
+		Write-Host 'CCleanerSkipUAC task does not exist on this device.'
+	}
 }
-
 
 
 function DisableMediaPlayerTelemetry {
 
-	Write-Host "Disable Media Player Telemetry."
+	Write-Host "Disabling Media Player Telemetry."
 
-	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\MediaPlayer\Preferences" -Name "UsageTracking" -Type DWord -Value 0x00000000		  # Win11 Home NA
+	# Disable usage tracking for Windows Media Player
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\MediaPlayer\Preferences" -Name "UsageTracking" -Type DWord -Value 0x00000000
 
+	# Create Policies registry path if it doesn't exist
 	If (!(Test-Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer")) { 
 		New-Item "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventCDDVDMetadataRetrieval" -Type DWord -Value 0x00000000		  # Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventMusicFileMetadataRetrieval" -Type DWord -Value 0x00000000	  # Win11 Home NA	LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventRadioPresetsRetrieval" -Type DWord -Value 0x00000000		  # Win11 Home NA	LTSC NA
 
+	# Disable metadata retrieval for CDs, DVDs, and music files
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventCDDVDMetadataRetrieval" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventMusicFileMetadataRetrieval" -Type DWord -Value 0x00000001
+	Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\WindowsMediaPlayer" -Name "PreventRadioPresetsRetrieval" -Type DWord -Value 0x00000001
+
+	# Create WMDRM registry path if it doesn't exist
 	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM")) { 
 		New-Item "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Name "DisableOnline" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
 
+	# Disable online features for WMDRM
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\WMDRM" -Name "DisableOnline" -Type DWord -Value 0x00000001
 
-	 # Stop-Service "WMPNetworkSvc" -ea SilentlyContinue
-	Set-Service "WMPNetworkSvc" -StartupType Disabled -erroraction SilentlyContinue												  # Win11 Home Manual	LTSC Manual
-
+	# Disable the Windows Media Player Network Sharing Service
+	Set-Service "WMPNetworkSvc" -StartupType Disabled -ErrorAction SilentlyContinue
 }
-
 
 
 function DisableMicrosoftOfficeTelemetry {
 	
-	Write-Host "Disable Microsoft Office Telemetry."
+	Write-Host "Disabling Microsoft Office Telemetry."
 
-	 # This will disable Microsoft Office telemetry (supports Microsoft Office 2013 and 2016)
+	# This will disable Microsoft Office telemetry (supports Microsoft Office 2013 and 2016)
 
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common" -Force | Out-Null
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" -Force | Out-Null
+	# Create necessary registry paths if they don't exist
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" -Force | Out-Null
 
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common" -Force | Out-Null
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common\Feedback" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common\Feedback" -Force | Out-Null
 
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common" -Force | Out-Null
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" -Force | Out-Null
-		New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Feedback" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" -Force | Out-Null
+	New-Item "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Feedback" -Force | Out-Null
 
+	# Disable telemetry settings for Office 2013
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common" -Name "QMEnable" -Type DWord -Value 0x00000000											  # Win11 Home NA	LTSC NA
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\15.0\Common\Feedback" -Name "Enabled" -Type DWord -Value 0x00000000									  # Win11 Home NA	LTSC NA
 	
+	# Disable telemetry settings for Office 2016
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common" -Name "QMEnable" -Type DWord -Value 0x00000000											  # Win11 Home NA	LTSC NA
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" -Name "DisableTelemetry" -Type DWord -Value 0x00000001					  # Win11 Home NA	LTSC NA
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Feedback" -Name "Enabled" -Type DWord -Value 0x00000000									  # Win11 Home NA	LTSC NA
 
+	# Disable telemetry in common client settings
 	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" -Name "DisableTelemetry" -Type DWord -Value 0x00000001						  # Win11 Home NA	LTSC NA
 
-	if(Get-ScheduledTask OfficeTelemetry* -ErrorAction Ignore) { Get-ScheduledTask  OfficeTelemetry* | Stop-ScheduledTask ; Get-ScheduledTask  OfficeTelemetry* | Disable-ScheduledTask } else { 'OfficeTelemetryAgentFallBack task does not exist on this device.'}  # initiates the background task for the Office Telemetry Agent that scans and uploads usage and error information for Office solutions
-
+	# Disable any existing scheduled tasks related to Office Telemetry
+	if(Get-ScheduledTask "OfficeTelemetry*" -ErrorAction Ignore) { 
+		Get-ScheduledTask "OfficeTelemetry*" | Stop-ScheduledTask 
+		Get-ScheduledTask "OfficeTelemetry*" | Disable-ScheduledTask 
+	} else { 
+		Write-Host 'OfficeTelemetryAgentFallBack task does not exist on this device.' 
+	}
 }
 
 
 
+
+#########################################################################################################################################################################################################
+#########################################################################################################################################################################################################
+#########################################################################################################################################################################################################
+#########################################################################################################################################################################################################
 Function DisableVisualStudioTelemetry {
 	
 	Write-Host "Disable Visual Studio Telemetry."
@@ -1963,15 +2149,8 @@ Function DisableWidgets {
 	
 	Write-Output "Disable and uninstall Widgets. The Widgets app runs in the background even with the option turned off."
 	
-	Write-Host "Checking if Widgets is installed..."
-	if (Test-Path $Env:windir\SystemApps\MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy) {
-		winget uninstall "windows web experience pack" --silent		
-	}
-	else {
-		Write-Host "Widgets do not exist on this device."
+    winget uninstall "windows web experience pack" --silent
 
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarDa" -Type DWord -Value 0x00000000	  # Win11 Home 0		LTSC NA
 }
 
 
@@ -2687,14 +2866,52 @@ function SetPowerManagment {
 
 
 
-function revertPowerManagment {
-	
-	Write-Output "Reset All Power Plans to Their Defaults."
+function revertPowerManagement {
+    <#
+    Restaura todos os planos de energia para suas configurações padrão.
+    #>
 
-	powercfg -restoredefaultschemes
-	Start-Sleep 1
-	powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e
+    Write-Output "Resetando todos os planos de energia para suas configurações padrão."
+
+    # Restaura todos os planos de energia
+    powercfg -restoredefaultschemes
+    Start-Sleep -Seconds 1  # Espera 1 segundo para garantir que a restauração foi concluída
+
+    # Ativa o plano de energia "Equilibrado"
+    powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e
+    Write-Output "Plano de energia 'Equilibrado' ativado."
 }
+
+
+
+function DisableRecall {
+    <#
+    Desativa o recurso de Recall do Windows e ajusta a configuração de análise de dados da IA.
+    #>
+
+    Write-Output "Desativando o recurso Recall do Windows."
+
+    # Verifica se o recurso Recall está habilitado
+    $recallFeature = Get-WindowsOptionalFeature -Online | Where-Object { $_.FeatureName -eq 'Recall' }
+
+    if ($recallFeature.State -ne "Disabled") {
+        # Desativa o recurso Recall
+        Dism /Online /Disable-Feature /Featurename:Recall
+        Write-Output "Recall feature has been disabled."
+    } else {
+        Write-Output "Recall feature is already disabled."
+    }
+    
+    # Verifica a chave de registro para ajustar a análise de dados da IA
+    if (Test-Path "HKCU:\Software\Policies\Microsoft\Windows\WindowsAI") {
+        Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\WindowsAI" -Name "DisableAIDataAnalysis" -Type DWord -Value 0x00000001
+        Write-Output "AI data analysis has been disabled."
+    } else {
+        Write-Output "The WindowsAI key does not exist in the registry."
+    }
+}
+
+
 
 
 
@@ -2705,177 +2922,127 @@ function revertPowerManagment {
 
 
 function DisableVBS_HVCI {
-	
-	<#
-	Core Isolation (for WSL)
-	Not recommended if you use it as a server in production. It can reduce your computer security capabilities.
-	See more at https://www.tomshardware.com/how-to/disable-vbs-windows-11
-	#>
+    <#
+    Desativa a segurança baseada em virtualização (VBS) e a integridade do código forçado pelo hipervisor (HVCI).
+    #>
 
-	$DeviceGuard = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard"
-	If (!(Test-Path $DeviceGuard)) {  
-		New-Item $DeviceGuard -Force | Out-Null
-	}
+    Write-Output "Desativando a segurança baseada em virtualização e a integridade do código forçado pelo hipervisor."
 
-	$WOW6432NodeDeviceGuard = "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard"
-	If (!(Test-Path $WOW6432NodeDeviceGuard)) {  
-		New-Item $WOW6432NodeDeviceGuard -Force | Out-Null
-	}
+    $DeviceGuard = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard"
+    If (!(Test-Path $DeviceGuard)) {  
+        New-Item $DeviceGuard -Force | Out-Null
+    }
 
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Turn off Virtualization-based security."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000							  # LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000											  # LTSC NA
+    $WOW6432NodeDeviceGuard = "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard"
+    If (!(Test-Path $WOW6432NodeDeviceGuard)) {  
+        New-Item $WOW6432NodeDeviceGuard -Force | Out-Null
+    }
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
+    # Verifica se o sistema é Windows 10
+    IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {
+        Write-Host "Windows 10 detectado. Desativando a segurança baseada em virtualização."
+        
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
+    }
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
+    # Verifica se o sistema é Windows 11
+    IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {
+        Write-Host "Windows 11 detectado. Desativando a segurança baseada em virtualização."
+        
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
+    }
 
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
-
-	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity")) {
-			New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Type DWord -Value 0x00000000		  # LTSC NA
-	}
-
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Turn off Virtualization-based security."
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000							  # Win11 Home NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000											  # Win11 Home NA
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
-
-	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity")) {
-			New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Type DWord -Value 0x00000000		  # Win11 Home NA
-	}
+    # Habilita ou desabilita a integridade do código forçado pelo hipervisor
+    If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity")) {
+        New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Type DWord -Value 0x00000000
 }
+
 
 
 
 function TurnWSLlight {
-	
-Write-Output "WSL Performance Tweaks."
+    <#
+    Aplica ajustes de desempenho no Windows Subsystem for Linux (WSL).
+    #>
 
-$user_home = "$env:USERPROFILE\.wslconfig"
-$wslconfig = @'
+    Write-Output "Ajustes de desempenho do WSL."
+
+    # Caminho para o arquivo de configuração do WSL
+    $user_home = "$env:USERPROFILE\.wslconfig"
+
+    # Verifica se o arquivo .wslconfig existe
+    if (Test-Path $user_home) {
+        # Cria um backup do arquivo existente
+        Copy-Item -Path $user_home -Destination "$user_home.bak" -Force
+        Write-Host "Backup do .wslconfig existente criado como .wslconfig.bak"
+    }
+
+    # Configurações para o arquivo .wslconfig
+    $wslconfig = @'
 [wsl2]
 kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_bypass_disable no_stf_barrier spectre_v2_user=off spec_store_bypass_disable=off l1tf=off mitigations=off mds=off tsx_async_abort=off spectre_v2=off ssbd=force-off tsx=on kpti=off pti=off nopcid nosmap slub_debug=- page_alloc.shuffle=0 systemd.unified_cgroup_hierarchy=0
 '@
-New-Item -Path $user_home -Value $wslconfig -Force | Out-Null
+
+    # Cria ou substitui o arquivo .wslconfig
+    Set-Content -Path $user_home -Value $wslconfig -Force
+    Write-Output ".wslconfig atualizado com as novas configurações."
 }
 
 
 
+
 function DisableWindowsDefender {
-	
 
-	<#
-	The author explains that he disabled only the features related to Real-Time Protection, Cloud-Delivered Protection, Automatic Sample Submission, 
-	 and Core Isolation (for WSL) because they directly impact system performance.
+    <#
+    O autor explica que apenas desativou as funcionalidades relacionadas à Proteção em Tempo Real, Proteção Entregue na Nuvem, 
+    Envio Automático de Amostras e Isolamento de Núcleo (para WSL) porque impactam diretamente o desempenho do sistema.
+    #>
 
-	It is essential to clarify that the Windows operating system needs some level of protection, and the author of this project does not believe that removing all of these features
-	 is the best solution. Leaving the system as the project proposes would be insane, as even opening a harmless Nuget plugin could lead to an invasion (init.ps1).
+    # Verifica se a Proteção contra Tamper está ativada
+    $tamperProtectionStatus = Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows Defender\Features' -ErrorAction SilentlyContinue
 
-	Features such as Quick Scan (Windows Malicious Software Removal Tool), Virus and Threat Protection Updates, Account Protection, Firewall and Network Protection, Reputation-Based Protection,
-	 Exploit Protection (DEP/ASLR/SEHOP/KASAN), and Parental Controls have not been changed.
-	#>
+    if ($null -eq $tamperProtectionStatus -or $tamperProtectionStatus.TamperProtection -ne 0) {
+        Write-Host 'Windows Defender não pode ser desativado, a Proteção contra Tamper ainda está ativa.'
+        Write-Host 'Desative a Proteção contra Tamper manualmente e tente novamente.'
+        return
+    }
 
+    # Configurações do registro
+    $paths = @(
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet"
+    )
 
-	<#
-	Write-Output "`nTrying to disable Windows Defender. First, you need to manually modify it by going to the:"
-	Write-Output "`nSettings -> Privacy & Security -> Windows Security -> Virus & threat protection -> Manage settings -> Tamper Protection -> Off"
+    foreach ($path in $paths) {
+        if (!(Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+    }
 
-	Write-Output "`nAfter manual modification, press any key to continue the script."
-	[Console]::ReadKey($true) | Out-Null
-	#>
+    # Configura propriedades
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiVirus" -Value 1 -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -Force
 
-	if (!(Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows Defender\Features').TamperProtection -eq 4) {
-		Write-Output 'Windows Defender can not be disabled, Tamper Protection is still active' '' 'Disable Tamper Protection manually, then press OK' '' 'Go to:' '' 'Settings -> Privacy & Security -> Windows Security -> Virus & Threat Protection -> Manage Settings -> Tamper Protection -> Off' | msg /w *
-	}
-	else {
+    # Desativar mitigações
+    Set-ProcessMitigation -System -Reset
 
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" -Name "DisableEnhancedNotifications" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
-	
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration" -Name "Notification_Suppress" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
-	
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiVirus" -Type DWord -Value 0x00000001								  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Type DWord -Value 0x00000001							  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRoutinelyTakingAction" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableSpecialRunningModes" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "ServiceKeepAlive" -Type DWord -Value 0x00000000								  # Win11 Home NA		LTSC NA
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender")) {
-			New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Type DWord -Value 0x00000001				  # Win11 Home NA		LTSC NA
-	
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableBehaviorMonitoring" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableIOAVProtection" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableOnAccessProtection" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableScanOnRealtimeEnable" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
+    Write-Host "Windows Defender e mitigações desativadas com sucesso."
 
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection")) {
-			New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
-	
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates" -Name "ForceUpdateFromMU" -Type DWord -Value 0x00000000				   # Win11 Home NA		LTSC NA
-	
-	
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "DisableBlockAtFirstSeen" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "SpynetReporting" -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "SubmitSamplesConsent" -Type DWord -Value 0x00000002						  # Win11 Home NA		LTSC NA
-	
+	Start-Sleep 1
 		
-		If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access")) {
-			New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Force | Out-Null
-		}
-		Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Name "EnableControlledFolderAccess" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
-	
-		Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "SecurityHealth" -ErrorAction SilentlyContinue # Win11 Home "%windir%\system32\SecurityHealthSystray.exe"				  # LTSC "%windir%\system32\SecurityHealthSystray.exe"
-
-		 # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/exploit-protection-reference?view=o365-worldwide
-
-		
-		 # Disable ALL System Mitigations (https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/customize-exploit-protection?view=o365-worldwide)
-		
-		 # Get-ProcessMitigation -System
-		
-		Set-ProcessMitigation -System -Reset			  # Reset All Mitigations at the system level.
-		Start-Sleep 1
 		<#
 		Mitigation											Applies to				PowerShell cmdlets
 		Control flow guard (CFG)							System and app-level	CFG, StrictCFG, SuppressExports
@@ -2887,10 +3054,8 @@ function DisableWindowsDefender {
 		
 		#>	
 
-		 # Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports ( breaks WSL functionality on Windows 11 !)
-		
+		# Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports ( breaks WSL functionality on Windows 11 !)
 	
-	} 
 }
 
 
@@ -2901,157 +3066,345 @@ function DisableWindowsDefender {
 
 
 
-Function SetMinAnimate {
-	
-	Write-Output "Disable useless visual effects to speed up response and display of desktop."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type String -Value "0"											  # Win11 Home 1		LTSC 1		# Omen Gaming Hub
+function SetMinAnimate {
+    <#
+    Desativa animações desnecessárias para acelerar a resposta e a exibição do desktop.
+    #>
+
+    Write-Output "Desabilitando animações desnecessárias para aumentar a velocidade de resposta e a exibição do desktop."
+
+    # Define a propriedade MinAnimate no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type String -Value "0" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Animações mínimas desativadas com sucesso."
+    } else {
+        Write-Output "Falha ao desativar animações mínimas."
+    }
 }
 
 
 
-Function SetDesktopProcess {
-	
-	Write-Output "Optimize the priority of program processes and independent processes to avoid system crash."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "DesktopProcess" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
+function SetDesktopProcess {
+    <#
+    Otimiza a prioridade dos processos de programas e processos independentes para evitar travamentos do sistema.
+    #>
+
+    Write-Output "Otimizando a prioridade dos processos do programa e processos independentes para evitar falhas do sistema."
+
+    # Define a propriedade DesktopProcess no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "DesktopProcess" -Type DWord -Value 0x00000001 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Prioridade do processo do desktop otimizada com sucesso."
+    } else {
+        Write-Output "Falha ao otimizar a prioridade do processo do desktop."
+    }
 }
 
 
 
-Function SetTaskbarAnimations {
-	
-	Write-Output "Play animations in the taskbar and start menu."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1		# Omen Gaming Hub
+
+function SetTaskbarAnimations {
+    <#
+    Desativa animações na barra de tarefas e no menu Iniciar.
+    #>
+
+    Write-Output "Desativando animações na barra de tarefas e no menu Iniciar."
+
+    # Define a propriedade TaskbarAnimations no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type DWord -Value 0x00000000 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Animações da barra de tarefas desativadas com sucesso."
+    } else {
+        Write-Output "Falha ao desativar animações da barra de tarefas."
+    }
 }
 
 
 
-Function SetWaitToKillServiceTimeout {
-	
-	Write-Output "Optimize the speed of ending processes."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "WaitToKillServiceTimeout" -Type String -Value "2000"								  # Win11 Home 5000		LTSC 5000
+function SetWaitToKillServiceTimeout {
+    <#
+    Otimiza a velocidade de finalização dos processos ajustando o tempo de espera para serviços.
+    #>
+
+    Write-Output "Otimizando a velocidade de finalização dos serviços."
+
+    # Define a propriedade WaitToKillServiceTimeout no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control" -Name "WaitToKillServiceTimeout" -Type String -Value "2000" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Tempo de espera para finalizar serviços ajustado para 2000 milissegundos com sucesso."
+    } else {
+        Write-Output "Falha ao ajustar o tempo de espera para finalizar serviços."
+    }
 }
 
 
 
-Function SetNoSimpleNetIDList {
-	
-	Write-Output "Optimize the refresh strategy of the system file list."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoSimpleNetIDList" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
+function SetNoSimpleNetIDList {
+    <#
+    Otimiza a estratégia de atualização da lista de arquivos do sistema, desativando a lista simples de identificadores de rede.
+    #>
+
+    Write-Output "Otimizando a estratégia de atualização da lista de identificadores de rede."
+
+    # Verifica se o caminho da chave de registro existe, se não, cria
+    If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+        New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+    }
+
+    # Define a propriedade NoSimpleNetIDList no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoSimpleNetIDList" -Type DWord -Value 0x00000001 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Estratégia de atualização da lista de identificadores de rede otimizada com sucesso."
+    } else {
+        Write-Output "Falha ao otimizar a estratégia de atualização da lista de identificadores de rede."
+    }
 }
 
 
 
-Function SetMouseHoverTime {
-	
-	Write-Output "Reduce the display time of taskbar preview."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Type String -Value "100"						  # Win11 Home 400		LTSC 400
+
+function SetMouseHoverTime {
+    <#
+    Reduz o tempo de exibição da pré-visualização da barra de tarefas ajustando o tempo de espera do mouse.
+    #>
+
+    Write-Output "Reduzindo o tempo de exibição da pré-visualização da barra de tarefas."
+
+    # Define a propriedade MouseHoverTime no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Type String -Value "100" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Tempo de exibição da pré-visualização da barra de tarefas ajustado para 100 milissegundos com sucesso."
+    } else {
+        Write-Output "Falha ao ajustar o tempo de exibição da pré-visualização da barra de tarefas."
+    }
 }
 
 
 
-Function SetMenuShowDelay {
-	
-	Write-Output "Speed up the response and display of system commands."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0"						  # Win11 Home 400		LTSC 400	# Omen Gaming Hub
+
+function SetMenuShowDelay {
+    <#
+    Acelera a resposta e a exibição dos comandos do sistema ajustando o atraso na exibição de menus.
+    #>
+
+    Write-Output "Acelerando a resposta e a exibição de comandos do sistema."
+
+    # Define a propriedade MenuShowDelay no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type String -Value "0" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Atraso na exibição de menus ajustado para 0 milissegundos com sucesso."
+    } else {
+        Write-Output "Falha ao ajustar o atraso na exibição de menus."
+    }
 }
 
 
 
-Function SetForegroundLockTimeout {
-	
-	Write-Output "Improve the response speed of foreground program."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type String -Value "150000"		  # Win11 Home 0x00030d40 (200000)		LTSC 0x00030d40 (200000)		# Omen Gaming Hub
+
+function SetForegroundLockTimeout {
+    <#
+    Melhora a velocidade de resposta do programa em primeiro plano ajustando o tempo de bloqueio do primeiro plano.
+    #>
+
+    Write-Output "Ajustando o tempo de bloqueio do primeiro plano para melhorar a resposta do programa."
+
+    # Define a propriedade ForegroundLockTimeout no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type String -Value "150000" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Tempo de bloqueio do primeiro plano ajustado para 150000 milissegundos com sucesso."
+    } else {
+        Write-Output "Falha ao ajustar o tempo de bloqueio do primeiro plano."
+    }
 }
 
 
 
-Function SetAlwaysUnloadDLL {
-	
-	Write-Output "Release unused dlls in memory."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "AlwaysUnloadDLL" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
+
+function SetAlwaysUnloadDLL {
+    <#
+    Libera DLLs não utilizadas da memória para otimizar o uso de memória.
+    #>
+
+    Write-Output "Liberando DLLs não utilizadas da memória."
+
+    # Define a propriedade AlwaysUnloadDLL no registro
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "AlwaysUnloadDLL" -Type DWord -Value 0x00000001 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "DLLs não utilizadas agora serão liberadas da memória com sucesso."
+    } else {
+        Write-Output "Falha ao configurar a liberação de DLLs não utilizadas."
+    }
 }
 
 
 
-Function SetFontStyleShortcut{
-	
-	Write-Output "Remove the font style of the desktop shortcut."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "link" -Type String -Value "0"					  # Win11 Home NA		LTSC NA
+
+function SetFontStyleShortcut {
+    <#
+    Remove o estilo de fonte dos atalhos na área de trabalho.
+    #>
+
+    Write-Output "Removendo o estilo de fonte do atalho na área de trabalho."
+
+    # Verifica se a chave de registro existe
+    if (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer") {
+        # Define a propriedade link no registro
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "link" -Type String -Value "0" -Force
+
+        # Confirmação de sucesso
+        if ($?) {
+            Write-Output "Estilo de fonte do atalho removido com sucesso."
+        } else {
+            Write-Output "Falha ao remover o estilo de fonte do atalho."
+        }
+    } else {
+        Write-Output "A chave de registro especificada não existe."
+    }
 }
 
 
 
-Function SetAutoRestartShell {
-	
-	Write-Output "Optimize user interface components. Auto-refresh when there is an error to avoid system crash."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001					  # Win11 Home 1		LTSC 1	# Omen Gaming Hub
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA	# Omen Gaming Hub
+
+function SetAutoRestartShell {
+    <#
+    Otimiza os componentes da interface do usuário, permitindo a reinicialização automática do shell em caso de falhas.
+    #>
+
+    Write-Output "Otimizando os componentes da interface do usuário. Habilitando reinicialização automática do shell."
+
+    # Define a propriedade AutoRestartShell para sistemas de 64 bits
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001 -Force
+    
+    # Define a propriedade AutoRestartShell para sistemas de 32 bits
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoRestartShell" -Type DWord -Value 0x00000001 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Configuração de reinicialização automática do shell aplicada com sucesso."
+    } else {
+        Write-Output "Falha ao aplicar a configuração de reinicialização automática do shell."
+    }
 }
 
 
 
-Function SetVisualEffects {
-	
-	Write-Output "Optimize the visual effects of system menus and lists to improve system performance."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Type DWord -Value 0x00000000					  # Win11 Home 1		LTSC 1		# Omen Gaming Hub
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Type DWord -Value 0x00000002					  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000			  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name "DefaultApplied" -Type DWord -Value 0x00000000		  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name "DefaultApplied" -Type DWord -Value 0x00000000	  # Win11 Home 1		LTSC 1
+
+function SetVisualEffects {
+    <#
+    Otimiza os efeitos visuais dos menus e listas do sistema para melhorar o desempenho.
+    #>
+
+    Write-Output "Otimizing visual effects of system menus and lists for improved performance."
+
+    # Desativa vários efeitos visuais
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Type DWord -Value 0x00000002 -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name "DefaultApplied" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name "DefaultApplied" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name "DefaultApplied" -Type DWord -Value 0x00000000 -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Visual effects optimized successfully."
+    } else {
+        Write-Output "Failed to optimize visual effects." -ForegroundColor Red
+    }
 }
 
 
 
-Function GetFullContextMenu {
-	
-	Write-Output "Setting Full Context Menus."
-	
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Setting Full Context Menus in Windows 11."
-		If (!(Test-Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}")) {
-			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" -Force | Out-Null
-			New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null
-			Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" '(Default)' -Value ""
-		}
-	}
- # reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+
+function GetFullContextMenu {
+    <#
+    Configura o menu de contexto completo no Windows 11.
+    #>
+
+    Write-Output "Configurando Menus de Contexto Completo."
+
+    # Verifica se a versão do Windows é 11 (Build 22000 ou superior)
+    if ([System.Environment]::OSVersion.Version.Build -ge 22000) {
+        Write-Host "Configurando Menus de Contexto Completo no Windows 11."
+
+        # Verifica se a chave de registro já existe
+        if (!(Test-Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}")) {
+            # Cria a chave de registro
+            New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" -Force | Out-Null
+            New-Item -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Name '(Default)' -Value ""
+        }
+
+        Write-Output "Menus de contexto completos configurados com sucesso."
+    } else {
+        Write-Output "Este script é compatível apenas com Windows 11."
+    }
 }
 
 
 
-Function SetKeyboardDelay {
-	
-	Write-Output "Adjust the keyboards delayed response time."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "InitialKeyboardIndicators" -Type String -Value "2"		  # Win11 Home 0		LTSC 0
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Type String -Value "0"					  # Win11 Home 1		LTSC 1
-	Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Type String -Value "48"				  # Win11 Home 31		LTSC 31
+
+function SetKeyboardDelay {
+    <#
+    Ajusta o tempo de resposta do teclado.
+    #>
+
+    Write-Output "Ajustando o tempo de resposta do teclado."
+
+    # Define as propriedades do teclado no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "InitialKeyboardIndicators" -Type String -Value "2" -Force
+    Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Type String -Value "0" -Force
+    Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Type String -Value "48" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Configurações do teclado ajustadas com sucesso."
+    } else {
+        Write-Output "Falha ao ajustar as configurações do teclado."
+    }
 }
 
 
 
-Function SetMaxCachedIcons {
-	
-	Write-Output "Increase the system image buffer to display images faster."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"				  # Win11 Home NA		LTSC NA	# Omen Gaming Hub
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000"	  # Win11 Home NA		LTSC NA
+
+function SetMaxCachedIcons {
+    <#
+    Aumenta o buffer de ícones do sistema para exibir imagens mais rapidamente.
+    #>
+
+    Write-Output "Aumentando o buffer de ícones do sistema para exibir imagens mais rapidamente."
+
+    # Define a propriedade Max Cached Icons no registro para sistemas de 64 bits
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000" -Force
+    
+    # Define a propriedade Max Cached Icons no registro para sistemas de 32 bits
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Type String -Value "4000" -Force
+
+    # Confirmação de sucesso
+    if ($?) {
+        Write-Output "Número máximo de ícones em cache definido para 4000 com sucesso."
+    } else {
+        Write-Output "Falha ao definir o número máximo de ícones em cache."
+    }
 }
+
 
 
 
@@ -3061,168 +3414,260 @@ Function SetMaxCachedIcons {
 
 
 
- Function DisableUnusedDiskControllerDriver {
-    Write-Host "Disabling Legacy IDE Unused Disk Controller Driver."
+function DisableUnusedDiskControllerDriver {
+    <#
+    Use with caution!
+    Desativa o driver de controlador de disco IDE legado.
+    #>
 
+    Write-Host "Desativando o driver de controlador de disco IDE legado."
+
+    # Desativa o driver pciide no registro
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\pciide" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    Write-Host "Driver IDE legado desativado com sucesso."
 }
 
 
 
-Function SetNoLowDiskSpaceChecks {
-	
-	Write-Output "Improve hard disk performance to enhance disk read/write capacity."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA	 # Omen Gaming Hub
+function SetNoLowDiskSpaceChecks {
+    <#
+    Desativa as verificações automáticas de espaço em disco baixo, removendo notificações de espaço insuficiente.
+    #>
+
+    Write-Output "Desativando as verificações de espaço em disco baixo para melhorar a performance."
+
+    # Verifica se a chave de registro existe
+    If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+        # Cria a chave de registro se ela não existir
+        New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+    }
+
+    # Define a propriedade NoLowDiskSpaceChecks no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoLowDiskSpaceChecks" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "Verificações de espaço em disco baixo desativadas com sucesso."
 }
 
 
 
-Function DisableStorageSense {
-	
-	 # Not applicable to Servers
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. -> Disabling Storage Sense."
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
-	}
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		  # LTSC NA
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		  # LTSC NA
-	}
+function DisableStorageSense {
+    <#
+    Desativa o Storage Sense com base na versão do Windows (Windows 10 ou Windows 11).
+    #>
 
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. -> Disabling Storage Sense."
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
-	}
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000		  # Win11 Home 1
-		Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000		  # Win11 Home 1
-	}
+    # Verifica se o sistema é Windows 10
+    IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {
+        Write-Host "Windows 10 Detectado. -> Desativando o Storage Sense."
+        
+        # Verifica e cria a chave de registro se não existir
+        If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
+        }
+
+        # Define as propriedades que desativam o Storage Sense no Windows 10
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000
+    }
+
+    # Verifica se o sistema é Windows 11
+    IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {
+        Write-Host "Windows 11 Detectado. -> Desativando o Storage Sense."
+
+        # Verifica e cria a chave de registro se não existir
+        If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy")) {
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Force | Out-Null
+        }
+
+        # Define as propriedades que desativam o Storage Sense no Windows 11
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "01" -Type DWord -Value 0x00000000
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" -Name "04" -Type DWord -Value 0x00000000
+    }
 }
 
 
 
-Function SetNtfsDisable8dot3NameCreation {
-	Write-Output "Disable short file names feature."
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value 0x00000001			  # Win11 Home 2		LTSC 2	 # Omen Gaming Hub
+function SetNtfsDisable8dot3NameCreation {
+    <#
+    Desativa o recurso de criação de nomes curtos (formato 8.3) no sistema de arquivos NTFS.
+    #>
 
-	 # fsutil behavior query disable8dot3	 # Win11 Home 2 (Per volume setting - the default)
+    Write-Output "Desativando o recurso de criação de nomes curtos (8.3) no NTFS."
+
+    # Desativa a criação de nomes 8.3 globalmente
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisable8dot3NameCreation" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "A criação de nomes curtos (8.3) foi desativada."
+
+    # Comando opcional para verificar a configuração:
+    Write-Output "Execute 'fsutil behavior query disable8dot3' para verificar o status atual."
 }
 
 
 
-Function SetNoDriveTypeAutoRun {
-	
-	Write-Output "Disable AutoPlay for external devices to avoid potential risks such as malware."
-	
-	If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
-		New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 0x000000dd	  # Win11 Home NA		LTSC NA	 # Omen Gaming Hub
+
+function SetNoDriveTypeAutoRun {
+    <#
+    Desativa o AutoPlay para dispositivos externos, evitando riscos como a execução automática de malware.
+    #>
+
+    Write-Output "Desativando o AutoPlay para dispositivos externos para reduzir riscos de segurança."
+
+    # Verifica se a chave de registro existe
+    If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+        # Cria a chave de registro se ela não existir
+        New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+    }
+
+    # Define a propriedade NoDriveTypeAutoRun no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 0x000000dd -Force
+
+    Write-Output "AutoPlay desativado com sucesso para unidades removíveis e externas."
+
+	<#
+	0x80: Desativa o AutoPlay em unidades de rede.
+	0x04: Desativa o AutoPlay em unidades removíveis (como pen drives).
+	0x08: Desativa o AutoPlay em unidades fixas.
+	0x10: Desativa o AutoPlay em CDs/DVDs.
+	0x20: Desativa o AutoPlay em discos RAM.
+	O valor 0xdd é a soma dessas bandeiras (0x80 + 0x08 + 0x04 + 0x01 + 0x10).
+#>
 }
+
 
 
 
 function DisableDeleteNotify {
-	
-	<#
-	TRIM (also called Trim or Trim Command) allows your SSD drive to handle garbage more evidentially.
-	TRIM allows the operating system to decide which blocks are already in use so they can be wiped internally.
-	Anytime you delete something, TRIM automatically deletes that page or block.
-	The next time the page or block is written to, the operating system does not have to wait for that block to be deleted.
-	SSD TRIM can prolong the life and performance of your SSD drive.
+    <#
+    Habilita o TRIM para prolongar a vida útil e melhorar o desempenho das unidades SSD.
+    #>
 
-	https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
-	#>
+    Write-Output "Forçando o estado TRIM para ativado."
 
-	Write-Output "Force TRIM state to On."
-	
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Allows TRIM operations to be sent to the storage device."
-		 # fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 0			  # LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
-		fsutil behavior set DisableDeleteNotify ReFS 0		  # LTSC 0 (DisableDeleteNotify = 0  (Disabled) "TRIM ENABLED")
-	}
+    # Verifica se o sistema é Windows 10
+    IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {
+        Write-Host "Windows 10 Detectado. Permitindo operações de TRIM para serem enviadas ao dispositivo de armazenamento."
+        fsutil behavior set DisableDeleteNotify 0    # Habilita TRIM
+        fsutil behavior set DisableDeleteNotify ReFS 0  # Habilita TRIM para ReFS
+    }
 
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Allows TRIM operations to be sent to the storage device."
-		 # fsutil behavior query DisableDeleteNotify
-		fsutil behavior set DisableDeleteNotify 0			  # Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
-		fsutil behavior set DisableDeleteNotify ReFS 0		  # Win11 Home 0 (Allows TRIM operations to be sent to the storage device. "TRIM ENABLED")
-	} 
-}  
+    # Verifica se o sistema é Windows 11
+    IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {
+        Write-Host "Windows 11 Detectado. Permitindo operações de TRIM para serem enviadas ao dispositivo de armazenamento."
+        fsutil behavior set DisableDeleteNotify 0    # Habilita TRIM
+        fsutil behavior set DisableDeleteNotify ReFS 0  # Habilita TRIM para ReFS
+    }
+
+    Write-Output "TRIM foi habilitado com sucesso."
+}
+
 
 
 
 function SetLastAccessTimeStamp {
-	
-	<#
-	https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
+    <#
+    Desativa as atualizações de "Last Access Time Stamp" em sistemas de arquivos NTFS para melhorar o desempenho.
+    #>
 
-	The disablelastaccess parameter can affect programs such as Backup and Remote Storage, which rely on this feature.
-	#>
+    # Verifica se o sistema é Windows 10
+    IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {
+        Write-Host "Windows 10 Detectado. Desativando as atualizações de Last Access Time Stamp no NTFS."
+        fsutil behavior set disablelastaccess 1  # Desativa as atualizações de Last Access Time
+    }
 
-	IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {Write-Host "Windows 10 Detected. Disable NTFS Last Access Time Stamp Updates."
-		 # fsutil behavior query disablelastaccess
-		 # fsutil behavior set disablelastaccess 0
-		fsutil behavior set disablelastaccess 1  # LTSC 2 (System Managed, "Last Access Time Updates DISABLED")
-	}
+    # Verifica se o sistema é Windows 11
+    IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {
+        Write-Host "Windows 11 Detectado. Desativando as atualizações de Last Access Time Stamp no NTFS."
+        fsutil behavior set disablelastaccess 1  # Desativa as atualizações de Last Access Time
+    }
 
-	IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {Write-Host "Windows 11 Detected. Disable NTFS Last Access Time Stamp Updates."
-		 # fsutil behavior query disablelastaccess
-		 # fsutil behavior set disablelastaccess 1
-		fsutil behavior set disablelastaccess 1  # Win11 Home 2 (System Managed, "Last Access Time Updates ENABLED")
-	}
+    Write-Output "Atualizações de Last Access Time Stamp desativadas com sucesso."
 }
 
 
 
-Function SetWaitToKillAppTimeout {
-	
-	Write-Output "Optimize program response time to improve system response speed."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000"	  # Win11 Home NA		LTSC NA	# Omen Gaming Hub
+function SetWaitToKillAppTimeout {
+    <#
+    Ajusta o tempo de espera para encerrar aplicativos, melhorando a velocidade de resposta do sistema.
+    #>
+
+    Write-Output "Otimização do tempo de espera para encerrar aplicativos."
+
+    # Define o tempo de espera para encerrar aplicativos no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type String -Value "10000" -Force
+
+    Write-Output "Tempo de espera para encerrar aplicativos ajustado para 10000 milissegundos (10 segundos)."
 }
 
 
 
-Function SetHungAppTimeout {
-	
-	Write-Output "Shorten the wait time for unresponsive mouse and keyboard caused by error program."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000"			  # Win11 Home NA		LTSC NA # Omen Gaming Hub
+function SetHungAppTimeout {
+    <#
+    Reduz o tempo de espera para aplicativos não responsivos, melhorando a experiência do usuário.
+    #>
+
+    Write-Output "Ajustando o tempo de espera para aplicativos não responsivos."
+
+    # Define o tempo de espera para aplicativos não responsivos no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type String -Value "3000" -Force
+
+    Write-Output "Tempo de espera para aplicativos não responsivos ajustado para 3000 milissegundos (3 segundos)."
 }
 
 
 
-Function SetDataQueueSize {
-	
-	Write-Output "Set KeyboardDataQueueSize and MouseDataQueueSize to 0x00000032."
-	
-	If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters")) {
-		New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" -Name "MouseDataQueueSize" -Type DWord -Value 0x00000032		  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" -Name "KeyboardDataQueueSize" -Type DWord -Value 0x00000032		  # Win11 Home 64		LTSC 64
+
+function SetDataQueueSize {
+    <#
+    Ajusta o tamanho das filas de dados para teclado e mouse para melhorar a responsividade.
+    #>
+
+    Write-Output "Definindo MouseDataQueueSize e KeyboardDataQueueSize para 0x00000032."
+
+    # Verifica se a chave de registro para o mouse existe e cria se não existir
+    If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters")) {
+        New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" -Force | Out-Null
+    }
+    # Define o tamanho da fila de dados do mouse
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" -Name "MouseDataQueueSize" -Type DWord -Value 0x00000032 -Force
+
+    # Define o tamanho da fila de dados do teclado
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" -Name "KeyboardDataQueueSize" -Type DWord -Value 0x00000032 -Force
+
+    Write-Output "Tamanhos das filas de dados para mouse e teclado ajustados com sucesso."
 }
 
 
-Function DisableThreadedDPCs {
-	# https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-threaded-dpcs
-	# In most cases it is recommended to keep this turned on.
-   Write-Output "Optimize program response time to improve system response speed disabling threaded DPCs."
-   
-   Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" -Name "ThreadDpcEnable" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+
+function DisableThreadedDPCs {
+    <#
+    Desativa os DPCs em thread para potencialmente melhorar a resposta do sistema.
+    #>
+
+    Write-Output "Otimização do tempo de resposta do programa desativando DPCs em thread."
+
+    # Define o valor para desativar os DPCs em thread
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" -Name "ThreadDpcEnable" -Type DWord -Value 0x00000000 -Force
+
+    Write-Output "DPCs em thread desativados com sucesso."
 }
 
 
 
-Function SetPriorityControl {
-	
-	Write-Output "Optimize Win32PrioritySeparation value to make system smoother."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000024		  # Win11 Home 0x00000024		LTSC 0x00000026
 
+function SetPriorityControl {
+    <#
+    Otimiza o valor de Win32PrioritySeparation para melhorar a responsividade do sistema.
+    #>
+
+    Write-Output "Otimização do valor de Win32PrioritySeparation para um sistema mais suave."
+
+    # Ajusta o valor de Win32PrioritySeparation no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Type DWord -Value 0x00000024 -Force
+
+    Write-Output "Valor de Win32PrioritySeparation ajustado para 0x00000024."
+	
 	<#
 	https://www.youtube.com/watch?v=bqDMG1ZS-Yw
 
@@ -3256,26 +3701,43 @@ Function SetPriorityControl {
 
 
 
-Function SetAutoEndTasks {
-	
-	Write-Output "Automatically end unresponsive programs to avoid system crash."
-	
-	Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1"									  # Win11 Home NA		LTSC NA	 # Omen Gaming Hub
+function SetAutoEndTasks {
+    <#
+    Habilita a finalização automática de programas não responsivos para evitar travamentos do sistema.
+    #>
+
+    Write-Output "Habilitando a finalização automática de programas não responsivos."
+
+    # Define a propriedade AutoEndTasks no registro
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Type String -Value "1" -Force
+
+    Write-Output "Finalização automática de tarefas habilitada com sucesso."
 }
 
 
 
-Function SetBootOptimizeFunction {
-	
-	Write-Output "Disable Windows auto disk defragmetation and automatically optimize boot partition to make the bootup speed faster."
-	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""					  # Win11 Home NA		LTSC NA
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
-	}	
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value ""		  # Win11 Home NA		LTSC NA
+
+function SetBootOptimizeFunction {
+    <#
+    Desativa a desfragmentação automática de disco e habilita a otimização da partição de inicialização para melhorar a velocidade de inicialização.
+    #>
+
+    Write-Output "Desativando a desfragmentação automática e habilitando a otimização da partição de inicialização."
+
+    # Define o valor para desativar a desfragmentação automática
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value "" -Force
+
+    # Verifica se a chave WOW6432Node existe e cria se necessário
+    If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction")) {
+        New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
+    }
+
+    # Define o valor para desativar a desfragmentação automática na chave WOW6432Node
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value "" -Force
+
+    Write-Output "Desfragmentação automática desativada e otimização da partição de inicialização habilitada com sucesso."
 }
+
 
 
 
@@ -3284,262 +3746,419 @@ Function SetBootOptimizeFunction {
  ###					      ###
 
 
-Function SetInterruptModeration  {
-	 # Disabling (0) "Packet Coalescing" or "Interrupt Coalescing" or "Interrupt Moderation Rate" or "SetInterruptModeration".
-	
-	Write-Output "Setting Packet Coalescing / InterruptModeration to LOW."
-	
-	New-NetAdapterAdvancedProperty -Name Wi-Fi -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
-	New-NetAdapterAdvancedProperty -Name Ethernet -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+function SetInterruptModeration {
+    <#
+    Ajusta a modulação de interrupções para os adaptadores de rede Wi-Fi e Ethernet para otimizar a performance.
+    #>
 
-	Set-NetAdapterAdvancedProperty -Name Wi-Fi -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
-	Set-NetAdapterAdvancedProperty -Name Ethernet -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+    Write-Output "Configurando Packet Coalescing / Interrupt Moderation para LOW."
 
-	 # Restart-NetAdapter -Name Wi-Fi
-	 # Restart-NetAdapter -Name Ethernet
+    # Adiciona a propriedade de modulação de interrupções para Wi-Fi e Ethernet
+    New-NetAdapterAdvancedProperty -Name "Wi-Fi" -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+    New-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+
+    # Define a propriedade de modulação de interrupções para Wi-Fi e Ethernet
+    Set-NetAdapterAdvancedProperty -Name "Wi-Fi" -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+    Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*InterruptModeration" -RegistryValue 1 -ErrorAction Ignore
+
+    # Reinicia os adaptadores para aplicar as novas configurações (descomente se necessário)
+    # Restart-NetAdapter -Name "Wi-Fi" -Confirm:$false
+    # Restart-NetAdapter -Name "Ethernet" -Confirm:$false
+
+    Write-Output "Modulação de interrupções ajustada para ambos os adaptadores com sucesso."
 }
 
-Function DisableIPv6  {
- 
-   Write-Output "Disabling IPv6 protocol."
-   
-   Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Name "DisabledComponents" -Type DWord -Value 0x000000FF
 
+function DisableIPv6 {
+    <#
+    Desativa o protocolo IPv6 no sistema para evitar problemas de conectividade em redes que não utilizam IPv6.
+    #>
+
+    Write-Output "Desativando o protocolo IPv6."
+
+    # Define o valor para desativar o IPv6 no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Name "DisabledComponents" -Type DWord -Value 0x000000FF -Force
+
+    Write-Output "IPv6 desativado com sucesso."
 }
 
 
 
-Function SetIRPStackSize {
-	 # Improve network performance by improving how many buffers your computer can use simultaneously on your LAN. 
-	
-	Write-Output "Setting IRPStackSize."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "IRPStackSize" -Type DWord -Value 0x0000000c 	  # Win11 Home NA		LTSC NA
+
+function SetIRPStackSize {
+    <#
+    Ajusta o tamanho da pilha IRP para melhorar o desempenho da rede local (LAN).
+    #>
+
+    Write-Output "Configurando o tamanho da pilha IRP."
+
+    # Define o valor de IRPStackSize no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "IRPStackSize" -Type DWord -Value 0x0000000c -Force
+
+    Write-Output "Tamanho da pilha IRP configurado para 12 (0x0000000c) com sucesso."
 }
 
 
 
 function SettingTimeService {
-	
-	Write-Host "Setting BIOS time to UTC and fixing any inconsistency."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" -Name "RealTimeIsUniversal" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
+    <#
+    Configura o relógio da BIOS para UTC e ajusta o serviço de tempo do Windows.
+    #>
 
-	 # Secure Time Seeding – improving time keeping in Windows. This resolve a lot of problems with VM's & WSL time out of sync in some devices.
-	 # See more at http://byronwright.blogspot.com/2016/03/windows-10-time-synchronization-and.html
+    Write-Host "Configurando o tempo da BIOS para UTC e corrigindo inconsistências."
 
-	 # Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\w32time\SecureTimeLimits\RunTime" -Name "SecureTimeTickCount" -Type QWORD -Value 8735562		  # Win11 Home NA
+    # Define o relógio da BIOS como UTC
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" -Name "RealTimeIsUniversal" -Type DWord -Value 0x00000001 -Force
 
-	net stop w32time
+    # Reinicia o serviço de tempo do Windows
+    Write-Host "Reiniciando o serviço de tempo do Windows."
 
-	w32tm /unregister
-	w32tm /register
+    net stop w32time
+    w32tm /unregister
+    w32tm /register
+    net start w32time
 
-	net start w32time
-	w32tm /resync /nowait
+    # Sincroniza o tempo imediatamente
+    w32tm /resync /nowait
+
+    Write-Output "Configuração do serviço de tempo concluída com sucesso."
 }
 
 
 
-Function DisableWiFiSense {
-	
-	Write-Output "Disabling Wi-Fi Sense."
-	
-	$WifiSense1 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting"
-	$WifiSense2 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots"
-	$WifiSense3 = "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
-	If (!(Test-Path $WifiSense1)) {
-		New-Item $WifiSense1 -Force | Out-Null
-	}
-	Set-ItemProperty $WifiSense1  value -Type DWord -Value 0x00000000						  # Win11 Home NA		LTSC NA
-	
-	If (!(Test-Path $WifiSense2)) {
-		New-Item $WifiSense2 -Force | Out-Null
-	}
-	Set-ItemProperty $WifiSense2  value -Type DWord -Value 0x00000000						  # Win11 Home 1		LTSC 1
-	Set-ItemProperty $WifiSense3  AutoConnectAllowedOEM -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+function DisableWiFiSense {
+    <#
+    Desativa o recurso Wi-Fi Sense, que permite conexões automáticas a hotspots Wi-Fi.
+    #>
+
+    Write-Output "Desativando o Wi-Fi Sense."
+
+    # Definindo os caminhos das chaves de registro
+    $WifiSense1 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting"
+    $WifiSense2 = "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots"
+    $WifiSense3 = "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
+
+    # Criando e definindo a chave AllowWiFiHotSpotReporting
+    If (!(Test-Path $WifiSense1)) {
+        New-Item -Path $WifiSense1 -Force | Out-Null
+    }
+    Set-ItemProperty -Path $WifiSense1 -Name "value" -Type DWord -Value 0x00000000 -Force
+
+    # Criando e definindo a chave AllowAutoConnectToWiFiSenseHotspots
+    If (!(Test-Path $WifiSense2)) {
+        New-Item -Path $WifiSense2 -Force | Out-Null
+    }
+    Set-ItemProperty -Path $WifiSense2 -Name "value" -Type DWord -Value 0x00000000 -Force
+
+    # Definindo a opção de AutoConnectAllowedOEM
+    If (!(Test-Path $WifiSense3)) {
+        New-Item -Path $WifiSense3 -Force | Out-Null
+    }
+    Set-ItemProperty -Path $WifiSense3 -Name "AutoConnectAllowedOEM" -Type DWord -Value 0x00000000 -Force
+
+    Write-Output "Wi-Fi Sense desativado com sucesso."
 }
 
 
 
-Function DisableWFPlogs {
-	
-	Write-Output "Disabling WFP logs."
-	
-	 # https://social.technet.microsoft.com/Forums/en-US/7d0d2721-35ea-418e-9e7c-0bef1366a25f/wfpdiagetl-disk-usage-constantly-writing?forum=win10itprogeneral
-	 # wfpdiag.etl disk usage, constantly writing
-	
-	 # netsh wfp show options netevents
-	netsh wfp set options netevents=off		  # Win11 Home On
+
+function DisableWFPlogs {
+    <#
+    Desativa os logs do Windows Filtering Platform (WFP) para reduzir o uso de disco.
+    #>
+
+    Write-Output "Desativando os logs do WFP."
+
+    # Desativa a gravação de eventos de rede
+    netsh wfp set options netevents=off
+
+    Write-Output "Logs do WFP desativados com sucesso."
 }
 
 
 
-Function SetDefaultTTL {
-	Write-Output "Optimize default TTL to decrease bandwidth loss and increase available bandwidth."
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "DefaultTTL" -Type DWord -Value 0x00000040					  # Win11 Home NA		LTSC NA
-}
+function SetDefaultTTL {
+    <#
+    Ajusta o valor do Time To Live (TTL) padrão para otimizar o uso da largura de banda.
+    #>
 
+    Write-Output "Otimização do TTL padrão para diminuir a perda de largura de banda e aumentar a largura de banda disponível."
 
-Function SetFastForwarding {
-	Write-Output "Optimize network fast forwarding mechanism to get better internet speed."
+    # Define o valor do TTL padrão no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "DefaultTTL" -Type DWord -Value 0x00000040 -Force
 
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "SackOpts" -Type DWord -Value 0x00000001					  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TcpMaxDupAcks" -Type DWord -Value 0x00000002				  # Win11 Home NA		LTSC NA
-}
-
-
-Function SetMaxConnectionsPerServerIE {
-	Write-Output "Add more IE concurrent connections."
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a				  # Win11 Home 0x00000004		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a					  # Win11 Home 0x00000002		LTSC NA
-
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a	  # Win11 Home 0x00000004		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value 0x0000000a		  # Win11 Home 0x00000002		LTSC NA
-	
-	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
-	Set-ItemProperty -Path "HKU:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a							  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKU:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a							  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKU:\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a							  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKU:\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a							  # Win11 Home NA		LTSC NA
-
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x0000000a									  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value 0x0000000a									  # Win11 Home NA		LTSC NA
-}
-
-
-Function SetMaxConnectionsPerServer {
-	
-	Write-Output "Optimize Network Adapter performance to get better Internet speed."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x00000000							  # Win11 Home NA		LTSC NA
+    Write-Output "TTL padrão ajustado para 64 (0x00000040) com sucesso."
 }
 
 
 
-Function SetAutoDetectionMTUsize {
-	
-	Write-Output "Enable auto-detection of MTU size and black hole router detection to get better internet speed."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUDiscovery" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUBHDetect" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
+function SetFastForwarding {
+    <#
+    Otimiza o mecanismo de encaminhamento rápido de rede para melhorar a velocidade da Internet.
+    #>
+
+    Write-Output "Otimização do mecanismo de encaminhamento rápido de rede para melhorar a velocidade da Internet."
+
+    # Ativa o suporte a SACK (Selective Acknowledgments)
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "SackOpts" -Type DWord -Value 0x00000001 -Force
+    
+    # Define o número máximo de ACKs duplicados permitidos
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TcpMaxDupAcks" -Type DWord -Value 0x00000002 -Force
+
+    Write-Output "Configurações de encaminhamento rápido aplicadas com sucesso."
 }
 
 
 
-Function SetNameSrvQueryTimeout {
-	
-	Write-Output "Optimize network WINS name query time to enhance network data transmission capacity."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" -Name "NameSrvQueryTimeout" -Type DWord -Value 0x00000bb8			  # Win11 Home 0x000005dc (1500) 		LTSC 0x000005dc (1500)
+function SetMaxConnectionsPerServerIE {
+    <#
+    Aumenta o número máximo de conexões simultâneas permitidas por servidor no Internet Explorer.
+    #>
+
+    Write-Output "Aumentando as conexões simultâneas permitidas por servidor no Internet Explorer."
+
+    # Ajusta as configurações para o Internet Explorer
+    $value = 0x0000000a  # 10 conexões
+
+    # Configurações para HKLM
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value $value -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value $value -Force
+
+    # Configurações para HKLM WOW6432Node
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPER1_0SERVER" -Name "iexplore.exe" -Type DWord -Value $value -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_MAXCONNECTIONSPERSERVER" -Name "iexplore.exe" -Type DWord -Value $value -Force
+
+    # Cria um novo PSDrive para HKEY_USERS
+    New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+
+    # Configurações para HKU .DEFAULT e S-1-5-18
+    $userPaths = @(
+        "HKU:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Internet Settings",
+        "HKU:\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+    )
+
+    foreach ($path in $userPaths) {
+        Set-ItemProperty -Path $path -Name "MaxConnectionsPerServer" -Type DWord -Value $value -Force
+        Set-ItemProperty -Path $path -Name "MaxConnectionsPer1_0Server" -Type DWord -Value $value -Force
+    }
+
+    # Configurações para HKCU
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPerServer" -Type DWord -Value $value -Force
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name "MaxConnectionsPer1_0Server" -Type DWord -Value $value -Force
+
+    Write-Output "Conexões simultâneas configuradas com sucesso."
+}
+
+
+function SetMaxConnectionsPerServer {
+    <#
+    Ajusta o número máximo de conexões permitidas por servidor para otimizar o desempenho do adaptador de rede.
+    #>
+
+    Write-Output "Otimização do desempenho do adaptador de rede para melhorar a velocidade da Internet."
+
+    # Define o número máximo de conexões por servidor no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "MaxConnectionsPerServer" -Type DWord -Value 0x00000000 -Force
+
+    Write-Output "Número máximo de conexões por servidor configurado para ilimitado (0x00000000) com sucesso."
 }
 
 
 
-Function SetDnsCache {
-	
-	Write-Output "Optimize DNS to get better parsing speed."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheEntryTtlLimit" -Type DWord -Value 0x00002a30	  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheTtl" -Type DWord -Value 0x00002a30				  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxNegativeCacheTtl" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NegativeSOACacheTime" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NetFailureCacheTime" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+
+function SetAutoDetectionMTUsize {
+    <#
+    Habilita a detecção automática do tamanho MTU e a detecção de roteadores black hole para melhorar a velocidade da Internet.
+    #>
+
+    Write-Output "Habilitando a detecção automática do tamanho MTU e a detecção de roteadores black hole."
+
+    # Ativa a descoberta do tamanho máximo do pacote transmissível
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUDiscovery" -Type DWord -Value 0x00000001 -Force
+    
+    # Habilita a detecção de roteadores black hole
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUBHDetect" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "Detecção automática do MTU e detecção de roteadores black hole habilitadas com sucesso."
 }
 
 
 
-Function SetNoUpdateCheckonIE {
-	
-	Write-Output "Disable automatic updates on IE."
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001				  # Win11 Home NA
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001	  # Win11 Home NA
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001											  # Win11 Home NA
+
+function SetNameSrvQueryTimeout {
+    <#
+    Ajusta o tempo de consulta do nome WINS para otimizar a capacidade de transmissão de dados na rede.
+    #>
+
+    Write-Output "Otimização do tempo de consulta do nome WINS para melhorar a transmissão de dados na rede."
+
+    # Define o valor do tempo de consulta do nome no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" -Name "NameSrvQueryTimeout" -Type DWord -Value 0x00000bb8 -Force
+
+    Write-Output "Tempo de consulta do nome WINS ajustado para 3000 milissegundos (0x00000bb8) com sucesso."
 }
 
 
 
-Function SetTcp1323Opts {
-	
-	Write-Output "Enable auto-adjustment of transport unit buffer to shorten network response time."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "Tcp1323Opts" -Type DWord -Value 0x00000001							  # Win11 Home NA		LTSC NA
+function SetDnsCache {
+    <#
+    Otimiza as configurações de cache DNS para melhorar a velocidade de resolução de nomes.
+    #>
+
+    Write-Output "Otimização do cache DNS para melhorar a velocidade de resolução de nomes."
+
+    # Define o tempo máximo de cache DNS
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheEntryTtlLimit" -Type DWord -Value 0x00002a30 -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxCacheTtl" -Type DWord -Value 0x00002a30 -Force
+
+    # Define o tempo de cache para entradas negativas como zero
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "MaxNegativeCacheTtl" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NegativeSOACacheTime" -Type DWord -Value 0x00000000 -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" -Name "NetFailureCacheTime" -Type DWord -Value 0x00000000 -Force
+
+    Write-Output "Configurações de cache DNS aplicadas com sucesso."
 }
 
 
 
-Function SetMaxCmds {
-	
-	Write-Output "Optimize network parameter configuration to improve network performance and throughput."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCmds" -Type DWord -Value 0x0000001e					  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxThreads" -Type DWord -Value 0x0000001e				  # Win11 Home NA		LTSC NA
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCollectionCount" -Type DWord -Value 0x00000020		  # Win11 Home NA		LTSC NA
+
+function SetNoUpdateCheckonIE {
+    <#
+    Desativa as atualizações automáticas no Internet Explorer.
+    #>
+
+    Write-Output "Desativando atualizações automáticas no Internet Explorer."
+
+    # Verifica e cria a chave de registro para HKLM (64 bits)
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001 -Force
+
+    # Verifica e cria a chave de registro para HKLM WOW6432Node (32 bits)
+    If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions")) {
+        New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001 -Force
+
+    # Desativa atualizações para o usuário atual
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "NoUpdateCheck" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "Atualizações automáticas no Internet Explorer desativadas com sucesso."
 }
 
 
 
-Function SetNoNetCrawling {
-	
-	Write-Output "Optimize LAN connection."
-	
-	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "NoNetCrawling" -Type DWord -Value 0x00000001		  # Win11 Home NA		LTSC NA
+
+function SetTcp1323Opts {
+    <#
+    Habilita o autoajuste do buffer de unidade de transporte para melhorar o tempo de resposta da rede.
+    #>
+
+    Write-Output "Habilitando o ajuste automático das opções TCP 1323."
+
+    # Define a opção Tcp1323Opts no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "Tcp1323Opts" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "Opções TCP 1323 habilitadas com sucesso."
 }
 
 
 
-Function SetGlobalMaxTcpWindowSize {
-	
-	Write-Output "Speed up the broadband network."
-	
-	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "GlobalMaxTcpWindowSize" -Type DWord -Value 0x00007fff		  # Win11 Home NA		LTSC NA
+function SetMaxCmds {
+    <#
+    Otimiza as configurações do Lanman Workstation para melhorar o desempenho e a capacidade de resposta da rede.
+    #>
+
+    Write-Output "Otimização das configurações do Lanman Workstation para melhorar o desempenho da rede."
+
+    # Define o número máximo de comandos
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCmds" -Type DWord -Value 0x0000001e -Force
+    
+    # Define o número máximo de threads
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxThreads" -Type DWord -Value 0x0000001e -Force
+    
+    # Define o número máximo de coleções
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "MaxCollectionCount" -Type DWord -Value 0x00000020 -Force
+
+    Write-Output "Configurações do Lanman Workstation ajustadas com sucesso."
 }
 
 
 
-Function SetOptimizeNetwrok {
+function SetNoNetCrawling {
+    <#
+    Desativa a indexação de rede para otimizar as conexões LAN.
+    #>
 
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000				  # Win11 Home NA		LTSC NA
+    Write-Output "Desativando a indexação de rede para otimizar a conexão LAN."
 
-	If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched")) {
-		New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000	  # Win11 Home NA		LTSC NA
+    # Define a propriedade NoNetCrawling no registro
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "NoNetCrawling" -Type DWord -Value 0x00000001 -Force
 
-
-	 # Disable throttling mechanism to control network performance
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0xffffffff		  # Win11 Home 0x0000000a (10)	LTSC 0x0000000a (10)
-		
-
-	 # Disable Nagle’s Algorithm
-	Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" | ForEach-Object {
-		if(Get-ItemProperty -Path $_.PsPath -Name "DhcpServer" -ErrorAction SilentlyContinue )	 {
-			Set-ItemProperty -Path $_.PsPath -Name "TcpNoDelay" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue												  # Win11 Home NA	LTSC NA
-			Set-ItemProperty -Path $_.PsPath -Name "TcpAckFrequency" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue											  # Win11 Home NA	LTSC NA
-			Set-ItemProperty -Path $_.PsPath -Name "TcpDelAckTicks" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue											  # Win11 Home NA	LTSC NA
-		}	
-	}
-
-	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters")) {
-		New-Item -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Name "TCPNoDelay" -Type DWord -Value 0x00000001	  # Win11 Home NA		LTSC NA
-
+    Write-Output "Indexação de rede desativada com sucesso."
 }
+
+
+
+
+function SetGlobalMaxTcpWindowSize {
+    <#
+    Ajusta o tamanho da janela TCP global para otimizar o desempenho da rede de banda larga.
+    #>
+
+    Write-Output "Otimização do tamanho da janela TCP global para melhorar a velocidade da rede."
+
+    # Define o tamanho máximo da janela TCP global no registro
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "GlobalMaxTcpWindowSize" -Type DWord -Value 0x00007fff -Force
+
+    Write-Output "Tamanho da janela TCP global ajustado para 32767 (0x00007fff) com sucesso."
+}
+
+
+
+function SetOptimizeNetwrok {
+    <#
+    Otimiza as configurações de rede para melhorar o desempenho e a capacidade de resposta.
+    #>
+
+    Write-Output "Otimização das configurações de rede."
+
+    # Verifica e cria a chave para HKLM (64 bits)
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000 -Force
+
+    # Verifica e cria a chave para HKLM WOW6432Node (32 bits)
+    If (!(Test-Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched")) {
+        New-Item -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Psched" -Name "NonBestEffortLimit" -Type DWord -Value 0x00000000 -Force
+
+    # Desativa o mecanismo de limitação da rede
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type DWord -Value 0xffffffff -Force
+
+    # Desativa o Algoritmo de Nagle
+    Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" | ForEach-Object {
+        if (Get-ItemProperty -Path $_.PsPath -Name "DhcpServer" -ErrorAction SilentlyContinue) {
+            Set-ItemProperty -Path $_.PsPath -Name "TcpNoDelay" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $_.PsPath -Name "TcpAckFrequency" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $_.PsPath -Name "TcpDelAckTicks" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    # Verifica e cria a chave para MSMQ
+    If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters")) {
+        New-Item -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Force | Out-Null
+    }
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Name "TCPNoDelay" -Type DWord -Value 0x00000001 -Force
+
+    Write-Output "Configurações de rede otimizadas com sucesso."
+}
+
+
 
 
 
@@ -3549,14 +4168,22 @@ Function SetOptimizeNetwrok {
 
 
 
-Function DisableEventTracker {
-	
-	Write-Output "Disabling Shutdown Event Tracker."
-	
-	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability")) {
-		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Force | Out-Null
-	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0x00000000		  # Win11 Home NA		LTSC NA
+function DisableEventTracker {
+    <#
+    Desativa o rastreador de eventos de desligamento no Windows.
+    #>
+
+    Write-Output "Desativando o Shutdown Event Tracker."
+
+    # Verifica e cria a chave de registro para Reliability
+    If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Force | Out-Null
+    }
+    
+    # Define a propriedade ShutdownReasonOn para desativar o rastreador de eventos
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0x00000000 -Force
+
+    Write-Output "Shutdown Event Tracker desativado com sucesso."
 }
 
 
@@ -3570,86 +4197,86 @@ Function DisableEventTracker {
 
 
 
-Function RemovingFax {
-	
-	Write-Output "Removing Default Fax Printer."
-	
-	 # Get-Printer
-	 # Remove-Printer -Name "Microsoft Print to PDF" -ErrorAction SilentlyContinue
-	Remove-Printer -Name "Fax" -ErrorAction SilentlyContinue
-	Remove-Printer -Name "OneNote (Desktop)" -ErrorAction SilentlyContinue
+function RemovingFax {
+    <#
+    Remove impressoras específicas do sistema, incluindo a impressora de fax padrão e a do OneNote.
+    #>
+
+    Write-Output "Removendo a impressora de fax padrão e a impressora do OneNote."
+
+    # Remove a impressora de fax, caso exista
+    Remove-Printer -Name "Fax" -ErrorAction SilentlyContinue
+
+    # Remove a impressora do OneNote, caso exista
+    Remove-Printer -Name "OneNote (Desktop)" -ErrorAction SilentlyContinue
+
+    Write-Output "Impressoras removidas com sucesso."
 }
 
 
 
-Function RemoveFeaturesKeys {
 
-	 # These are the registry keys that it will delete.
-	
-	$Keys = @(
-		 # Remove Background Tasks
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
-		 # "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy"
+function RemoveFeaturesKeys {
+    <#
+    Remove uma lista específica de chaves de registro associadas a aplicativos e funcionalidades do Windows.
+    #>
 
-		 # Windows File
-		"HKCR:\Extensions\ContractId\Windows.File\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+    Write-Output "Iniciando a remoção de chaves de registro específicas."
 
+    # Lista de chaves de registro para remover
+    $Keys = @(
+        # Remove Background Tasks
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.BackgroundTasks\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy",
 
-		 # Registry keys to delete if they aren't uninstalled by RemoveAppXPackage/RemoveAppXProvisionedPackage
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		 # "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy"
+        # Windows File
+        "HKCR:\Extensions\ContractId\Windows.File\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0",
 
-		 # Scheduled Tasks to delete
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6"
-		"HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6"
+        # Registry keys to delete if they aren't uninstalled by RemoveAppXPackage/RemoveAppXProvisionedPackage
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\46928bounde.EclipseManager_2.2.4.51_neutral__a5h4egax66k6y",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Launch\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy",
 
-		 # Windows Protocol Keys
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-		 # "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.15063.0_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.19041.1_neutral_neutral_cw5n1h2txyewy"
-		 # "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.PPIProjection_10.0.22621.1_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy"
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy" 
-		"HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy" 
+        # Scheduled Tasks to delete
+        "HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\Microsoft.MicrosoftOfficeHub_17.7909.7600.0_x64__8wekyb3d8bbwe",
+        "HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.3.0_x64__v10z8vjag6ke6",
+        "HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2305.4.0_x64__v10z8vjag6ke6",
+        "HKCR:\Extensions\ContractId\Windows.PreInstalledConfigTask\PackageId\AD2F1837.OMENCommandCenter_1101.2307.1.0_x64__v10z8vjag6ke6",
 
-		 # Windows Share Target
-		"HKCR:\Extensions\ContractId\Windows.ShareTarget\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
-	)
+        # Windows Protocol Keys
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0",
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.15063.0.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.16299.15.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.19041.1023.0_neutral_neutral_cw5n1h2txyewy",
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.22621.1.0_neutral_neutral_cw5n1h2txyewy", 
+        "HKCR:\Extensions\ContractId\Windows.Protocol\PackageId\Microsoft.XboxGameCallableUI_1000.25128.1000.0_neutral_neutral_cw5n1h2txyewy", 
 
+        # Windows Share Target
+        "HKCR:\Extensions\ContractId\Windows.ShareTarget\PackageId\ActiproSoftwareLLC.562882FEEB491_2.6.18.18_neutral__24pqs290vpjk0"
+    )
 
-	 # This writes the output of each key it is removing and also removes the keys listed above.
-    If (!(Test-Path "HKCR:")) {
-		New-PSDrive -Name "HKCR" -PSProvider "Registry" -Root "HKEY_CLASSES_ROOT" | Out-Null
-	}
-	ForEach ($Key in $Keys) {
-		Write-Output "Removing $Key from registry"
-		Remove-Item -Path $Key -Force -Recurse -ErrorAction SilentlyContinue
-	}
+    # Remover cada chave de registro da lista
+    ForEach ($Key in $Keys) {
+        Write-Output "Removendo $Key do registro."
+        Remove-Item -Path $Key -Force -Recurse -ErrorAction SilentlyContinue
+    }
+
+    Write-Output "Remoção das chaves de registro concluída."
 }
+
 
 
 <#

@@ -1,6 +1,7 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.10
+# Version : 0.1.2
+# Date: 2022-01-10
 # Source: https://github.com/hermannheringer/
 
 
@@ -30,7 +31,7 @@ InstallWinget
 
 
 ###  Debloat  ###
-!DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
+DebloatBlacklist                    #Get rid of nonsense apps that come with the OS.
 !AvoidDebloatReturn                  #Adding Registry keys to prevent bloatware apps from returning and removes some suggestions settings.
 !SetMixedReality                     #Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings.
 
@@ -43,15 +44,14 @@ DisableServices                     #Stopping and disabling unnecessary services
 
 
 ###  Optional Features  ###
-!AllowMiracast                       #Allow Projection To PC Miracast feature.
 HideNewOutlookToggle                #Hides the New Outlook Toggle.
 
 
 ###  Performance Game / GPU Related  ###
-!RemoveXboxFeatures                  #Disabling Xbox features.
+RemoveXboxFeatures                  #Disabling Xbox features.
 EnableGPUScheduling                 #Turn On Hardware Accelerated GPU Scheduling.
-!EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
-!EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge Canary.
+EnableVRR_AutoHDR                   #Turn On Variable Refresh Rate - Auto HDR - Optimizations for Windowed Games.
+EnableEdge_GPU                      #Turn On Hardware Accelerated GPU on Microsoft Edge.
 
 
 
@@ -112,7 +112,7 @@ SomeKernelTweaks                    #Applying some tweaks chosen by the author a
 MisconceptionHPET                   #Reverting this misconception about HPET-TSC-PMT to system default values.
 SetPowerManagment                   #Platform-customized power management optimization scheme.
 !revertPowerManagment               #Revert power management customizations.
-
+DisableRecall                       #Disable the Windows Recall feature.
 
 
 ###  Security  ###
@@ -142,7 +142,7 @@ SetMaxCachedIcons                   #Increase the system image buffer to display
 
 
 ###  File System Optimizations  ###
-!DisableUnusedDiskControllerDrivers  #Disable legacy IDE unused disk controller drivers.
+DisableUnusedDiskControllerDriver   #Disable legacy IDE unused disk controller drivers.
 SetNoLowDiskSpaceChecks             #Improve hard disk performance to enhance disk read/write capacity.
 DisableStorageSense                 #Disabling Storage Sense.
 SetNtfsDisable8dot3NameCreation     #Disable short file names feature.
@@ -172,13 +172,13 @@ DisableWFPlogs                      #Disable WFP logs.
 !SetMaxConnectionsPerServer          #Optimize Network Adapter performance to get better Internet speed.
 SetAutoDetectionMTUsize             #Enable auto-detection of MTU size and black hole router detection to get better internet speed.
 SetNameSrvQueryTimeout              #Optimize network WINS name query time to enhance network data transmission capacity.
-!SetDnsCache                         #Optimize DNS to get better parsing speed.
+SetDnsCache                         #Optimize DNS to get better parsing speed.
 !SetNoUpdateCheckonIE                #Disable automatic updates on IE.
 !SetTcp1323Opts                      #Enable auto-adjustment of transport unit buffer to shorten network response time.
 !SetMaxCmds                          #Optimize network parameter configuration to improve network performance and throughput.
 !SetNoNetCrawling                    #Optimize LAN connection.
 !SetGlobalMaxTcpWindowSize           #Speed up the broadband network.
-!SetOptimizeNetwrok                  #Disable Nagle’s Algorithm and throttling mechanism to control network performance.
+SetOptimizeNetwrok                  #Disable Nagle’s Algorithm and throttling mechanism to control network performance.
 
 
 
