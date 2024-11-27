@@ -1,8 +1,8 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.4.0
-Date: 2024-10-16
+Version : 0.4.1
+Date: 2024-11-27
 License: MIT
 Source: https://github.com/hermannheringer/
 #>
@@ -325,7 +325,7 @@ Function DebloatBlacklist {
     # Remover cada capacidade listada
     foreach ($capabilityName in $Capabilities) {
         try {
-            Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction Stop
+            Get-WindowsCapability -Online | Where-Object {$_.Name -like "*$capabilityName*"} | Remove-WindowsCapability -ErrorAction SilentlyContinue
             Write-Host "Capacidade ${capabilityName} removida com sucesso."
         } catch {
             Write-Host "Ocorreu um erro ao tentar remover a capacidade ${capabilityName}: $_"
@@ -445,7 +445,7 @@ function DisableWAPPush {
     if ($service) {
         try {
             # Define o serviço para inicialização manual
-            Set-Service "dmwappushservice" -StartupType Manual -ErrorAction Stop
+            Set-Service "dmwappushservice" -StartupType Manual -ErrorAction SilentlyContinue
             Write-Host "Serviço 'dmwappushservice' configurado para inicialização manual."
         } catch {
             Write-Host "Ocorreu um erro ao configurar o serviço: $_"
@@ -473,7 +473,7 @@ function DisableServices {
 
         if ($service) {
             try {
-                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction SilentlyContinue
                 Write-Output "$displayName desativado com sucesso."
             } catch {
                 Write-Output "Erro ao desativar ${displayName}: $_"
@@ -629,7 +629,7 @@ function RemoveXboxFeatures {
         if ($service) {
             try {
                 Stop-Service -Name $serviceName -ErrorAction SilentlyContinue
-                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+                Set-Service -Name $serviceName -StartupType Disabled -ErrorAction SilentlyContinue
                 Write-Output "$displayName desativado com sucesso."
             } catch {
                 Write-Output "Erro ao desativar {$displayName}: $_"
@@ -742,7 +742,7 @@ function EnableVRR_AutoHDR {
         )
 
         try {
-            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction SilentlyContinue
             Write-Host "$displayName configurado com sucesso."
         } catch {
             Write-Host "Erro ao configurar {$displayName}: $_"
@@ -789,7 +789,7 @@ function EnableEdge_GPU {
         )
 
         try {
-            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction SilentlyContinue
             Write-Host "$displayName configurado com sucesso."
         } catch {
             Write-Host "Erro ao configurar {$displayName}: $_"
@@ -831,7 +831,7 @@ function RemoveAutoLogger {
     # Remover o arquivo de log se existir
     try {
         if (Test-Path $autoLoggerFile) {
-            Remove-Item $autoLoggerFile -Force -ErrorAction Stop
+            Remove-Item $autoLoggerFile -Force -ErrorAction SilentlyContinue
             Write-Host "Arquivo de log removido com sucesso."
         } else {
             Write-Host "Arquivo de log não encontrado."
@@ -871,7 +871,7 @@ function DisableDataCollection {
         )
 
         try {
-            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction Stop
+            Set-ItemProperty -Path $path -Name $name -Value $value -ErrorAction SilentlyContinue
             Write-Host "$displayName configurado para $value com sucesso."
         } catch {
             Write-Host "Erro ao configurar {$displayName}: $_"
@@ -913,7 +913,7 @@ function DisableDiagTrack {
 
         try {
             # Tente parar o serviço
-            Stop-Service -Name $serviceName -ErrorAction Stop
+            Stop-Service -Name $serviceName -ErrorAction SilentlyContinue
             Write-Host "Serviço $displayName parado com sucesso."
         } catch {
             Write-Host "Erro ao parar o serviço {$displayName}: $_"
@@ -921,7 +921,7 @@ function DisableDiagTrack {
 
         try {
             # Tente desativar o serviço
-            Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+            Set-Service -Name $serviceName -StartupType Disabled -ErrorAction SilentlyContinue
             Write-Host "Serviço $displayName desativado com sucesso."
         } catch {
             Write-Host "Erro ao desativar o serviço {$displayName}: $_"
@@ -956,7 +956,7 @@ function DisableStartupEventTraceSession {
         )
 
         try {
-            Set-ItemProperty -Path $path -Name $name -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+            Set-ItemProperty -Path $path -Name $name -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
             Write-Host "Sessão $displayName desativada com sucesso."
         } catch {
             Write-Host "Erro ao desativar a sessão {$displayName}: $_"
@@ -1039,7 +1039,7 @@ function DisableKernelDebugTracing {
     try {
         # Clean up kernel debug traces
         $backupPath = "C:\Windows\System32\LogFiles\WMI\RtBackup\*.*"
-        Remove-Item -Path $backupPath -Force -ErrorAction Stop
+        Remove-Item -Path $backupPath -Force -ErrorAction SilentlyContinue
         Write-Host "Kernel debug traces cleaned up successfully."
     } catch {
         Write-Host "Failed to clean kernel debug traces: $_" -ForegroundColor Red
@@ -1053,7 +1053,7 @@ function DisableDriverLogging {
 
     try {
         # Disable driver logging by setting TrackLockedPages to 0
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "TrackLockedPages" -Value 0 -Type DWord -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "TrackLockedPages" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
         Write-Host "Driver logging has been disabled successfully."
     } catch {
         Write-Host "Failed to disable driver logging: $_" -ForegroundColor Red
@@ -1067,8 +1067,8 @@ function DisableRemoteAssistance {
 
     try {
         # Disable Remote Assistance features
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowFullControl" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         
         Write-Host "Remote Assistance has been disabled successfully."
     } catch {
@@ -1088,7 +1088,7 @@ function DisableRDP {
 
     try {
         # Disable RDP connections by setting fDenyTSConnections to 1
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue
         Write-Host "Remote Desktop connections have been disabled."
     } catch {
         Write-Host "Failed to disable Remote Desktop connections: $_" -ForegroundColor Red
@@ -1096,7 +1096,7 @@ function DisableRDP {
 
     try {
         # Disable firewall rules related to Remote Desktop
-        Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction Stop
+        Disable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue
         Write-Host "Remote Desktop firewall rules have been disabled."
     } catch {
         Write-Host "Failed to disable Remote Desktop firewall rules: $_" -ForegroundColor Red
@@ -1107,7 +1107,7 @@ function DisableRDP {
     try {
         # Stop and disable the Remote Desktop service (TermService)
         Stop-Service "TermService" -ErrorAction SilentlyContinue
-        Set-Service "TermService" -StartupType Disabled -ErrorAction Stop
+        Set-Service "TermService" -StartupType Disabled -ErrorAction SilentlyContinue
         Write-Host "Remote Desktop Services have been disabled."
     } catch {
         Write-Host "Failed to disable Remote Desktop Services: $_" -ForegroundColor Red
@@ -1121,7 +1121,7 @@ function AcceptedPrivacyPolicy {
 
     try {
         # Disable AcceptedPrivacyPolicy by setting it to 0
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         Write-Host "AcceptedPrivacyPolicy has been turned off successfully."
     } catch {
         Write-Host "Failed to turn off AcceptedPrivacyPolicy: $_" -ForegroundColor Red
@@ -1140,9 +1140,9 @@ function DisableActivityHistory {
         }
 
         # Disable activity feed, user activity publishing, and uploading
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         Write-Host "Activity history settings disabled successfully."
     } catch {
         Write-Host "Failed to disable activity history settings: $_" -ForegroundColor Red
@@ -1150,7 +1150,7 @@ function DisableActivityHistory {
 
     try {
         # Disable local device search history
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" -Name "IsDeviceSearchHistoryEnabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         Write-Host "Device search history disabled successfully."
     } catch {
         Write-Host "Failed to disable device search history: $_" -ForegroundColor Red
@@ -1159,7 +1159,7 @@ function DisableActivityHistory {
     Write-Host "Disabling Shared Experiences."
     try {
         # Disable Shared Experiences
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableCdp" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         Write-Host "Shared Experiences disabled successfully."
     } catch {
         Write-Host "Failed to disable Shared Experiences: $_" -ForegroundColor Red
@@ -1178,7 +1178,7 @@ function DisableAdvertisingID {
         }
 
         # Set the Advertising ID to be disabled by group policy
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001 -Force -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 0x00000001 -Force -ErrorAction SilentlyContinue
         Write-Host "Advertising ID has been disabled successfully."
     } catch {
         Write-Host "Failed to disable Advertising ID: $_" -ForegroundColor Red
@@ -1198,7 +1198,7 @@ function DisableAdvertisingInfo {
         }
 
         # Disable the Advertising Info feature
-        Set-ItemProperty -Path $Advertising -Name "Enabled" -Type DWord -Value 0x00000000 -Force -ErrorAction Stop
+        Set-ItemProperty -Path $Advertising -Name "Enabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
         Write-Host "Advertising Info has been disabled successfully."
     } catch {
         Write-Host "Failed to disable Advertising Info: $_" -ForegroundColor Red
@@ -1218,7 +1218,7 @@ function DisableAppDiagnostics {
         }
 
         # Set the Value to "Deny" to disable app diagnostics
-        Set-ItemProperty -Path $AppDiagnosticsPath -Name "Value" -Type String -Value "Deny" -Force -ErrorAction Stop
+        Set-ItemProperty -Path $AppDiagnosticsPath -Name "Value" -Type String -Value "Deny" -Force -ErrorAction SilentlyContinue
         Write-Host "App Diagnostics has been disabled successfully."
     } catch {
         Write-Host "Failed to disable App Diagnostics: $_" -ForegroundColor Red
@@ -1239,7 +1239,7 @@ Function DisableCEIP {
     # CEIP for Application Virtualization (App-V) - WOW6432Node
     $SQMClient1 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
     If (Test-Path $SQMClient1) {
-        Set-ItemProperty -Path $SQMClient1 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Set-ItemProperty -Path $SQMClient1 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
         Write-Host "CEIP disabled for SQMClient (WOW6432Node)."
     }
 
@@ -1248,20 +1248,20 @@ Function DisableCEIP {
     If (!(Test-Path $SQMClient2)) {
         New-Item -Path $SQMClient2 -Force | Out-Null
     }
-    Set-ItemProperty -Path $SQMClient2 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Set-ItemProperty -Path $SQMClient2 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
     Write-Host "CEIP disabled for Windows policies."
 
     # CEIP for Microsoft SQMClient
     $SQMClient3 = "HKLM:\Software\Microsoft\SQMClient\Windows"
     If (Test-Path $SQMClient3) {
-        Set-ItemProperty -Path $SQMClient3 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Set-ItemProperty -Path $SQMClient3 -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
         Write-Host "CEIP disabled for SQMClient."
     }
 
     # CEIP for Microsoft SQMClient - Unattend Settings
     $SQMClient4 = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\SQMClient"
     If (Test-Path $SQMClient4) {
-        Set-ItemProperty -Path $SQMClient4 -Name "CEIPEnabled" -Type DWord -Value 0x00000000 -ErrorAction Stop
+        Set-ItemProperty -Path $SQMClient4 -Name "CEIPEnabled" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
         Write-Host "CEIP disabled for unattend settings."
     }
 
@@ -1270,7 +1270,7 @@ Function DisableCEIP {
     If (!(Test-Path $AppVCEIP)) {
         New-Item -Path $AppVCEIP -Force | Out-Null
     }
-    Set-ItemProperty -Path $AppVCEIP -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Set-ItemProperty -Path $AppVCEIP -Name "CEIPEnable" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
     Write-Host "CEIP disabled for App-V."
 
     # CEIP for Internet Explorer
@@ -1278,7 +1278,7 @@ Function DisableCEIP {
     If (!(Test-Path $IECEIP)) {
         New-Item -Path $IECEIP -Force | Out-Null
     }
-    Set-ItemProperty -Path $IECEIP -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000 -ErrorAction Stop
+    Set-ItemProperty -Path $IECEIP -Name "DisableCustomerImprovementProgram" -Type DWord -Value 0x00000000 -ErrorAction SilentlyContinue
     Write-Host "CEIP disabled for Internet Explorer."
 
     # Optional: Remove Microsoft Messenger CEIP, although it's outdated
@@ -1286,7 +1286,7 @@ Function DisableCEIP {
     If (!(Test-Path $MessengerCEIP)) {
         New-Item -Path $MessengerCEIP -Force | Out-Null
     }
-    Set-ItemProperty -Path $MessengerCEIP -Name "CEIP" -Type DWord -Value 0x00000002 -ErrorAction Stop
+    Set-ItemProperty -Path $MessengerCEIP -Name "CEIP" -Type DWord -Value 0x00000002 -ErrorAction SilentlyContinue
     Write-Host "CEIP disabled for Microsoft Messenger (deprecated)."
 }
 
@@ -1499,108 +1499,159 @@ Function DisableTailoredExperiences {
 
 																							
 
-
 function BlockTelemetrybyHosts {
     
-    Write-Output "Bloqueando telemetria e rastreamento ao adicionar entradas ao arquivo hosts."
+    Write-Output "Blocking telemetry and tracking by adding entries to the hosts file."
 
-    # Caminho do arquivo hosts
+    # Path to hosts file
     $hostsPath = "$Env:windir\System32\drivers\etc\hosts"
     
-    # Caminho do backup
+    # Backup path
     $backupPath = "$Env:windir\System32\drivers\etc\hosts.bak"
     
-    # Criar um backup do arquivo hosts, se ainda não existir
+    # Create a backup if it doesn't already exist
     If (!(Test-Path $backupPath)) {
         Copy-Item -Path $hostsPath -Destination $backupPath -Force
-        Write-Host "Backup do arquivo hosts criado em $backupPath."
+        Write-Host "Backup of hosts file created at $backupPath."
     }
 
-    # Lista de domínios para bloquear
-    $TelemetrybyHosts = @'
-# Bloqueio de Telemetria
-127.0.0.1    data.microsoft.com
-127.0.0.1    us-mobile.events.data.microsoft.com
-127.0.0.1    uk-mobile.events.data.microsoft.com
-127.0.0.1    eu-mobile.events.data.microsoft.com
-127.0.0.1    jp-mobile.events.data.microsoft.com
-127.0.0.1    settings-win.data.microsoft.com
-127.0.0.1    msftconnecttest.com
-127.0.0.1    msftncsi.com
-127.0.0.1    v10.vortex-win.data.microsoft.com
-127.0.0.1    v20.vortex-win.data.microsoft.com
-127.0.0.1    v10.vortex.data.microsoft.com
-127.0.0.1    v20.vortex.data.microsoft.com
-127.0.0.1    telemetry.microsoft.com
-127.0.0.1    watson.microsoft.com
-127.0.0.1    oca.microsoft.com
-127.0.0.1    vortex.data.microsoft.com
-127.0.0.1    vortex-win.data.microsoft.com
+    # List of domains to block
+    $TelemetryDomains = @"
+# Microsoft Telemetry and Ads
 127.0.0.1    activity.windows.com
+127.0.0.1    ads.msn.com
+127.0.0.1    analytics.microsoft.com
+127.0.0.1    browser.events.data.msn.com
+127.0.0.1    checkappexec.microsoft.com
+127.0.0.1    data.microsoft.com
+127.0.0.1    diagnostics.support.microsoft.com
+127.0.0.1    edge.microsoft.com
+127.0.0.1    eu-mobile.events.data.microsoft.com
 127.0.0.1    feedback.windows.com
 127.0.0.1    i1.services.social.microsoft.com
-127.0.0.1    i1.services.social.microsoft.com.nsatc.net
-127.0.0.1    diagnostics.support.microsoft.com
-127.0.0.1    corp.sts.microsoft.com
-127.0.0.1    statsfe2.update.microsoft.com.akadns.net
-127.0.0.1    corpext.msitadfs.glbdns2.microsoft.com
-127.0.0.1    compatexchange.cloudapp.net
-127.0.0.1    assets.msn.com
-127.0.0.1    c.msn.com
-127.0.0.1    diagnostics.support.microsoft.com
-127.0.0.1    a.ads1.msn.com
-127.0.0.1    a.ads2.msn.com
-127.0.0.1    a.rad.msn.com
-127.0.0.1    ads.msn.com
-127.0.0.1    ads1.msads.net
-127.0.0.1    ads1.msn.com
-127.0.0.1    ads2.msads.net
-127.0.0.1    ads2.msn.com
-127.0.0.1    ad.doubleclick.net
-127.0.0.1    adnexus.net
-127.0.0.1    analytics.live.com
-127.0.0.1    analytics.microsoft.com
-127.0.0.1    bn1.telemetry.microsoft.com
-127.0.0.1    bn1.telemetry.microsoft.com.nsatc.net
-127.0.0.1    bs.serving-sys.com
-127.0.0.1    cdn.content.prod.cms.msn.com
-127.0.0.1    choice.microsoft.com
-127.0.0.1    choice.microsoft.com.nsatc.net
-127.0.0.1    db3aqu.atdmt.com
-127.0.0.1    df.telemetry.microsoft.com
-127.0.0.1    ds.serving-sys.com
-127.0.0.1    feedback.search.microsoft.com
-127.0.0.1    flex.msn.com
-127.0.0.1    msnportal.112.2o7.net
-127.0.0.1    oca.telemetry.microsoft.com
-127.0.0.1    pre.footprintpredict.com
-127.0.0.1    preview.msn.com
-127.0.0.1    rad.msn.com
-127.0.0.1    redir.metaservices.microsoft.com
-127.0.0.1    reports.wes.df.telemetry.microsoft.com
-127.0.0.1    services.wes.df.telemetry.microsoft.com
-127.0.0.1    settings-sandbox.data.microsoft.com
-127.0.0.1    ssw.live.com
-127.0.0.1    survey.watson.microsoft.com
-127.0.0.1    telecommand.telemetry.microsoft.com
-127.0.0.1    telecommand.telemetry.microsoft.com.nsatc.net
-127.0.0.1    telemetry.appex.bing.net
+127.0.0.1    jp-mobile.events.data.microsoft.com
+127.0.0.1    msftconnecttest.com
+127.0.0.1    msftncsi.com
+127.0.0.1    oca.microsoft.com
+127.0.0.1    sb.scorecardresearch.com
+127.0.0.1    scorecardresearch.com
+127.0.0.1    settings-win.data.microsoft.com
 127.0.0.1    telemetry.microsoft.com
 127.0.0.1    telemetry.urs.microsoft.com
-127.0.0.1    vortex-sandbox.data.microsoft.com
-127.0.0.1    watson.live.com
+127.0.0.1    uk-mobile.events.data.microsoft.com
+127.0.0.1    us-mobile.events.data.microsoft.com
+127.0.0.1    v10.vortex.data.microsoft.com
+127.0.0.1    v10.vortex-win.data.microsoft.com
+127.0.0.1    v20.vortex.data.microsoft.com
+127.0.0.1    v20.vortex-win.data.microsoft.com
+127.0.0.1    vortex.data.microsoft.com
+127.0.0.1    vortex-win.data.microsoft.com
 127.0.0.1    watson.microsoft.com
-127.0.0.1    wes.df.telemetry.microsoft.com
-127.0.0.1    www.msftncsi.com
-127.0.0.1    browser.events.data.msn.com
-127.0.0.1    edge.microsoft.com
-127.0.0.1    scorecardresearch.com
-127.0.0.1    sb.scorecardresearch.com
-'@
 
-    # Append as new lines no arquivo hosts existente
-    Add-Content -Path $hostsPath -Value $TelemetrybyHosts
-    Write-Host "Os domínios de telemetria foram bloqueados ao serem adicionados ao arquivo hosts."
+# Apple Telemetry
+127.0.0.1    analytics.apple.com
+127.0.0.1    api-glb-crashlytics.itunes.apple.com
+127.0.0.1    config.push.apple.com
+127.0.0.1    e.crashlytics.com
+127.0.0.1    events.apple.com
+127.0.0.1    experience.apple.com
+127.0.0.1    gateway.push.apple.com
+127.0.0.1    gsp10-ssl.ls.apple.com
+127.0.0.1    gsp11-ssl.ls.apple.com
+127.0.0.1    icloud-content.com
+127.0.0.1    init-p01md.apple.com
+127.0.0.1    metrics.apple.com
+127.0.0.1    radarsubmissions.apple.com
+127.0.0.1    sp.analytics.itunes.apple.com
+127.0.0.1    telemetry.apple.com
+
+# Google Ads and Telemetry
+127.0.0.1    ad.doubleclick.net
+127.0.0.1    ads.google.com
+127.0.0.1    adservice.google.co.in
+127.0.0.1    adservice.google.com
+127.0.0.1    adservice.google.com.ar
+127.0.0.1    adservice.google.com.au
+127.0.0.1    adservice.google.com.co
+127.0.0.1    adservice.google.com.mx
+127.0.0.1    adservice.google.com.tr
+127.0.0.1    adssettings.google.com
+127.0.0.1    beacon.google.com
+127.0.0.1    beacon.scorecardresearch.com
+127.0.0.1    doubleclick.net
+127.0.0.1    googleads.g.doubleclick.net
+127.0.0.1    googleadservices.com
+127.0.0.1    google-analytics.com
+127.0.0.1    googleoptimize.com
+127.0.0.1    googletagmanager.com
+127.0.0.1    pagead2.googlesyndication.com
+127.0.0.1    secure-us.imrworldwide.com
+127.0.0.1    ssl.google-analytics.com
+127.0.0.1    stats.g.doubleclick.net
+127.0.0.1    tagmanager.google.com
+127.0.0.1    tags.tiqcdn.com
+127.0.0.1    www.google-analytics.com
+
+# Facebook Ads and Tracking
+127.0.0.1    adaccount.instagram.com
+127.0.0.1    ads.facebook.com
+127.0.0.1    connect.facebook.net
+127.0.0.1    graph.facebook.com
+127.0.0.1    instagram.com/ads
+127.0.0.1    l.facebook.com
+127.0.0.1    marketing-api.facebook.com
+127.0.0.1    pixel.facebook.com
+127.0.0.1    tr.facebook.com
+127.0.0.1    tracking.facebook.com
+
+# Mozilla Telemetry
+127.0.0.1    blocklists.settings.services.mozilla.com
+127.0.0.1    crash-stats.mozilla.com
+127.0.0.1    data.mozilla.com
+127.0.0.1    fxmetrics.mozilla.com
+127.0.0.1    incoming.telemetry.mozilla.org
+127.0.0.1    shavar.services.mozilla.com
+127.0.0.1    telemetry.mozilla.org
+
+# General Ads and Telemetry
+127.0.0.1    ads.linkedin.com
+127.0.0.1    ads.pinterest.com
+127.0.0.1    ads.twitter.com
+127.0.0.1    ads.yahoo.com
+127.0.0.1    adserver.adtechus.com
+127.0.0.1    adssettings.yahoo.com
+127.0.0.1    analytics.snapchat.com
+127.0.0.1    analytics.tiktok.com
+127.0.0.1    app-measurement.com
+127.0.0.1    atdmt.com
+127.0.0.1    beacon.scorecardresearch.com
+127.0.0.1    cdn.ampproject.org
+127.0.0.1    chartbeat.com
+127.0.0.1    edge-metrics.com
+127.0.0.1    engine.adzerk.net
+127.0.0.1    hotjar.com
+127.0.0.1    logs.tiktokv.com
+127.0.0.1    m.stripe.network
+127.0.0.1    matomo.cloud
+127.0.0.1    media6degrees.com
+127.0.0.1    openx.net
+127.0.0.1    pagead.l.doubleclick.net
+127.0.0.1    pixel.quantserve.com
+127.0.0.1    quantserve.com
+127.0.0.1    scorecardresearch.com
+127.0.0.1    secure-us.imrworldwide.com
+127.0.0.1    ssl.google-analytics.com
+127.0.0.1    stats.wordpress.com
+127.0.0.1    tags.tiqcdn.com
+127.0.0.1    tracking-proxy-prod.msn.com
+127.0.0.1    yieldmanager.com
+
+# End of list of domains to block
+"@
+
+    # Append the telemetry list to the hosts file
+    Add-Content -Path $hostsPath -Value $TelemetryDomains
+    Write-Host "Telemetry domains have been blocked in the hosts file."
 
     <#
     Principais Domínios de Telemetria da Microsoft:
@@ -1614,8 +1665,18 @@ function BlockTelemetrybyHosts {
 
     MSN e Bing:
     Bloqueio de bingapis.com, edge.microsoft.com, msn.com, para evitar conexões indesejadas.
+    
+    Apple (macOS e iOS):
+    Adicionamos telemetry.apple.com, metrics.apple.com, e alguns servidores SSL da Apple, conhecidos por coleta de dados em dispositivos Apple.
+
+    Plataformas Gerais:
+    Vários domínios relacionados ao Google, DoubleClick, Facebook e ScorecardResearch são incluídos, usados para rastreamento e telemetria em sistemas Linux e em navegadores de todos os sistemas operacionais.
     #>
+
 }
+
+
+
 
 
 
@@ -2339,19 +2400,15 @@ Function SetSystemResponsiveness {
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "GPU Priority" -Type DWord -Value 0x00000008
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Priority" -Type DWord -Value 0x00000008
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "Scheduling Category" -Type String -Value "High"
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Low Latency" -Name "SFIO Priority" -Type String -Value "High"
 
 
 	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games")) {
 		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Force | Out-Null
 	}
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Type DWord -Value 0x00000008
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 0x00000008
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Type String -Value "High"
-	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Type String -Value "High"
 
 	Write-Host "Disabling System Crash Dump."
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Type DWord -Value 0x00000000 -Force -ErrorAction SilentlyContinue
@@ -2921,55 +2978,6 @@ function DisableRecall {
 
 
 
-function DisableVBS_HVCI {
-    <#
-    Desativa a segurança baseada em virtualização (VBS) e a integridade do código forçado pelo hipervisor (HVCI).
-    #>
-
-    Write-Output "Desativando a segurança baseada em virtualização e a integridade do código forçado pelo hipervisor."
-
-    $DeviceGuard = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard"
-    If (!(Test-Path $DeviceGuard)) {  
-        New-Item $DeviceGuard -Force | Out-Null
-    }
-
-    $WOW6432NodeDeviceGuard = "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\DeviceGuard"
-    If (!(Test-Path $WOW6432NodeDeviceGuard)) {  
-        New-Item $WOW6432NodeDeviceGuard -Force | Out-Null
-    }
-
-    # Verifica se o sistema é Windows 10
-    IF ([System.Environment]::OSVersion.Version.Build -lt 22000) {
-        Write-Host "Windows 10 detectado. Desativando a segurança baseada em virtualização."
-        
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
-    }
-
-    # Verifica se o sistema é Windows 11
-    IF ([System.Environment]::OSVersion.Version.Build -ge 22000) {
-        Write-Host "Windows 11 detectado. Desativando a segurança baseada em virtualização."
-        
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "HVCIMATRequired" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "RequirePlatformSecurityFeatures" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Type DWord -Value 0x00000000
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Type DWord -Value 0x00000000
-    }
-
-    # Habilita ou desabilita a integridade do código forçado pelo hipervisor
-    If (!(Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity")) {
-        New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Force | Out-Null
-    }
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Type DWord -Value 0x00000000
-}
-
-
-
-
 function TurnWSLlight {
     <#
     Aplica ajustes de desempenho no Windows Subsystem for Linux (WSL).
@@ -3000,46 +3008,68 @@ kernelCommandLine=noibrs noibpb nopti nospectre_v1 nospectre_v2 nospec_store_byp
 
 
 
-
 function DisableWindowsDefender {
 
     <#
-    O autor explica que apenas desativou as funcionalidades relacionadas à Proteção em Tempo Real, Proteção Entregue na Nuvem, 
-    Envio Automático de Amostras e Isolamento de Núcleo (para WSL) porque impactam diretamente o desempenho do sistema.
+    Desativa funcionalidades do Windows Defender que impactam diretamente o desempenho do sistema,
+    incluindo Proteção em Tempo Real, Proteção Entregue na Nuvem, Envio Automático de Amostras e configurações de Isolamento de Núcleo.
     #>
 
-    # Verifica se a Proteção contra Tamper está ativada
-    $tamperProtectionStatus = Get-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows Defender\Features' -ErrorAction SilentlyContinue
-
-    if ($null -eq $tamperProtectionStatus -or $tamperProtectionStatus.TamperProtection -ne 0) {
-        Write-Host 'Windows Defender não pode ser desativado, a Proteção contra Tamper ainda está ativa.'
-        Write-Host 'Desative a Proteção contra Tamper manualmente e tente novamente.'
-        return
+    # Verifica e interrompe o serviço do Windows Defender se estiver em execução
+    $defenderService = Get-Service -Name "WinDefend" -ErrorAction SilentlyContinue
+    if ($defenderService -and $defenderService.Status -eq "Running") {
+        try {
+            Stop-Service -Name "WinDefend" -Force -ErrorAction SilentlyContinue
+            Write-Host "Serviço Windows Defender interrompido."
+        } catch {
+            Write-Host "Não foi possível interromper o serviço do Windows Defender. Verifique as permissões administrativas." -ForegroundColor Red
+            return
+        }
     }
 
-    # Configurações do registro
-    $paths = @(
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration",
+    # Cria as chaves de diretiva (Policies) para desativar o Windows Defender e Isolamento de Núcleo
+    $policyPaths = @(
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender",
         "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet",
         "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet"
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Device Guard",
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\ExploitGuard\ControlledFolderAccess"
     )
 
-    foreach ($path in $paths) {
+    foreach ($path in $policyPaths) {
         if (!(Test-Path $path)) {
             New-Item -Path $path -Force | Out-Null
         }
     }
 
-    # Configura propriedades
+    # Configurações para desativar o Windows Defender usando Policies
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiVirus" -Value 1 -Force
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -Value 1 -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" -Name "SubmitSamplesConsent" -Value 2 -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates" -Name "ForceUpdateFromMU" -Value 0 -Force
 
-    # Desativar mitigações
+    # Configurações de Isolamento de Núcleo e Proteções Adicionais
+    # Memory Integrity
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Name "Enabled" -Value 0 -Force
+
+    # Kernel-mode Hardware-enforced Stack Protection
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Device Guard" -Name "HypervisorEnforcedCodeIntegrity" -Value 0 -Force
+
+    # Local Security Authority Protection
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Value 0 -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPLBoot" -Value 0 -Force
+
+    # Microsoft Vulnerable Driver Blocklist
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Device Guard" -Name "EnableVulnerableDriverBlocklist" -Value 0 -Force
+
+    # Feedback para o usuário
+    Write-Host "Configurações de Windows Defender e Isolamento de Núcleo desativadas com sucesso usando diretivas (Policies)."
+
+    # Alterar mitigações ao estado original
     Set-ProcessMitigation -System -Reset
-
-    Write-Host "Windows Defender e mitigações desativadas com sucesso."
+    Write-Host "Configurações de mitigação alteradas ao estado original."
 
 	Start-Sleep 1
 		
@@ -3054,9 +3084,10 @@ function DisableWindowsDefender {
 		
 		#>	
 
-		# Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports ( breaks WSL functionality on Windows 11 !)
-	
+		# Set-Processmitigation -System -Disable CFG, StrictCFG, SuppressExports ( breaks WSL functionality on Windows 11 !)	
 }
+
+
 
 
 
@@ -3725,6 +3756,9 @@ function SetBootOptimizeFunction {
     Write-Output "Desativando a desfragmentação automática e habilitando a otimização da partição de inicialização."
 
     # Define o valor para desativar a desfragmentação automática
+    If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction")) {
+        New-Item -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Force | Out-Null
+    }
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" -Name "Enable" -Type String -Value "" -Force
 
     # Verifica se a chave WOW6432Node existe e cria se necessário

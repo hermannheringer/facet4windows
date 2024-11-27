@@ -15,6 +15,11 @@ RequireAdmin
 
 
 
+### Verifiy if CIM server is operational. ###
+CIM_server
+
+
+
 ###  Transcript everything that happens during a session to a LOG file.  ###
 LogScript
 
@@ -116,9 +121,8 @@ DisableRecall                       #Disable the Windows Recall feature.
 
 
 ###  Security  ###
-DisableVBS_HVCI                     #Turn off Virtualization-based security.
 TurnWSLlight                        #Set some WSL Performance Tweaks.
-!DisableWindowsDefender              #Disables Windows Defender.
+DisableWindowsDefender              #Disables Windows Defender and Virtualization-based security.
 
 
 

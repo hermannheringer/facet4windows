@@ -1,7 +1,8 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.1
+Version : 0.1.2
+Date: 2024-11-04
 Source: https://github.com/hermannheringer/
 #>
 
@@ -27,13 +28,13 @@ $i = 0
 While ($i -lt $args.Length) {
 	If ($args[$i].ToLower() -eq "-include") {
 		 # Resolve full path to the included file
-		$include = Resolve-Path $args[++$i] -ErrorAction Stop
+		$include = Resolve-Path $args[++$i] -ErrorAction SilentlyContinue
 		$PSCommandArgs += "-include `"$include`""
 		 # Import the included file as a module
-		Import-Module -Name $include -ErrorAction Stop
+		Import-Module -Name $include -ErrorAction SilentlyContinue
 	} ElseIf ($args[$i].ToLower() -eq "-preset") {
 		 # Resolve full path to the preset file
-		$preset = Resolve-Path $args[++$i] -ErrorAction Stop
+		$preset = Resolve-Path $args[++$i] -ErrorAction SilentlyContinue
 		$PSCommandArgs += "-preset `"$preset`""
 	}
 	$i++

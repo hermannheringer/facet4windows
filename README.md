@@ -17,7 +17,11 @@
 ## **Description**
 
 
-#### PowerShell script for performance optimization and Windows latency reduction for a better data analysis experience.
+#### "The Year 2024: Yet another script to 'optimize,' reduce latency, and debloat Windows by butchering your OS with thousands of registry tweaks—backed by absolutely zero solid evidence (like ANOVA hypothesis test) to prove you're somehow smarter than the actual developers who built the system."
+
+#### *"Am I a genius? Nope. Am I clueless? Also nope. I just spend an unreasonable amount of time painstakingly testing every single function in this project. So yeah, it's not magic—it's obsession."*
+
+---
 
 Introduction:
 

@@ -1,7 +1,8 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.1.13
+Version : 0.1.15
+Date: 2024-11-27
 Source: https://github.com/hermannheringer/
 #>
 
@@ -19,6 +20,37 @@ Function RequireAdmin {
         } catch {
             Write-Host "Failed to elevate the script: $_" -ForegroundColor Red
             Exit 1
+        }
+    }
+}
+
+
+
+Function CIM_server {
+    # Nome do serviço WMI/CIM
+    $serviceName = "Winmgmt"
+    
+    # Tenta acessar o CIM para garantir que o serviço esteja funcionando
+    try {
+        Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "CIM server is operational." -ForegroundColor Green
+        return $true  # CIM server está funcionando
+    } catch {
+        Write-Host "CIM connection failed: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Attempting to restart the CIM (WMI) service: $serviceName..."
+
+        # Reinicia o serviço WMI/CIM
+        try {
+            Restart-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 5  # Aguarda alguns segundos para o serviço reiniciar
+
+            # Verifica novamente se o CIM está acessível após o restart
+            Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue | Out-Null
+            Write-Host "CIM server restarted and is now operational." -ForegroundColor Green
+            return $true
+        } catch {
+            Write-Host "Failed to restart the CIM server: $($_.Exception.Message)" -ForegroundColor Red
+            return $false  # Falha ao reiniciar o servidor CIM
         }
     }
 }
@@ -368,10 +400,16 @@ Function WaitForKey {
 
 
 Function Restart {
+    # Verifica se o PowerShell está sendo executado como Administrador
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "This script needs to be run as an Administrator to restart the computer." -ForegroundColor Red
+        return
+    }
+
     # Adiciona tipos necessários para a caixa de mensagem
     Add-Type -AssemblyName PresentationCore, PresentationFramework
-    
-    # Definindo os botões e mensagens
+
+    # Define os botões e mensagens
     $Button = [Windows.MessageBoxButton]::YesNoCancel
     $Reboot = "Consider restarting your operating system for some of the changes you made to take effect."
     $Warn = [Windows.MessageBoxImage]::Warning
@@ -380,20 +418,20 @@ Function Restart {
     $Prompt0 = [Windows.MessageBox]::Show($Reboot, "Reboot", $Button, $Warn)
 
     # Verifica a resposta do usuário
-    Switch ($Prompt0) {
-        [System.Windows.MessageBoxResult]::Yes {
+    Switch ([System.Windows.MessageBoxResult]$Prompt0) {
+        "Yes" {
             Start-Sleep -Seconds 1
             Write-Host "Initiating reboot..."
             Start-Sleep -Seconds 1
-            Restart-Computer -Force  # Reinicia o computador forçando o encerramento de aplicações, se necessário
+            Restart-Computer -Force
         }
-        [System.Windows.MessageBoxResult]::No {
+        "No" {
             Start-Sleep -Seconds 1
             Write-Host "Exiting..."
             Start-Sleep -Seconds 1
             Exit
         }
-        [System.Windows.MessageBoxResult]::Cancel {
+        "Cancel" {
             Start-Sleep -Seconds 1
             Write-Host "Operation canceled."
             Exit
@@ -413,22 +451,22 @@ $i = 0
 While ($i -lt $args.Length) {
     if ($args[$i].ToLower() -eq "-include") {
         # Resolve full path to the included file
-        $include = Resolve-Path $args[++$i] -ErrorAction Stop
+        $include = Resolve-Path $args[++$i] -ErrorAction SilentlyContinue
         $PSCommandArgs += "-include `"$include`""
         # Import the included file as a module, with error handling
         try {
-            Import-Module -Name $include -ErrorAction Stop
+            Import-Module -Name $include -ErrorAction SilentlyContinue
         } catch {
             Write-Host "Error importing module: $_" -ForegroundColor Red
             Exit
         }
     } elseif ($args[$i].ToLower() -eq "-preset") {
         # Resolve full path to the preset file
-        $preset = Resolve-Path $args[++$i] -ErrorAction Stop
+        $preset = Resolve-Path $args[++$i] -ErrorAction SilentlyContinue
         $PSCommandArgs += "-preset `"$preset`""
         # Load each tweak function defined in the preset file
         if (Test-Path $preset) {
-            Get-Content $preset -ErrorAction Stop | ForEach-Object {
+            Get-Content $preset -ErrorAction SilentlyContinue | ForEach-Object {
                 $line = $_.Split("#")[0].Trim()
                 if (-not [string]::IsNullOrWhiteSpace($line)) {
                     AddOrRemoveTweak($line)
