@@ -17,12 +17,6 @@
 ## **Description**
 
 
-#### "The Year 2024: Yet another script to 'optimize,' reduce latency, and debloat Windows by butchering your OS with thousands of registry tweaks—backed by absolutely zero solid evidence (like ANOVA hypothesis test) to prove you're somehow smarter than the actual developers who built the system."
-
-#### *"Am I a genius? Nope. Am I clueless? Also nope. I just spend an unreasonable amount of time painstakingly testing every single function in this project. So yeah, it's not magic—it's obsession."*
-
----
-
 Introduction:
 
 The PowerShell script presented here automates routine tasks on Windows 10 and 11 distributions (24H2 compatible), specifically focusing on improving performance and reducing overall latency for devices with limited CPU and RAM resources. While the script does not target IT administrators or serve as an ``"anti-tracking"`` solution, it aims to balance maintaining desired functionality and optimising system performance.

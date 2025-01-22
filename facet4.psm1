@@ -1,8 +1,8 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.4.1
-Date: 2024-11-27
+Version : 0.4.2
+Date: 2025-01-22
 License: MIT
 Source: https://github.com/hermannheringer/
 #>
@@ -2496,6 +2496,45 @@ Function SomeKernelTweaks {
 
 
 
+Function EnviromentTweaks {
+	
+	Write-Output "Make adjustments to improve OpenBLAS performance for Python and R."
+	# I work as a data analyst and use R for my daily activities. In the link below, you can find a step-by-step guide on optimizing the R language engine for multi-threading.
+    # The performance improvement is remarkable when used in combination with specific libraries!
+    # https://github.com/david-cortes/R-openblas-in-windows
+    
+
+    # Função para definir uma variável de ambiente apenas se ainda não estiver configurada ou se o valor for diferente
+    function Set-EnvVariableIfNeeded {
+        param (
+            [string]$Name,
+            [string]$Value,
+            [string]$Scope = "Machine"  # Machine para todos os usuários, User para o usuário atual
+        )
+        $currentValue = [System.Environment]::GetEnvironmentVariable($Name, $Scope)
+        if ($currentValue -ne $Value) {
+            Write-Host "Definindo variável '$Name' como '$Value' no escopo '$Scope'." -ForegroundColor Green
+            [System.Environment]::SetEnvironmentVariable($Name, $Value, $Scope)
+        } else {
+            Write-Host "Variável '$Name' já está definida com o valor correto ('$Value')." -ForegroundColor Yellow
+        }
+    }
+
+    # Obter o número de threads do processador (núcleos lógicos)
+    $logicalCores = [System.Environment]::ProcessorCount
+
+    # Configurar as variáveis de ambiente com o número de threads detectado
+    Set-EnvVariableIfNeeded -Name "OMP_NUM_THREADS" -Value $logicalCores.ToString()
+    Set-EnvVariableIfNeeded -Name "OPENBLAS_NUM_THREADS" -Value $logicalCores.ToString()
+    Set-EnvVariableIfNeeded -Name "RCPP_PARALLEL_NUM_THREADS" -Value $logicalCores.ToString()
+
+    # Definir as outras variáveis manualmente
+    Set-EnvVariableIfNeeded -Name "PYTHONOPTIMIZE" -Value "2"
+    Set-EnvVariableIfNeeded -Name "TF_CPP_MIN_LOG_LEVEL" -Value "3"
+}
+
+
+
 Function MisconceptionHPET {
 	
 	Write-Output "Reverting misconception about HPET-TSC-PMT to system default values."
@@ -3438,6 +3477,17 @@ function SetMaxCachedIcons {
 
 
 
+function ChangeDesktopImageQuality {
+    <#
+    Change Desktop Image Quality to High (100%).
+    #>
+
+    Write-Host "Change Desktop Image Quality to High."
+
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "JPEGImportQuality" -Type DWord -Value 0x00000064 -Force
+}
+
+
 
  ###                           ###
  ### File System Optimizations ###
@@ -3895,7 +3945,6 @@ function DisableWiFiSense {
 
 
 
-
 function DisableWFPlogs {
     <#
     Desativa os logs do Windows Filtering Platform (WFP) para reduzir o uso de disco.
@@ -3909,6 +3958,44 @@ function DisableWFPlogs {
     Write-Output "Logs do WFP desativados com sucesso."
 }
 
+
+
+function DisableComponentBasedServicingLog {
+    <#
+    Disable Component Based Servicing log to reduce disk usage.
+    #>
+
+    Write-Output "Disabling Component Based Servicing log."
+
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing" -Name "EnableLog" -Type DWord -Value 0x00000000 -Force
+
+}
+
+
+
+function DisableDeltaPackageExpanderLog {
+    <#
+    Disable Delta Package Expander Log to reduce disk usage.
+    #>
+
+    Write-Output "Disable Delta Package Expander Log."
+
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing" -Name "EnableDpxLog" -Type DWord -Value 0x00000000 -Force
+
+}
+
+
+
+function DisableComponentBasedServicingBackup {
+    <#
+    Disable Component Based Servicing Backup to reduce disk usage.
+    #>
+
+    Write-Output "Disable Component Based Servicing Backup."
+
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\SideBySide\Configuration" -Name "DisableComponentBackups" -Type DWord -Value 00000001 -Force
+
+}
 
 
 
@@ -4184,12 +4271,13 @@ function SetOptimizeNetwrok {
     }
 
     # Verifica e cria a chave para MSMQ
+    # Determina se o recurso Nagle's Algorithm será desativado para conexões TCP feitas pelo MSMQ (Microsoft Message Queuing).
     If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters")) {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Force | Out-Null
     }
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" -Name "TCPNoDelay" -Type DWord -Value 0x00000001 -Force
 
-    Write-Output "Configurações de rede otimizadas com sucesso."
+    Write-Output "Desativado o mecanismo de limitação da rede e o Algoritmo de Nagle para conexões TCP feitas pelo MSMQ."
 }
 
 
