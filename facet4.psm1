@@ -1517,134 +1517,103 @@ function BlockTelemetrybyHosts {
 
     # List of domains to block
     $TelemetryDomains = @"
-# Microsoft Telemetry and Ads
-127.0.0.1    activity.windows.com
-127.0.0.1    ads.msn.com
-127.0.0.1    analytics.microsoft.com
-127.0.0.1    browser.events.data.msn.com
-127.0.0.1    checkappexec.microsoft.com
-127.0.0.1    data.microsoft.com
-127.0.0.1    diagnostics.support.microsoft.com
-127.0.0.1    edge.microsoft.com
-127.0.0.1    eu-mobile.events.data.microsoft.com
-127.0.0.1    feedback.windows.com
-127.0.0.1    i1.services.social.microsoft.com
-127.0.0.1    jp-mobile.events.data.microsoft.com
-127.0.0.1    msftconnecttest.com
-127.0.0.1    msftncsi.com
-127.0.0.1    oca.microsoft.com
-127.0.0.1    sb.scorecardresearch.com
-127.0.0.1    scorecardresearch.com
-127.0.0.1    settings-win.data.microsoft.com
-127.0.0.1    telemetry.microsoft.com
-127.0.0.1    telemetry.urs.microsoft.com
-127.0.0.1    uk-mobile.events.data.microsoft.com
-127.0.0.1    us-mobile.events.data.microsoft.com
-127.0.0.1    v10.vortex.data.microsoft.com
-127.0.0.1    v10.vortex-win.data.microsoft.com
-127.0.0.1    v20.vortex.data.microsoft.com
-127.0.0.1    v20.vortex-win.data.microsoft.com
-127.0.0.1    vortex.data.microsoft.com
-127.0.0.1    vortex-win.data.microsoft.com
-127.0.0.1    watson.microsoft.com
+# Bloqueio de Telemetria e Rastreamento (Microsoft)
+127.0.0.1 activity.windows.com          # Telemetry
+127.0.0.1 data.microsoft.com            # Telemetry
+127.0.0.1 telemetry.microsoft.com       # Telemetry
+127.0.0.1 vortex.data.microsoft.com     # Telemetry
+127.0.0.1 v10.vortex-win.data.microsoft.com # Telemetry
+127.0.0.1 v20.vortex-win.data.microsoft.com # Telemetry
+127.0.0.1 watson.microsoft.com          # Crash Reporting
+127.0.0.1 settings-win.data.microsoft.com # Telemetry
+127.0.0.1 feedback.windows.com          # Metrics
+127.0.0.1 eu-mobile.events.data.microsoft.com # Analytics
+127.0.0.1 us-mobile.events.data.microsoft.com # Analytics
+127.0.0.1 mobile.pipe.aria.microsoft.com # Telemetry
 
-# Apple Telemetry
-127.0.0.1    analytics.apple.com
-127.0.0.1    api-glb-crashlytics.itunes.apple.com
-127.0.0.1    config.push.apple.com
-127.0.0.1    e.crashlytics.com
-127.0.0.1    events.apple.com
-127.0.0.1    experience.apple.com
-127.0.0.1    gateway.push.apple.com
-127.0.0.1    gsp10-ssl.ls.apple.com
-127.0.0.1    gsp11-ssl.ls.apple.com
-127.0.0.1    icloud-content.com
-127.0.0.1    init-p01md.apple.com
-127.0.0.1    metrics.apple.com
-127.0.0.1    radarsubmissions.apple.com
-127.0.0.1    sp.analytics.itunes.apple.com
-127.0.0.1    telemetry.apple.com
+# Publicidade e Trackers (Microsoft/Bing)
+127.0.0.1 ads.msn.com                   # Advertising
+127.0.0.1 bingads.microsoft.com         # Advertising
+127.0.0.1 c.bing.com                    # Trackers
+127.0.0.1 c.msn.com                     # Trackers
+127.0.0.1 browser.events.data.msn.com   # Analytics
 
-# Google Ads and Telemetry
-127.0.0.1    ad.doubleclick.net
-127.0.0.1    ads.google.com
-127.0.0.1    adservice.google.co.in
-127.0.0.1    adservice.google.com
-127.0.0.1    adservice.google.com.ar
-127.0.0.1    adservice.google.com.au
-127.0.0.1    adservice.google.com.co
-127.0.0.1    adservice.google.com.mx
-127.0.0.1    adservice.google.com.tr
-127.0.0.1    adssettings.google.com
-127.0.0.1    beacon.google.com
-127.0.0.1    beacon.scorecardresearch.com
-127.0.0.1    doubleclick.net
-127.0.0.1    googleads.g.doubleclick.net
-127.0.0.1    googleadservices.com
-127.0.0.1    google-analytics.com
-127.0.0.1    googleoptimize.com
-127.0.0.1    googletagmanager.com
-127.0.0.1    pagead2.googlesyndication.com
-127.0.0.1    secure-us.imrworldwide.com
-127.0.0.1    ssl.google-analytics.com
-127.0.0.1    stats.g.doubleclick.net
-127.0.0.1    tagmanager.google.com
-127.0.0.1    tags.tiqcdn.com
-127.0.0.1    www.google-analytics.com
+# Analytics e Métricas (Apple)
+127.0.0.1 analytics.apple.com           # Analytics
+127.0.0.1 metrics.apple.com             # Metrics
+127.0.0.1 telemetry.apple.com           # Telemetry
+127.0.0.1 radarsubmissions.apple.com    # Crash Reporting
+127.0.0.1 api-glb-crashlytics.itunes.apple.com # Crash Reporting
+127.0.0.1 crashes.iosapps.apple.com     # Crash Reporting
 
-# Facebook Ads and Tracking
-127.0.0.1    adaccount.instagram.com
-127.0.0.1    ads.facebook.com
-127.0.0.1    connect.facebook.net
-127.0.0.1    graph.facebook.com
-127.0.0.1    instagram.com/ads
-127.0.0.1    l.facebook.com
-127.0.0.1    marketing-api.facebook.com
-127.0.0.1    pixel.facebook.com
-127.0.0.1    tr.facebook.com
-127.0.0.1    tracking.facebook.com
+# Advertising (Google)
+127.0.0.1 ads.google.com                # Advertising
+127.0.0.1 adservice.google.*            # Advertising
+127.0.0.1 doubleclick.net               # Advertising
+127.0.0.1 googleadservices.com          # Advertising
+127.0.0.1 pagead2.googlesyndication.com # Advertising
+127.0.0.1 partnerad.l.doubleclick.net   # Advertising
+127.0.0.1 ad.doubleclick.net            # Advertising
 
-# Mozilla Telemetry
-127.0.0.1    blocklists.settings.services.mozilla.com
-127.0.0.1    crash-stats.mozilla.com
-127.0.0.1    data.mozilla.com
-127.0.0.1    fxmetrics.mozilla.com
-127.0.0.1    incoming.telemetry.mozilla.org
-127.0.0.1    shavar.services.mozilla.com
-127.0.0.1    telemetry.mozilla.org
+# Analytics e Tag Management (Google)
+127.0.0.1 google-analytics.com          # Analytics
+127.0.0.1 googletagmanager.com          # Tag Management
+127.0.0.1 www.googletagservices.com     # Tag Management
+127.0.0.1 ssl.google-analytics.com      # Analytics
+127.0.0.1 app-measurement.com           # Analytics
+127.0.0.1 beacon.google.com             # Analytics
 
-# General Ads and Telemetry
-127.0.0.1    ads.linkedin.com
-127.0.0.1    ads.pinterest.com
-127.0.0.1    ads.twitter.com
-127.0.0.1    ads.yahoo.com
-127.0.0.1    adserver.adtechus.com
-127.0.0.1    adssettings.yahoo.com
-127.0.0.1    analytics.snapchat.com
-127.0.0.1    analytics.tiktok.com
-127.0.0.1    app-measurement.com
-127.0.0.1    atdmt.com
-127.0.0.1    beacon.scorecardresearch.com
-127.0.0.1    cdn.ampproject.org
-127.0.0.1    chartbeat.com
-127.0.0.1    edge-metrics.com
-127.0.0.1    engine.adzerk.net
-127.0.0.1    hotjar.com
-127.0.0.1    logs.tiktokv.com
-127.0.0.1    m.stripe.network
-127.0.0.1    matomo.cloud
-127.0.0.1    media6degrees.com
-127.0.0.1    openx.net
-127.0.0.1    pagead.l.doubleclick.net
-127.0.0.1    pixel.quantserve.com
-127.0.0.1    quantserve.com
-127.0.0.1    scorecardresearch.com
-127.0.0.1    secure-us.imrworldwide.com
-127.0.0.1    ssl.google-analytics.com
-127.0.0.1    stats.wordpress.com
-127.0.0.1    tags.tiqcdn.com
-127.0.0.1    tracking-proxy-prod.msn.com
-127.0.0.1    yieldmanager.com
+# Facebook/Meta
+127.0.0.1 graph.facebook.com            # Trackers
+127.0.0.1 connect.facebook.net          # Trackers
+127.0.0.1 pixel.facebook.com            # Trackers
+127.0.0.1 tracking.facebook.com         # Trackers
+127.0.0.1 ads.instagram.com             # Advertising
+127.0.0.1 graph.instagram.com           # Trackers
+127.0.0.1 logging.instagram.com         # Analytics
+127.0.0.1 fbcdn-track.com               # Trackers
+
+# Mozilla
+127.0.0.1 telemetry.mozilla.org         # Telemetry
+127.0.0.1 incoming.telemetry.mozilla.org # Telemetry
+127.0.0.1 crash-stats.mozilla.com       # Crash Reporting
+
+# Outras Plataformas
+127.0.0.1 ads.yahoo.com                 # Advertising
+127.0.0.1 ads.linkedin.com              # Advertising
+127.0.0.1 ads.pinterest.com             # Advertising
+127.0.0.1 analytics.tiktok.com          # Analytics
+127.0.0.1 log-upload.tiktokv.com        # Telemetry
+127.0.0.1 analytics.snapchat.com        # Analytics
+127.0.0.1 ads.criteo.com                # Advertising
+127.0.0.1 cdn.taboola.com               # Advertising
+
+# Ferramentas de Terceiros
+127.0.0.1 hotjar.com                    # Analytics
+127.0.0.1 matomo.cloud                  # Analytics
+127.0.0.1 scorecardresearch.com         # Analytics
+127.0.0.1 quantserve.com                # Trackers
+127.0.0.1 imrworldwide.com              # Trackers
+127.0.0.1 optimizely.com                # A/B Testing
+127.0.0.1 fullstory.com                 # Session Replay
+
+# E-commerce e Outros
+127.0.0.1 adsystem.amazon.com           # Advertising
+127.0.0.1 fls-na.amazon.com             # Trackers
+127.0.0.1 telemetry.adobe.com           # Telemetry
+127.0.0.1 config.samsungads.com         # Advertising
+
+# Additional Domains Added for Completeness
+127.0.0.1 cdn.ampproject.org            # Trackers
+127.0.0.1 stats.g.doubleclick.net       # Advertising
+127.0.0.1 securepubads.g.doubleclick.net # Advertising
+127.0.0.1 pubads.g.doubleclick.net      # Advertising
+127.0.0.1 adserver.adtechus.com         # Advertising
+127.0.0.1 adserver.adtech.de            # Advertising
+127.0.0.1 trc.taboola.com               # Trackers
+127.0.0.1 cdn.segment.com               # Analytics
+127.0.0.1 api.mixpanel.com              # Analytics
+127.0.0.1 events.outbrain.com           # Trackers
 
 # End of list of domains to block
 "@
