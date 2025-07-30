@@ -1,8 +1,8 @@
 <#
 Facet4 Windows 10/11 distribution
 Author: Hermann Heringer
-Version : 0.4.2
-Date: 2025-01-22
+Version : 0.4.3
+Date: 2025-07-30
 License: MIT
 Source: https://github.com/hermannheringer/
 #>
@@ -1645,6 +1645,23 @@ function BlockTelemetrybyHosts {
 }
 
 
+
+
+function DisableRecall {
+Write-Output "Disabling Recall."
+
+# Check Status: 
+# Dism /Online /Get-Featureinfo /Featurename:Recall 
+
+# Disable: 
+Dism /Online /Disable-Feature /Featurename:Recall 
+
+# Enable: 
+# Dism /Online /Enable-Feature /Featurename:Recall
+
+Write-Host "Recall has been disabled."
+
+}
 
 
 

@@ -1,7 +1,7 @@
 # Facet4 Windows 10/11 distribution
 # Author: Hermann Heringer
-# Version : 0.1.3
-# Date: 2025-01-22
+# Version : 0.1.4
+# Date: 2025-07-30
 # Source: https://github.com/hermannheringer/
 
 
@@ -82,7 +82,7 @@ DisableFeedbackExperience              #Stops the Windows Feedback Experience fr
 !DisableLocationTracking               #Disabling this will break Microsoft 'Find My Device' functionality.
 DisableTailoredExperiences             #Disabling Tailored Experiences.
 BlockTelemetrybyHosts                  #Windows has a lot of telemetry and spying and connects to third-party data collection sites. We will block this.
-
+DisableRecall                          #Disabling Windows Recall feature.
 
 
 ###  Remove Third Party Telemetry  ###
